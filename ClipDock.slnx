@@ -2,7 +2,6 @@
   <Folder Name="/src/">
     <Project Path="src/ClipDock.App/ClipDock.App.csproj" />
     <Project Path="src/ClipDock.Core/ClipDock.Core.csproj" />
-    <Project Path="src/ClipDock.NativeHost/ClipDock.NativeHost.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ClipDock.Checks/ClipDock.Checks.csproj" />

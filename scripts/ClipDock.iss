@@ -23,7 +23,7 @@ AppName=ClipDock
 AppVersion={#AppVersion}
 AppPublisher=ClipDock
 AppPublisherURL=https://clipdock-d6z.pages.dev/
-AppSupportURL=https://github.com/kuma0128/clipdock/issues
+AppSupportURL=https://clipdock-d6z.pages.dev/help
 AppUpdatesURL=https://clipdock-d6z.pages.dev/
 DefaultDirName={localappdata}\Programs\ClipDock
 UsePreviousAppDir=no
@@ -64,12 +64,10 @@ Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
-japanese.CloseClipDock=ClipDockとChromeのClipDockポップアップを閉じてから、もう一度お試しください。保存中の動画がある場合は、完了するまでお待ちください。
-english.CloseClipDock=Close ClipDock and its Chrome popup, then try again. If a video is being saved, wait for it to finish first.
+japanese.CloseClipDock=ClipDockを閉じてから、もう一度お試しください。保存中の動画がある場合は、完了するまでお待ちください。
+english.CloseClipDock=Close ClipDock, then try again. If a video is being saved, wait for it to finish first.
 japanese.ProcessCheckFailed=ClipDockの実行状態を確認できませんでした。Windowsを再起動してから、もう一度お試しください。
 english.ProcessCheckFailed=Could not check whether ClipDock is running. Restart Windows and try again.
-japanese.NativeRegistrationFailed=Chrome連携を登録できませんでした。
-english.NativeRegistrationFailed=Could not register the Chrome connection.
 japanese.InvalidInstallDirectory=ClipDockは、このユーザーの標準インストール先にインストールしてください。
 english.InvalidInstallDirectory=ClipDock must be installed in this user's default application directory.
 japanese.LaunchClipDock=ClipDockを起動する
@@ -87,15 +85,11 @@ english.UnsignedDetails=ClipDock does not have a code-signing certificate signat
 Name: "desktopicon"; Description: "{cm:DesktopIcon}"; Flags: unchecked
 
 [Files]
-Source: "{#PackageDirectory}\*"; DestDir: "{app}"; Excludes: "ClipDock.NativeHost.exe,Install.ps1,Uninstall.ps1,INSTALL.cmd,UNINSTALL.cmd,*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#PackageDirectory}\ClipDock.NativeHost.exe"; DestDir: "{app}"; Flags: ignoreversion; AfterInstall: WriteNativeManifest
+Source: "{#PackageDirectory}\*"; DestDir: "{app}"; Excludes: "Install.ps1,Uninstall.ps1,INSTALL.cmd,UNINSTALL.cmd,.clipdock-package.json,*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{userprograms}\ClipDock"; Filename: "{app}\ClipDock.exe"; WorkingDir: "{app}"; Flags: uninsneveruninstall
 Name: "{userdesktop}\ClipDock"; Filename: "{app}\ClipDock.exe"; WorkingDir: "{app}"; Tasks: desktopicon; Flags: uninsneveruninstall
-
-[Registry]
-Root: HKCU; Subkey: "Software\Google\Chrome\NativeMessagingHosts\com.clipdock.downloader"; ValueType: string; ValueData: "{localappdata}\ClipDock\native-host.json"
 
 [Run]
 Filename: "{app}\ClipDock.exe"; WorkingDir: "{app}"; Description: "{cm:LaunchClipDock}"; Flags: nowait postinstall skipifsilent
@@ -128,10 +122,28 @@ begin
   end;
 end;
 
+function IsReparsePoint(const Path: String): Boolean;
+var
+  Found: TFindRec;
+begin
+  Result := False;
+  if FindFirst(Path, Found) then begin
+    try
+      Result := (Found.Attributes and $400) <> 0;
+    finally
+      FindClose(Found);
+    end;
+  end;
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   if CompareText(RemoveBackslashUnlessRoot(ExpandFileName(ExpandConstant('{app}'))),
     ExpandConstant('{localappdata}\Programs\ClipDock')) <> 0 then
+    Result := CustomMessage('InvalidInstallDirectory')
+  else if IsReparsePoint(ExpandConstant('{app}')) or IsReparsePoint(ExpandConstant('{app}\docs')) or
+    IsReparsePoint(ExpandConstant('{app}\licenses')) or IsReparsePoint(ExpandConstant('{app}\extension')) or
+    IsReparsePoint(ExpandConstant('{app}\extension\icons')) then
     Result := CustomMessage('InvalidInstallDirectory')
   else Result := RunningCheck;
 end;
@@ -143,28 +155,6 @@ begin
   Reason := RunningCheck;
   Result := Reason = '';
   if not Result then SuppressibleMsgBox(Reason, mbError, MB_OK, IDOK);
-end;
-
-function JsonString(Value: String): String;
-begin
-  StringChangeEx(Value, '\', '\\', True);
-  StringChangeEx(Value, '"', '\"', True);
-  Result := '"' + Value + '"';
-end;
-
-procedure WriteNativeManifest;
-var
-  Lines: TArrayOfString;
-  Path: String;
-begin
-  Path := ExpandConstant('{localappdata}\ClipDock\native-host.json');
-  SetArrayLength(Lines, 1);
-  Lines[0] := '{"name":"com.clipdock.downloader","description":"ClipDock Chrome bridge","path":' +
-    JsonString(ExpandConstant('{app}\ClipDock.NativeHost.exe')) + ',"type":"stdio","allowed_origins":[' +
-    '"chrome-extension://oeolbdjffnnmaanghklbkhfhgihepfhd/",' +
-    '"chrome-extension://okehkphoehepefjddoiinohnhpjghefe/"]}';
-  if not ForceDirectories(ExtractFileDir(Path)) or not SaveStringsToUTF8FileWithoutBOM(Path, Lines, False) then
-    RaiseException(CustomMessage('NativeRegistrationFailed'));
 end;
 
 function ReadJsonString(const Text: String; var Position: Integer; var Value: String): Boolean;
@@ -255,13 +245,48 @@ begin
     Result := CompareText(ExpandFileName(Target), ExpandConstant('{app}\ClipDock.NativeHost.exe')) = 0;
 end;
 
+procedure RemoveOwnedNativeRegistration;
+var
+  RegisteredPath, CanonicalPath: String;
+begin
+  CanonicalPath := ExpandConstant('{localappdata}\ClipDock\native-host.json');
+  if RegQueryStringValue(HKCU, NativeKey, '', RegisteredPath) then begin
+    if ManifestTargetsThisApp(RegisteredPath) then begin
+      RegDeleteValue(HKCU, NativeKey, '');
+      RegDeleteKeyIfEmpty(HKCU, NativeKey);
+    end;
+  end;
+  if ManifestTargetsThisApp(CanonicalPath) then DeleteFile(CanonicalPath);
+end;
+
+procedure RemoveRetiredFiles;
+var
+  Files: TArrayOfString;
+  I: Integer;
+begin
+  Files := ['ClipDock.NativeHost.exe', 'ClipDock.NativeHost.dll', 'ClipDock.NativeHost.deps.json',
+    'ClipDock.NativeHost.runtimeconfig.json', 'ClipDock.NativeHost.pdb',
+    'extension\background.js', 'extension\content.js', 'extension\distribution.js',
+    'extension\manifest.json', 'extension\media.js', 'extension\popup.css', 'extension\popup.html',
+    'extension\popup.js', 'extension\site-policy.js', 'extension\store-identity.json',
+    'extension\icons\16.png', 'extension\icons\32.png', 'extension\icons\48.png',
+    'extension\icons\128.png', 'extension\icons\256.png',
+    'docs\webstore-listing-ja.md', 'docs\webstore-review.md'];
+  for I := 0 to GetArrayLength(Files) - 1 do DeleteFile(ExpandConstant('{app}\') + Files[I]);
+  RemoveDir(ExpandConstant('{app}\extension\icons'));
+  RemoveDir(ExpandConstant('{app}\extension'));
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep <> ssDone then Exit;
+  RemoveOwnedNativeRegistration;
+  RemoveRetiredFiles;
   DeleteFile(ExpandConstant('{app}\Install.ps1'));
   DeleteFile(ExpandConstant('{app}\Uninstall.ps1'));
   DeleteFile(ExpandConstant('{app}\INSTALL.cmd'));
   DeleteFile(ExpandConstant('{app}\UNINSTALL.cmd'));
+  DeleteFile(ExpandConstant('{app}\.clipdock-package.json'));
 end;
 
 procedure RemoveOwnedShortcut(const Path: String);
@@ -280,19 +305,12 @@ end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
-  RegisteredPath, Reason: String;
+  Reason: String;
 begin
   if CurUninstallStep <> usUninstall then Exit;
   Reason := RunningCheck;
   if Reason <> '' then RaiseException(Reason);
-  if RegQueryStringValue(HKCU, NativeKey, '', RegisteredPath) then begin
-    if ManifestTargetsThisApp(RegisteredPath) then begin
-      RegDeleteValue(HKCU, NativeKey, '');
-      RegDeleteKeyIfEmpty(HKCU, NativeKey);
-      if CompareText(RegisteredPath, ExpandConstant('{localappdata}\ClipDock\native-host.json')) = 0 then
-        DeleteFile(RegisteredPath);
-    end;
-  end;
+  RemoveOwnedNativeRegistration;
   RemoveOwnedShortcut(ExpandConstant('{userprograms}\ClipDock.lnk'));
   RemoveOwnedShortcut(ExpandConstant('{userdesktop}\ClipDock.lnk'));
 end;

@@ -6,5 +6,6 @@
     <Compile Include="../../src/ClipDock.App/DownloadItem.cs" Link="App/DownloadItem.cs" />
     <Compile Include="../../src/ClipDock.App/DownloadEngine.cs" Link="App/DownloadEngine.cs" />
     <Compile Include="../../src/ClipDock.App/DownloadFailure.cs" Link="App/DownloadFailure.cs" />
+    <Compile Include="../../src/ClipDock.App/BrowserUrlCandidate.cs" Link="App/BrowserUrlCandidate.cs" />
   </ItemGroup>
 </Project>

@@ -1,5 +1,7 @@
-const installer = "ClipDock-1.0.2-win-x64-unsigned-setup.exe";
-const releases = new Set([installer, `${installer}.sha256`]);
+const releases = new Set(["1.0.2", "1.0.3"].flatMap(version => {
+  const installer = `ClipDock-${version}-win-x64-unsigned-setup.exe`;
+  return [installer, `${installer}.sha256`];
+}));
 
 function empty(status, extra = {}) {
   return new Response(null, { status, headers: { "Cache-Control": "no-store", ...extra } });

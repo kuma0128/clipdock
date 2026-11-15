@@ -138,14 +138,13 @@ internal static class QueueChecks
             finally { releaseCleanup.TrySetResult(); await queue.StopAsync(); }
         });
 
-        Async("cancellation before engine preparation does not create output files or retain cookies", async () =>
+        Async("cancellation before engine preparation does not create output files ", async () =>
         {
             using var cancellation = new CancellationTokenSource(); cancellation.Cancel();
             var output = Path.Combine(Path.GetTempPath(), "ClipDock-not-created-" + Guid.NewGuid().ToString("N"));
-            var job = new DownloadItem { OutputDirectory = output, Request = new DownloadRequest { Url = "https://example.com/video",
-                Cookies = [new BrowserCookie { Domain = "example.com", Name = "test", Value = "synthetic" }] } };
+            var job = new DownloadItem { OutputDirectory = output, Request = new DownloadRequest { Url = "https://example.com/video" } };
             await DownloadEngine.RunAsync(job, output, action => action(), cancellation.Token);
-            Assert(job.State == "cancelled" && job.Request.Cookies.Count == 0 && !Directory.Exists(output));
+            Assert(job.State == "cancelled" && !Directory.Exists(output));
         });
 
         check("old settings default to two saves and the selected concurrency survives serialization", () =>
@@ -159,10 +158,10 @@ internal static class QueueChecks
         check("history keeps old active saves and shutdown entries within its 300 item limit", () =>
         {
             var jobs = Enumerable.Range(0, 350).Select(_ => new DownloadItem { State = "completed" }).ToList();
-            var active = new DownloadItem { State = "downloading", Request = new DownloadRequest { Cookies = [new BrowserCookie { Value = "secret" }] } };
+            var active = new DownloadItem { State = "downloading", Request = new DownloadRequest { Url = "https://example.com/video" } };
             jobs.Add(active);
             var snapshot = DownloadHistory.Snapshot(jobs);
-            Assert(snapshot.Count == 300 && snapshot[^1].Id == active.Id && snapshot[^1].Request.Cookies.Count == 0);
+            Assert(snapshot.Count == 300 && snapshot[^1].Id == active.Id);
             active.State = "interrupted";
             Assert(DownloadHistory.Snapshot(jobs, [active])[^1].Id == active.Id);
         });

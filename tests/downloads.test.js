@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { onRequest } from "../functions/downloads/[[file]].js";
 
-const file = "ClipDock-1.0.2-win-x64-unsigned-setup.exe";
+const file = "ClipDock-1.0.3-win-x64-unsigned-setup.exe";
 const uploaded = new Date("2026-11-15T01:02:03.456Z");
 const bytes = new TextEncoder().encode("0123456789");
 

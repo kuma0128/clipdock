@@ -2,63 +2,41 @@ import assert from "node:assert/strict";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 
 const directory = resolve(process.argv[2] || "artifacts/ClipDock-win-x64");
-const host = join(directory, "ClipDock.NativeHost.exe");
-const manifest = JSON.parse(readFileSync(join(directory, "extension/manifest.json"), "utf8"));
-const origin = "chrome-extension://oeolbdjffnnmaanghklbkhfhgihepfhd/";
-const storeOrigin = "chrome-extension://okehkphoehepefjddoiinohnhpjghefe/";
-function invoke(input, caller = origin) {
-  const result = spawnSync(host, [caller], { input, timeout: 15000, windowsHide: true, maxBuffer: 1024 * 1024 });
-  if (result.error) throw result.error;
-  return result;
+const props = readFileSync(new URL("../Directory.Build.props", import.meta.url), "utf8");
+const version = props.match(/<Version>(\d+\.\d+\.\d+)<\/Version>/)?.[1];
+assert.ok(version, "Directory.Build.props must define a three-component release version");
+for (const file of ["ClipDock.exe", "ClipDock.dll", "ClipDock.Core.dll", "ClipDock.deps.json", "ClipDock.runtimeconfig.json",
+  "coreclr.dll", "hostpolicy.dll", "INSTALL.cmd", "Install.ps1", "UNINSTALL.cmd", "Uninstall.ps1",
+  "README.md", "PRIVACY.md", "LICENSE", "THIRD-PARTY.md", "START-HERE.html", "docs/manual-checks.md", ".clipdock-package.json",
+  "Microsoft.Web.WebView2.Core.dll", "Microsoft.Web.WebView2.Wpf.dll", "WebView2Loader.dll", "licenses/webview2/LICENSE.txt", "licenses/webview2/NOTICE.txt"])
+  assert.ok(existsSync(join(directory, file)), `Missing standalone package file: ${file}`);
+assert.ok(!existsSync(join(directory, "extension")), "Retired extension must not be packaged");
+assert.ok(!readdirSync(directory).some(file => file.startsWith("ClipDock.NativeHost.")), "Retired native host must not be packaged");
+const inventory = JSON.parse(readFileSync(join(directory, ".clipdock-package.json"), "utf8"));
+for (const file of inventory.files) {
+  assert.ok(typeof file.path === "string" && !file.path.split(/[\\/]/).some(part => part === "..") && !file.path.includes(":"));
+  const contents = readFileSync(join(directory, file.path));
+  assert.equal(createHash("sha256").update(contents).digest("hex"), file.sha256.toLowerCase(), `Invalid uninstall inventory hash: ${file.path}`);
 }
-function frame(value) {
-  const body = Buffer.from(JSON.stringify(value));
-  const size = Buffer.alloc(4); size.writeUInt32LE(body.length);
-  return Buffer.concat([size, body]);
-}
-function decode(result) {
-  assert.ok(result.stdout.length >= 4, result.stderr.toString());
-  const size = result.stdout.readUInt32LE(0);
-  assert.equal(size, result.stdout.length - 4, "stdout must contain exactly one native message");
-  return JSON.parse(result.stdout.subarray(4).toString("utf8"));
-}
-const health = invoke(frame({ action: "ping" }));
-assert.equal(health.status, 0);
-const response = decode(health);
-assert.equal(response.ok, true);
-assert.equal(response.version, manifest.version, "Native host and extension versions must match");
-console.log(`PASS packaged native protocol handshake (engines ${response.ready ? "ready" : "not bundled"})`);
-const storeHealth = invoke(frame({ action: "ping" }), storeOrigin);
-assert.equal(storeHealth.status, 0);
-assert.equal(decode(storeHealth).ok, true);
-assert.equal(decode(storeHealth).version, manifest.version);
-console.log("PASS packaged native protocol accepts the public store origin");
-const inbox = join(process.env.LOCALAPPDATA, "ClipDock", "inbox");
-const queuedFiles = () => existsSync(inbox) ? readdirSync(inbox).filter(name => /\.request(?:\.tmp)?$/.test(name)) : [];
-const beforeStoreRequests = new Set(queuedFiles());
-for (const restriction of [{}, { restrictYouTube: false }]) {
-  for (const fields of [{ url: "https://www.youtube.com/watch?v=store-policy-test" },
-    { url: "https://example.com/video.mp4", pageUrl: "https://www.youtube.com/watch?v=store-policy-test" },
-    { url: "https://example.com/video.mp4", referer: "https://rr1.googlevideo.com/video.mp4" }]) {
-    const result = invoke(frame({ action: "download", ...fields, ...restriction }), storeOrigin);
-    assert.equal(result.status, 1);
-    const rejected = decode(result);
-    assert.equal(rejected.ok, false);
-    assert.match(rejected.error, /Chrome ウェブストア版はYouTube/);
-  }
-}
-assert.deepEqual(queuedFiles().filter(name => !beforeStoreRequests.has(name)), [], "Rejected store requests must not enter the inbox");
-console.log("PASS store origin enforces YouTube restrictions before creating queued files");
-assert.equal(decode(invoke(frame({ action: "execute", command: "not-run" }))).ok, false);
-console.log("PASS unsupported native action rejected");
-const invalidSize = Buffer.alloc(4); invalidSize.writeInt32LE(2147483647);
-assert.equal(decode(invoke(invalidSize)).ok, false);
-console.log("PASS oversized native message rejected");
-const unauthorized = invoke(frame({ action: "ping" }), "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/");
-assert.equal(unauthorized.status, 1); assert.equal(unauthorized.stdout.length, 0);
-console.log("PASS unauthorized extension origin rejected");
+assert.ok(inventory.files.some(file => file.path === "ClipDock.exe") && inventory.files.some(file => file.path === "Uninstall.ps1"));
+for (const file of ["docs/webstore-listing-ja.md", "docs/webstore-review.md"])
+  assert.ok(!existsSync(join(directory, file)), `Retired store document must not be packaged: ${file}`);
+const exe = readFileSync(join(directory, "ClipDock.exe"));
+assert.equal(exe.toString("ascii", 0, 2), "MZ");
+const pe = exe.readUInt32LE(0x3c);
+assert.equal(exe.toString("ascii", pe, pe + 4), "PE\0\0");
+assert.equal(exe.readUInt16LE(pe + 4), 0x8664, "ClipDock.exe must be an x64 executable");
+const checkVersion = spawnSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command",
+  "$ErrorActionPreference = 'Stop'; @('ClipDock.exe', 'ClipDock.dll', 'ClipDock.Core.dll') | ForEach-Object { " +
+  "$v = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $env:CLIPDOCK_PACKAGE_CHECK $_)); " +
+  "'{0}.{1}.{2}' -f $v.FileMajorPart, $v.FileMinorPart, $v.FileBuildPart }"],
+  { env: { ...process.env, CLIPDOCK_PACKAGE_CHECK: directory }, encoding: "utf8", timeout: 15000, windowsHide: true });
+assert.equal(checkVersion.status, 0, String(checkVersion.error || checkVersion.stderr));
+assert.deepEqual(checkVersion.stdout.trim().split(/\r?\n/), [version, version, version], "Application binary versions must match Directory.Build.props");
+console.log(`PASS standalone x64 application and version ${version}`);
 const runtime = JSON.parse(readFileSync(join(directory, "ClipDock.runtimeconfig.json"), "utf8"));
 assert.ok(runtime.runtimeOptions.includedFrameworks.some(f => f.name === "Microsoft.WindowsDesktop.App"));
 for (const framework of runtime.runtimeOptions.includedFrameworks) {
@@ -67,21 +45,5 @@ for (const framework of runtime.runtimeOptions.includedFrameworks) {
   if (framework.name === "Microsoft.NETCore.App")
     assert.ok(existsSync(join(folder, "THIRD-PARTY-NOTICES.TXT")), "Missing .NET runtime third-party notices");
 }
-console.log("PASS licenses for the bundled .NET runtime");
-for (const file of ["ClipDock.exe", "INSTALL.cmd", "Install.ps1", "UNINSTALL.cmd", "Uninstall.ps1", "README.md", "PRIVACY.md", "LICENSE", "THIRD-PARTY.md", "START-HERE.html", "docs/manual-checks.md", ...Object.values(manifest.icons).map(f => "extension/" + f)])
-  assert.ok(existsSync(join(directory, file)), file);
-console.log("PASS self-contained runtime and installation files present");
-const bundled = existsSync(join(directory, "tools"));
-if (bundled) {
-  for (const file of ["versions.json", "licenses"])
-    assert.ok(existsSync(join(directory, "tools", file)), `Missing bundled engine metadata: ${file}`);
-}
-for (const [exe, arg] of [["yt-dlp.exe", "--version"], ["ffmpeg.exe", "-version"], ["ffprobe.exe", "-version"], ["deno.exe", "--version"]]) {
-  if (!bundled) break;
-  const path = join(directory, "tools", exe);
-  assert.ok(existsSync(path), `Incomplete engine bundle: ${exe}`);
-  const result = spawnSync(path, [arg], { timeout: 20000, windowsHide: true, maxBuffer: 1024 * 1024 });
-  assert.equal(result.status, 0, `${exe}: ${result.error || result.stderr}`);
-  console.log(`PASS ${exe}: ${result.stdout.toString().split(/\r?\n/)[0]}`);
-}
+console.log("PASS self-contained runtime, licenses and installation files; no retired browser payload");
 console.log("Package checks passed.");

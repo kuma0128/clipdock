@@ -34,10 +34,11 @@ public sealed class DownloadItem : INotifyPropertyChanged
     public bool CanRetry => State is "failed" or "cancelled" or "interrupted";
     public bool IsCompleted => State == "completed";
     public bool IsBusy => State is "downloading" or "converting";
-    public string Meta => $"{(Uri.TryCreate(Request.PageUrl, UriKind.Absolute, out var page) ? page.Host : "")}   ·   {(Request.Quality == "best" ? "最高画質" : Request.Quality + "p 以下")}   ·   {CreatedAt:MM/dd HH:mm}";
+    public string FormatLabel => Request.Format == "mp3" ? "MP3" : "MP4";
+    public string Meta => $"{(Uri.TryCreate(Request.PageUrl, UriKind.Absolute, out var page) ? page.Host : "")}   ·   {(Request.Format == "mp3" ? "音声のみ" : Request.Quality == "best" ? "最高画質" : Request.Quality + "p 以下")}   ·   {CreatedAt:MM/dd HH:mm}";
     public string StateLabel => State switch
     {
-        "queued" => "待機中", "downloading" => "ダウンロード中", "converting" => "MP4を仕上げています",
+        "queued" => "待機中", "downloading" => "ダウンロード中", "converting" => $"{FormatLabel}を仕上げています",
         "completed" => "保存完了", "failed" => "保存できませんでした", "cancelled" => "キャンセル済み", _ => "中断されました"
     };
     private void Notify([CallerMemberName] string? property = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
@@ -48,7 +49,7 @@ public sealed class DownloadItem : INotifyPropertyChanged
         Notify(property);
         return true;
     }
-    public SavedDownload Save() => new(Id, Request with { Cookies = [] }, CreatedAt, OutputDirectory, Title, State, FilePath, Detail);
+    public SavedDownload Save() => new(Id, Request, CreatedAt, OutputDirectory, Title, State, FilePath, Detail);
 }
 
 public sealed record SavedDownload(string Id, DownloadRequest Request, DateTimeOffset CreatedAt, string OutputDirectory, string Title, string State, string FilePath, string Detail);

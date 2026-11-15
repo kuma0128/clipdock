@@ -34,7 +34,7 @@ Cloudflareへログイン済みの環境で実行します。サイトは `websi
 リポジトリのルートでPowerShell 7から実行します。証明書とSignToolは不要です。
 
 ```powershell
-.\scripts\build.ps1 -BundleTools
+.\scripts\build.ps1
 .\scripts\build-installer.ps1 -AllowUnsignedRelease
 ```
 
@@ -55,7 +55,7 @@ Get-FileHash -LiteralPath $installerFile -Algorithm SHA256
 リポジトリのルートでPowerShell 7から実行します。証明書の拇印とSignToolのパスは実際の値に置き換えてください。
 
 ```powershell
-.\scripts\build.ps1 -BundleTools
+.\scripts\build.ps1
 
 $installerOptions = @{
     CertificateThumbprint = '<証明書の40桁のSHA-1拇印>'
@@ -65,9 +65,9 @@ $installerOptions = @{
 .\scripts\build-installer.ps1 @installerOptions
 ```
 
-`build.ps1` はアプリのビルド、自動チェック、自己完結型パッケージの作成を行います。保存エンジンを同梱しない場合は `-BundleTools` を外します。
+`build.ps1` はアプリのビルド、自動チェック、自己完結型パッケージの作成を行います。保存エンジンはアプリの初回設定で取得します。
 
-`build-installer.ps1` はパッケージを作業フォルダーにコピーしてから署名・コンパイルします。元のパッケージは書き換えません。拡張とアプリの版数が一致しない場合や、必要なファイルが欠けている場合は停止します。
+`build-installer.ps1` はパッケージを作業フォルダーにコピーしてから署名・コンパイルします。元のパッケージは書き換えません。必要なファイルが欠けている場合は停止します。
 
 | 引数 | 指定内容 |
 | --- | --- |
@@ -82,7 +82,7 @@ $installerOptions = @{
 
 ## 署名付きファイルの検証
 
-署名対象は `ClipDock.exe`、`ClipDock.dll`、`ClipDock.Core.dll`、`ClipDock.NativeHost.exe`、`ClipDock.NativeHost.dll`、インストーラー、アンインストーラーです。SHA-256署名とRFC 3161のSHA-256タイムスタンプを付けます。
+署名対象は `ClipDock.exe`、`ClipDock.dll`、`ClipDock.Core.dll`、インストーラー、アンインストーラーです。SHA-256署名とRFC 3161のSHA-256タイムスタンプを付けます。
 
 `sign-artifact.ps1` は次を確認し、不一致なら終了コード1で停止します。
 
@@ -105,7 +105,7 @@ Get-FileHash -LiteralPath $installerFile -Algorithm SHA256
 
 ## 配布前の確認
 
-署名の有無にかかわらず、標準ユーザーでの新規インストール、更新、Chrome連携、動画保存、アンインストールを確認します。公開先から取得したEXEのSHA-256が配布用ファイルと一致してから、[公式サイト](https://clipdock-d6z.pages.dev/)のダウンロードリンクを有効にします。
+署名の有無にかかわらず、標準ユーザーでの新規インストール、更新、URLからのMP4・MP3保存、アンインストールを確認します。公開先から取得したEXEのSHA-256が配布用ファイルと一致してから、[公式サイト](https://clipdock-d6z.pages.dev/)のダウンロードリンクを有効にします。
 
 未署名版では、発行元を証明書で確認できず、WindowsのSmartScreenに警告が出る場合があります。利用者には次のように案内します。
 

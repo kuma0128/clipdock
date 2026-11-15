@@ -1,2 +1,22 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><title>ClipDock のはじめ方</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font:16px/1.9 system-ui,sans-serif;background:#111a22;color:#e5edf3;max-width:720px;margin:60px auto;padding:0 24px}h1{font-size:36px;color:#a5e7ba;line-height:1.3}h2{font-size:20px;margin-top:36px}li{margin:18px 0}code{background:#273541;padding:4px 7px;border-radius:4px;overflow-wrap:anywhere;font-size:13px}a{color:#a5e7ba}.card{background:#1c2a34;border:1px solid #33423f;border-radius:14px;padding:20px 28px}.small{color:#8fa5b1;font-size:13px}</style></head><body><p class="small">CHROME → MP4</p><h1>ClipDock の初回設定</h1><p>ClipDockの初回設定は、次の3ステップです。</p><p><strong>未署名版について:</strong> 発行元を証明書で確認できず、Windowsの警告が出る場合があります。<a href="https://clipdock-d6z.pages.dev/">公式サイト</a>から取得したことを確認し、実行する場合はSmartScreenの「詳細情報」→「実行」を選びます。「実行」がない場合は中止し、保護機能を無効にせず端末の管理者に確認してください。</p><div class="card"><ol><li><strong>アプリの導入を確認。</strong><br>インストーラー（.exe）で導入した場合は、そのまま次へ進んでください。<br>ZIP版を使う場合だけ、すべて展開して <code>INSTALL.cmd</code> をダブルクリックします。すでに実行した場合は不要です。</li><li><strong>Chromeの拡張を確認。</strong><br>Chromeウェブストアから拡張を導入済みなら、この手順は不要です。ローカル拡張を追加で読み込まず、次へ進んでください。<br>拡張を導入していない場合は、アドレスバーに <code>chrome://extensions</code> を入力 → デベロッパーモードをON →「パッケージ化されていない拡張機能を読み込む」。<br><code>%LOCALAPPDATA%\Programs\ClipDock\extension</code> を選びます。アプリの「拡張フォルダーを開く」でも場所を確認できます。</li><li><strong>動画ページを再読み込み。</strong><br>動画を再生し、マウスを乗せて「MP4で保存」。または拡張アイコンからページや検出した動画を選んで保存できます。</li></ol></div><h2>最初に確認</h2><p>スタートメニューなどからClipDockを起動し、左下に「エンジンの準備完了」が出ていれば準備OK。表示されない場合は「エンジンを準備 / 更新」を押してください。</p><p>初期保存先は <code>ダウンロード\ClipDock</code>。進捗と保存結果はアプリに表示されます。</p><p class="small">DRM保護動画には対応しません。取得可否はサイトによって異なります。詳しい使い方とトラブル対処は同梱の <a href="README.md">README.md</a> を参照してください。</p></body></html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ClipDockのはじめ方</title>
+<style>body{margin:48px auto;padding:0 24px;max-width:740px;color:#253329;background:#fff;font:16px/1.9 Arial,"Yu Gothic UI",sans-serif}h1{font-size:30px;line-height:1.5;font-weight:600}h2{font-size:21px;font-weight:600;margin-top:32px}a{color:#27653d;text-underline-offset:4px}li{margin:12px 0}code{background:#eff5ef;padding:2px 5px;overflow-wrap:anywhere}.note{padding:17px 20px;background:#f0f6ee;border-left:3px solid #8eb395}.small{font-size:14px;color:#536257}a:focus-visible{outline:2px solid #27653d;outline-offset:4px}</style>
+</head>
+<body>
+<p>ClipDock / Windows 10・11（x64）</p><h1>URLを貼り付けて、動画・音声を保存</h1>
+<ol>
+<li><strong>アプリを導入する。</strong>インストーラー（.exe）で導入済みなら次へ進みます。ZIP版だけ、すべて展開して <code>INSTALL.cmd</code> を開きます。</li>
+<li><strong>保存エンジンを準備する。</strong>スタートメニューからClipDockを起動し、「保存エンジンを準備」を押します。初回はインターネット接続が必要です。</li>
+<li><strong>URLを追加する。</strong>「URLから追加」に動画ページや動画ファイルのURLを貼り付けます。MP4またはMP3と保存先を選び、「追加」を押します。</li>
+</ol>
+<p>MP4が初期値で、MP3は音声のみを保存します。保存先は「保存先を変更」で選べます。4Kは解像度の上限で、元の動画を高解像度に拡大する機能ではありません。</p>
+<h2>ブラウザー上部の保存タブ</h2>
+<p>「ブラウザー上部に保存タブ」は初期OFFです。ONにすると、前面のChrome・Edgeの上中央からURLの取り込みを試せます。取り込んだURLをアプリで確認して「追加」を押してください。読み取れない場合は手動で貼り付けます。</p>
+<h2>ログインが必要な動画</h2><p>「この保存にログイン情報を使う」は初期ONです。「ログイン」を押し、ClipDock専用の画面で保存対象のサイトへサインインしてください。Chrome・Edgeの既存のログインとは別です。OFFにすると次の追加・再試行ではCookieを使いません。</p><p>ログイン画面にはMicrosoft Edge WebView2 Runtimeが必要です。見つからない場合は画面内のMicrosoft公式案内から導入してください。「ログイン情報を削除」は、専用画面の全サイトのログイン情報と閲覧データを削除します。保存の完了またはキャンセル後に使ってください。</p><p>ログインしていても、投稿の公開条件やサイト制限によっては保存できません。DRMやアクセス制限の解除は行いません。</p>
+<h2>Windowsに警告が出る場合</h2>
+<p class="note">配布インストーラーは未署名です。<a href="https://clipdock-d6z.pages.dev/">公式サイト</a>から取得したことを確認し、実行する場合はSmartScreenの「詳細情報」→「実行」を選びます。「実行」がなければ中止し、保護機能を無効にせず端末の管理者に確認してください。</p>
+<p class="small">導入後は「エンジンの更新を確認」で更新を確認できます。同じ版でファイルが正常なら再取得しません。旧版からの更新直後は、一度取得し直す場合があります。</p>
+<p><a href="https://clipdock-d6z.pages.dev/help">使い方・ヘルプ</a> · <a href="https://clipdock-d6z.pages.dev/privacy">プライバシーポリシー</a></p>
+</body></html>

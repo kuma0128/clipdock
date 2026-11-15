@@ -52,7 +52,7 @@ jobs:
       - name: Build unsigned development installer
         shell: pwsh
         run: ./scripts/build-installer.ps1 -AllowUnsignedDevelopment
-      - name: Check installer install, update and uninstall lifecycle
+      - name: Check standalone install, legacy migration and uninstall lifecycle
         shell: pwsh
         run: ./scripts/test-installer.ps1
       - name: Upload installer lifecycle logs

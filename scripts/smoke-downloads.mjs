@@ -1,4 +1,4 @@
-// Optional real-engine integration test. Only synthetic media and cookies are used;
+// Optional real-engine integration test. Only synthetic media is used;
 // app settings and history are never opened. Requires a previously built test project.
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -11,12 +11,13 @@ const artifacts = path.resolve("artifacts"); fs.mkdirSync(artifacts, { recursive
 const root = fs.mkdtempSync(path.join(artifacts, "parallel-smoke-"));
 const fixture = path.join(root, "fixture"); fs.mkdirSync(fixture);
 function ffmpeg(args) {
-  const result = spawnSync(path.join(tools, "ffmpeg.exe"), ["-hide_banner", "-loglevel", "error", "-y", ...args], { windowsHide: true, timeout: 30000 });
+  const result = spawnSync(path.join(tools, "ffmpeg.exe"), ["-hide_banner", "-loglevel", "error", "-y", ...args], { cwd: fixture, windowsHide: true, timeout: 30000 });
   assert.equal(result.status, 0, String(result.error || result.stderr));
 }
 ffmpeg(["-f", "lavfi", "-i", "testsrc2=size=320x180:rate=15", "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000", "-t", "2", "-c:v", "libx264", "-threads", "2", "-pix_fmt", "yuv420p", "-c:a", "aac", "-movflags", "+faststart", path.join(fixture, "sample.mp4")]);
 ffmpeg(["-i", path.join(fixture, "sample.mp4"), "-c:v", "libvpx-vp9", "-threads", "2", "-c:a", "libopus", path.join(fixture, "sample.webm")]);
 ffmpeg(["-i", path.join(fixture, "sample.mp4"), "-c", "copy", "-hls_time", "1", "-hls_list_size", "0", path.join(fixture, "sample.m3u8")]);
+ffmpeg(["-i", path.join(fixture, "sample.mp4"), "-map", "0:v:0", "-map", "0:a:0", "-c", "copy", "-f", "dash", "-seg_duration", "1", "-adaptation_sets", "id=0,streams=v id=1,streams=a", path.join(fixture, "sample.mpd")]);
 
 const active = new Map(); let maxConcurrentJobs = 0;
 const server = http.createServer((req, res) => {
@@ -26,7 +27,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(404); res.end("Not found"); return;
   }
   const data = fs.readFileSync(path.join(fixture, name));
-  const mime = name.endsWith(".m3u8") ? "application/vnd.apple.mpegurl" : name.endsWith(".ts") ? "video/mp2t" : name.endsWith(".webm") ? "video/webm" : "video/mp4";
+  const mime = name.endsWith(".mpd") ? "application/dash+xml" : name.endsWith(".m3u8") ? "application/vnd.apple.mpegurl" : name.endsWith(".ts") ? "video/mp2t" : name.endsWith(".webm") ? "video/webm" : "video/mp4";
   const range = req.headers.range?.match(/^bytes=(\d+)-(\d*)$/);
   let offset = range ? Number(range[1]) : 0;
   const end = range?.[2] ? Math.min(Number(range[2]), data.length - 1) : data.length - 1;

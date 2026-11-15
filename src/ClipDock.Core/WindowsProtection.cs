@@ -4,7 +4,7 @@ using System.Runtime.Versioning;
 
 namespace ClipDock.Core;
 
-// Windows DPAPI: only this Windows account can read queued URLs and cookies at rest.
+// Windows DPAPI protects saved history for this Windows account.
 [SupportedOSPlatform("windows")]
 public static class WindowsProtection
 {

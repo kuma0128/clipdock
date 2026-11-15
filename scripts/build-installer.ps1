@@ -14,7 +14,7 @@ Set-StrictMode -Version Latest
 $root = [System.IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $artifactRoot = [System.IO.Path]::GetFullPath((Join-Path $root 'artifacts'))
 $installerRoot = [System.IO.Path]::GetFullPath((Join-Path $artifactRoot 'installer'))
-$ownBinaries = @('ClipDock.exe', 'ClipDock.dll', 'ClipDock.Core.dll', 'ClipDock.NativeHost.exe', 'ClipDock.NativeHost.dll')
+$ownBinaries = @('ClipDock.exe', 'ClipDock.dll', 'ClipDock.Core.dll')
 
 function Invoke-SigningHelper([string]$Path, [switch]$VerifyOnly) {
     $arguments = @('-NoProfile', '-NonInteractive', '-File', (Join-Path $PSScriptRoot 'sign-artifact.ps1'),
@@ -48,14 +48,18 @@ try {
         $sourceFiles.Where({ $_.Attributes -band [System.IO.FileAttributes]::ReparsePoint }).Count -gt 0) {
         throw 'The distribution must not contain symbolic links or junctions.'
     }
-    foreach ($name in @($ownBinaries) + @('ClipDock.deps.json', 'ClipDock.runtimeconfig.json', 'ClipDock.NativeHost.deps.json',
-        'ClipDock.NativeHost.runtimeconfig.json', 'coreclr.dll', 'extension\manifest.json', 'LICENSE', 'THIRD-PARTY.md', 'PRIVACY.md', 'START-HERE.html')) {
+    foreach ($name in @($ownBinaries) + @('ClipDock.deps.json', 'ClipDock.runtimeconfig.json',
+        'coreclr.dll', 'LICENSE', 'THIRD-PARTY.md', 'PRIVACY.md', 'START-HERE.html')) {
         if (-not (Test-Path -LiteralPath (Join-Path $PackageDirectory $name) -PathType Leaf)) { throw "Incomplete distribution: $name. Run scripts/build.ps1 first." }
     }
     foreach ($name in @('docs', 'licenses')) {
         if (-not (Test-Path -LiteralPath (Join-Path $PackageDirectory $name) -PathType Container)) { throw "Incomplete distribution: $name." }
     }
-    $version = [string](Get-Content -LiteralPath (Join-Path $PackageDirectory 'extension\manifest.json') -Raw | ConvertFrom-Json).version
+    if ((Test-Path -LiteralPath (Join-Path $PackageDirectory 'extension')) -or
+        @(Get-ChildItem -LiteralPath $PackageDirectory -Filter 'ClipDock.NativeHost.*' -File).Count -ne 0) {
+        throw 'The distribution contains retired browser integration files. Rebuild it first.'
+    }
+    $version = [string]([xml](Get-Content -LiteralPath (Join-Path $root 'Directory.Build.props') -Raw)).Project.PropertyGroup.Version
     if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'A three-component release version is required.' }
     foreach ($name in $ownBinaries) {
         $binaryVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $PackageDirectory $name))
@@ -101,7 +105,7 @@ try {
     $compiled = Join-Path $workDirectory 'compiled'
     New-Item -ItemType Directory -Path $payload, $compiled -Force | Out-Null
     Get-ChildItem -LiteralPath $PackageDirectory -Force | Copy-Item -Destination $payload -Recurse -Force
-    $excluded = @('Install.ps1', 'Uninstall.ps1', 'INSTALL.cmd', 'UNINSTALL.cmd')
+    $excluded = @('Install.ps1', 'Uninstall.ps1', 'INSTALL.cmd', 'UNINSTALL.cmd', '.clipdock-package.json')
     foreach ($name in $excluded) {
         $path = Join-Path $payload $name
         if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force }

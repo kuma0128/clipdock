@@ -1,5 +1,5 @@
-using System.Buffers.Binary;
-using System.Diagnostics;
+
+
 using System.Text;
 using System.Text.Json;
 using ClipDock.App;
@@ -7,21 +7,6 @@ using ClipDock.Core;
 
 if (args is ["--download-smoke", var tools, var server, var output])
     return await DownloadSmokeChecks.RunAsync(tools, server, output);
-if (args is ["--store-policy-smoke", var storeTools])
-    return await StorePolicyChecks.RunEngineAsync(storeTools);
-
-// A hidden helper outlives its launcher so the test can detect inherited protocol pipes.
-if (args is ["--stdio-holder"]) { Thread.Sleep(10000); return 0; }
-if (args is ["--launch-probe"])
-{
-    var start = Integration.AppStartInfo(Environment.ProcessPath!);
-    start.WindowStyle = ProcessWindowStyle.Hidden;
-    start.ArgumentList.Add("--stdio-holder");
-    using var child = Process.Start(start)!;
-    Console.WriteLine(child.Id);
-    return 0;
-}
-
 var passed = 0;
 var failed = 0;
 void Check(string name, Action check)
@@ -42,19 +27,36 @@ Check("only absolute HTTP(S) URLs are accepted", () =>
         Assert(!DownloadRequest.IsWebUrl(url));
     Assert(DownloadRequest.IsWebUrl("https://example.com/video?id=a&token=b"));
 });
-Check("unknown actions and formats cannot become downloader arguments", () =>
+Check("unsupported qualities and formats cannot become downloader arguments", () =>
 {
-    Throws<ArgumentException>(() => new DownloadRequest { Action = "exec" }.Validated());
+
     Throws<ArgumentException>(() => new DownloadRequest { Url = "https://example.com", Quality = "1080 --exec calc" }.Validated());
+    foreach (var format in new string?[] { "avi", "MP3", "mp3 --exec calc", "", null })
+        Throws<ArgumentException>(() => new DownloadRequest { Url = "https://example.com", Format = format! }.Validated());
 });
-Check("X missing-video errors explain how to resend with login information and preserve diagnostics", () =>
+Check("legacy requests, history and settings default to MP4 with browser overlay off", () =>
+{
+    var request = JsonSerializer.Deserialize<DownloadRequest>("{\"url\":\"https://example.com/video\"}", Json.Options)!.Validated();
+    var settings = JsonSerializer.Deserialize<AppSettings>("{\"outputDirectory\":\"videos\",\"quality\":\"720\"}", Json.Options)!;
+    Assert(request.Format == "mp4" && settings.Format == "mp4" && !settings.BrowserOverlayEnabled && request.UseLogin && settings.UseLogin);
+    var item = new DownloadItem { Request = request with { Format = "mp3" }, State = "converting" };
+    Assert(item.FormatLabel == "MP3" && item.StateLabel.Contains("MP3") && item.Meta.Contains("音声のみ"));
+    Assert(item.Save().Request.Format == "mp3");
+});
+Check("legacy history keeps download fields and drops retired browser credentials", () =>
+{
+    var request = JsonSerializer.Deserialize<DownloadRequest>("{\"url\":\"https://example.com/video\",\"quality\":\"720\",\"cookies\":[{\"value\":\"old-secret\"}],\"restrictYouTube\":true}", Json.Options)!.Validated();
+    var saved = JsonSerializer.Serialize(new DownloadItem { Request = request }.Save(), Json.Options);
+    Assert(request.Quality == "720" && request.Format == "mp4" && !saved.Contains("old-secret") && !saved.Contains("cookies") && !saved.Contains("restrictYouTube"));
+});
+Check("X missing-video errors explain authentication limits and preserve diagnostics", () =>
 {
     const string error = "[twitter] Downloading GraphQL JSON\nERROR: [twitter] 123: No video could be found in this tweet\nURL: https://x.com/example/status/123 [Cookie]";
     foreach (var url in new[] { "https://x.com/example/status/123", "https://twitter.com/example/status/123", "https://mobile.twitter.com/example/status/123", "https://WWW.X.COM/example/status/123" })
     {
         var detail = DownloadFailure.Describe(url, error);
         Assert(detail.StartsWith("Xの動画情報を取得できませんでした。", StringComparison.Ordinal));
-        Assert(detail.Contains("場合があります。") && detail.Contains("この保存にページのログイン情報を使う"));
+        Assert(detail.Contains("場合があります。") && detail.Contains("ClipDock内でXにログイン") && detail.Contains("ONにして再試行"));
         Assert(detail.EndsWith("\n" + error, StringComparison.Ordinal));
         Assert(DownloadFailure.Describe(url, detail) == detail);
     }
@@ -79,23 +81,6 @@ Check("text limits never keep half of a surrogate pair", () =>
     Assert(DownloadRequest.CleanText("ab🎬", 4) == "ab🎬");
     Assert(DownloadRequest.CleanText(null, 4) == "" && DownloadRequest.CleanText("a\tb", 0) == "");
 });
-Check("cookies are restricted to requested domains and cannot inject cookie lines", () =>
-{
-    var r = new DownloadRequest { Url = "https://media.example.com/v", Cookies = [
-        new() { Domain = ".example.com", Name = "session", Value = "ok", HttpOnly = true, Secure = true },
-        new() { Domain = "evil-example.com", Name = "session", Value = "bad" },
-        new() { Domain = "example.com", HostOnly = true, Name = "session", Value = "bad" },
-        new() { Domain = ".example.com", Name = "broken", Value = "a\nb" },
-        new() { Domain = "com", Name = "broad", Value = "bad" },
-    ] }.Validated();
-    Assert(r.Cookies.Count == 1);
-    Assert(DownloadPlan.CookieFile(r).Contains("#HttpOnly_.example.com\tTRUE\t/\tTRUE\t0\tsession\tok"));
-});
-Check("null and excessive cookie payloads are rejected", () =>
-{
-    Throws<ArgumentException>(() => new DownloadRequest { Url = "https://a.test", Cookies = null! }.Validated());
-    Throws<ArgumentException>(() => new DownloadRequest { Url = "https://a.test", Cookies = Enumerable.Range(0, 501).Select(_ => new BrowserCookie()).ToList() }.Validated());
-});
 Check("progress parses download percentages, speed and ETA", () =>
 {
     var p = DownloadProgress.Parse("CLIPDOCK_PROGRESS {\"downloaded_bytes\":512,\"total_bytes\":1024,\"speed\":128,\"eta\":4,\"status\":\"downloading\"}");
@@ -109,32 +94,55 @@ Check("unknown sizes and malformed progress do not break the queue", () =>
     Assert(DownloadProgress.Parse("normal log") is null);
 });
 Check("estimated progress is clamped", () => Assert(DownloadProgress.Parse("CLIPDOCK_PROGRESS {\"downloaded_bytes\":200,\"total_bytes_estimate\":100}")?.Percent == 100));
+Check("separate video and audio keep one increasing progress bar until the completed file is ready", () =>
+{
+    var tracker = new DownloadProgressTracker(); tracker.SetParts("[\"137\",\"140\"]");
+    Assert(tracker.Apply(new(50, 100, 2, false, "video")).Percent == 23.75);
+    var video = tracker.Apply(new(100, 100, 0, true, "video"));
+    Assert(video.Percent == 47.5 && !video.Finished);
+    Assert(tracker.Apply(new(100, 100, 0, true, "video")).Percent == 47.5);
+    Assert(tracker.Apply(new(0, 100, 2, false, "audio")).Percent == 47.5);
+    var audio = tracker.Apply(new(100, 100, 0, true, "audio"));
+    Assert(audio.Percent == 95 && audio.Finished);
+    Assert(tracker.Apply(new(10, 100, 2, false, "audio")).Percent == 95);
+});
 Check("CLI uses discrete arguments and URL terminator, ignores external configs", () =>
 {
     var url = "https://example.com/v?x=\" & calc & echo \"";
-    var start = DownloadPlan.Create(new DownloadRequest { Url = url, Title = "--exec calc" }, @"C:\tool space", @"C:\video space", new string('a', 32), @"C:\session space\cookie");
+    var start = DownloadPlan.Create(new DownloadRequest { Url = url, Title = "--exec calc" }, @"C:\tool space", @"C:\video space", new string('a', 32));
     Assert(!start.UseShellExecute && start.CreateNoWindow);
     Assert(start.RedirectStandardInput && start.RedirectStandardOutput && start.RedirectStandardError);
     Assert(start.ArgumentList[^2] == "--" && start.ArgumentList[^1] == url);
     Assert(start.ArgumentList.Contains("--ignore-config") && start.ArgumentList.Contains("--no-playlist"));
     Assert(start.ArgumentList.Contains("bv*[height<=?1080]+ba/b[height<=?1080]"));
     Assert(start.ArgumentList.Contains("--recode-video") && start.ArgumentList.Contains("--abort-on-unavailable-fragments"));
-    Assert(start.ArgumentList.Contains(@"C:\session space\cookie"));
+    Assert(!start.ArgumentList.Contains("--cookies") && !start.ArgumentList.Contains("--cookies-from-browser"));
     Assert(!start.ArgumentList.Contains("--exec"));
 });
 Check("best quality omits height cap; all specified qualities are bounded", () =>
 {
     foreach (var quality in new[] { "best", "480", "720", "1080", "2160" })
     {
-        var args = DownloadPlan.Create(new DownloadRequest { Url = "https://a.test", Quality = quality }, @"C:\tools", @"C:\videos", new string('b', 32), null).ArgumentList;
+        var args = DownloadPlan.Create(new DownloadRequest { Url = "https://a.test", Quality = quality }, @"C:\tools", @"C:\videos", new string('b', 32)).ArgumentList;
         Assert(args.Contains(quality == "best" ? "bv*+ba/b" : $"bv*[height<=?{quality}]+ba/b[height<=?{quality}]"));
     }
 });
 Check("format sort ranks resolution above the H.264/AAC preference", () =>
 {
-    var args = DownloadPlan.Create(new DownloadRequest { Url = "https://a.test", Quality = "2160" }, @"C:\tools", @"C:\videos", new string('c', 32), null).ArgumentList;
+    var args = DownloadPlan.Create(new DownloadRequest { Url = "https://a.test", Quality = "2160" }, @"C:\tools", @"C:\videos", new string('c', 32)).ArgumentList;
     var fields = args[args.IndexOf("--format-sort") + 1].Split(',').ToList();
     Assert(fields.IndexOf("res") >= 0 && fields.IndexOf("res") < fields.IndexOf("vcodec:h264") && fields.IndexOf("vcodec:h264") < fields.IndexOf("acodec:aac"));
+});
+Check("MP3 extracts best available audio without a video height cap or video recoding", () =>
+{
+    var args = DownloadPlan.Create(new DownloadRequest { Url = "https://a.test", Quality = "480", Format = "mp3" }, @"C:\tools", @"C:\videos", new string('c', 32)).ArgumentList;
+    Assert(args[args.IndexOf("--format") + 1] == "ba/b");
+    Assert(args.Contains("--extract-audio") && args[args.IndexOf("--audio-format") + 1] == "mp3");
+    Assert(!args.Contains("--recode-video") && !args.Contains("--merge-output-format") && !args.Any(a => a.Contains("height")));
+    Assert(DownloadPlan.IsOutputFile(@"C:\videos\audio.MP3", @"C:\videos", "mp3"));
+    Assert(!DownloadPlan.IsOutputFile(@"C:\videos\audio.mp4", @"C:\videos", "mp3"));
+    Assert(!DownloadPlan.IsOutputFile(@"C:\videos\audio.mp3", @"C:\videos", "mp4"));
+    Assert(!DownloadPlan.IsOutputFile(@"C:\videos\..\audio.mp3", @"C:\videos", "mp3"));
 });
 Check("output verification tolerates missing or malformed paths", () =>
 {
@@ -150,106 +158,9 @@ Check("output verification rejects sibling path escapes and non-MP4", () =>
     Assert(!DownloadPlan.IsOutputFile(@"C:\videos\..\secret.mp4", @"C:\videos"));
     Assert(!DownloadPlan.IsOutputFile(@"C:\videos\app.exe", @"C:\videos"));
 });
-Check("native messages handle fragmented UTF-8 reads", () =>
-{
-    using var stream = new MemoryStream();
-    var request = new DownloadRequest { Url = "https://example.com", Title = "日本語の動画 🎬" };
-    NativeProtocol.WriteAsync(stream, request).GetAwaiter().GetResult();
-    var data = stream.ToArray();
-    Assert(BinaryPrimitives.ReadInt32LittleEndian(data) == data.Length - 4);
-    using var fragmented = new FragmentedStream(data);
-    var decoded = NativeProtocol.ReadAsync<DownloadRequest>(fragmented).GetAwaiter().GetResult();
-    Assert(decoded.Title == request.Title);
-});
-Check("native integration permits exactly the local and store origins", () =>
-{
-    Assert(Integration.AllowedOrigins.SequenceEqual(new[] { Integration.Origin, Integration.StoreOrigin }));
-    foreach (var origin in Integration.AllowedOrigins) Assert(Integration.IsAllowedOrigin(origin));
-    foreach (var origin in new string?[] { null, "", Integration.StoreOrigin.TrimEnd('/'), Integration.StoreOrigin + "popup.html",
-        Integration.StoreOrigin.Replace("chrome-extension://", "https://"), Integration.StoreOrigin.ToUpperInvariant(),
-        "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/" })
-    {
-        Assert(!Integration.IsAllowedOrigin(origin));
-        Throws<ArgumentException>(() => Integration.ValidateRequest(origin!, new DownloadRequest { Action = "ping" }));
-    }
-});
-Check("store origin forces download restrictions even when the sender omits or disables them", () =>
-{
-    foreach (var payload in new[] { "{\"url\":\"https://example.com/video\"}",
-        "{\"url\":\"https://example.com/video\",\"restrictYouTube\":false}" })
-    {
-        var source = JsonSerializer.Deserialize<DownloadRequest>(payload, Json.Options)!;
-        var request = Integration.ValidateRequest(Integration.StoreOrigin, source);
-        Assert(request.RestrictYouTube && !source.RestrictYouTube);
-        Assert(JsonSerializer.Deserialize<DownloadRequest>(JsonSerializer.Serialize(request, Json.Options), Json.Options)!.RestrictYouTube);
-        Throws<ArgumentException>(() => Integration.ValidateRequest(Integration.StoreOrigin, source with { Url = "https://youtu.be/video" }));
-        Throws<ArgumentException>(() => Integration.ValidateRequest(Integration.StoreOrigin, source with { PageUrl = "https://youtube.com/watch?v=video" }));
-    }
-});
-Check("local requests retain their chosen restrictions and non-download store actions remain valid", () =>
-{
-    var local = new DownloadRequest { Url = "https://youtu.be/video" };
-    Assert(!Integration.ValidateRequest(Integration.Origin, local).RestrictYouTube);
-    Throws<ArgumentException>(() => Integration.ValidateRequest(Integration.Origin, local with { RestrictYouTube = true }));
-    foreach (var action in new[] { "open", "ping" })
-    {
-        var request = Integration.ValidateRequest(Integration.StoreOrigin, new DownloadRequest { Action = action });
-        Assert(request.Action == action && !request.RestrictYouTube && request.Url == "");
-    }
-});
-Check("native messages reject negative and oversized lengths before allocation", () =>
-{
-    foreach (var length in new[] { -1, 0, NativeProtocol.MaxMessageBytes + 1, int.MaxValue })
-    {
-        var data = new byte[4]; BinaryPrimitives.WriteInt32LittleEndian(data, length);
-        Throws<InvalidDataException>(() => NativeProtocol.ReadAsync<DownloadRequest>(new MemoryStream(data)).GetAwaiter().GetResult());
-    }
-});
-Check("native messages reject truncated payloads", () =>
-{
-    Throws<EndOfStreamException>(() => NativeProtocol.ReadAsync<DownloadRequest>(new MemoryStream([5, 0, 0, 0, 123])).GetAwaiter().GetResult());
-});
-Check("a launched app cannot keep the native messaging pipes open", () =>
-{
-    var start = new ProcessStartInfo(Environment.ProcessPath!)
-    {
-        UseShellExecute = false, CreateNoWindow = true,
-        RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true
-    };
-    start.ArgumentList.Add("--launch-probe");
-    using var launcher = Process.Start(start)!;
-    launcher.StandardInput.Close();
-    var childId = int.Parse(launcher.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult()!);
-    try
-    {
-        var stdout = launcher.StandardOutput.ReadToEndAsync();
-        var stderr = launcher.StandardError.ReadToEndAsync();
-        Assert(launcher.WaitForExit(5000));
-        Assert(Task.WaitAll([stdout, stderr], TimeSpan.FromSeconds(2)));
-        Assert(launcher.ExitCode == 0 && stdout.Result.Length == 0 && stderr.Result.Length == 0);
-    }
-    finally
-    {
-        try { using var child = Process.GetProcessById(childId); child.Kill(); child.WaitForExit(5000); }
-        catch (ArgumentException) { }
-    }
-});
-Check("a valid Unicode cookie request still fits the encrypted inbox after JSON escaping", () =>
-{
-    var request = new DownloadRequest { Url = "https://example.com/video", Cookies = Enumerable.Range(0, 30)
-        .Select(i => new BrowserCookie { Domain = "example.com", HostOnly = true, Name = "cookie" + i, Value = new string('あ', 4000) }).ToList() };
-    var wire = JsonSerializer.SerializeToUtf8Bytes(request, new JsonSerializerOptions(JsonSerializerDefaults.Web)
-        { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
-    Assert(wire.Length < NativeProtocol.MaxMessageBytes);
-    var queued = JsonSerializer.SerializeToUtf8Bytes(request.Validated(), Json.Options);
-    Assert(queued.Length > NativeProtocol.MaxMessageBytes);
-    var encrypted = WindowsProtection.Protect(queued);
-    Assert(encrypted.Length <= NativeProtocol.MaxQueuedMessageBytes + 4096);
-    Assert(JsonSerializer.Deserialize<DownloadRequest>(WindowsProtection.Unprotect(encrypted), Json.Options)?.Cookies.Count == 30);
-});
 Check("DPAPI encrypts data at rest and rejects tampering", () =>
 {
-    var bytes = Encoding.UTF8.GetBytes("signed-url-and-private-cookie");
+    var bytes = Encoding.UTF8.GetBytes("private-download-history");
     var encrypted = WindowsProtection.Protect(bytes);
     Assert(!encrypted.AsSpan().SequenceEqual(bytes));
     Assert(WindowsProtection.Unprotect(encrypted).AsSpan().SequenceEqual(bytes));
@@ -312,12 +223,10 @@ void WithToolPackage(Action<string, string, string[]> check)
     finally { Directory.Delete(directory, true); }
 }
 
-StorePolicyChecks.Run(Check);
+
 QueueChecks.Run(Check);
+BrowserOverlayChecks.Run(Check);
+ToolInstallerChecks.Run(Check);
+SessionChecks.Run(Check);
 Console.WriteLine($"{passed} passed; {failed} failed.");
 return failed == 0 ? 0 : 1;
-
-sealed class FragmentedStream(byte[] bytes) : MemoryStream(bytes)
-{
-    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) => base.ReadAsync(buffer[..Math.Min(buffer.Length, 1)], cancellationToken);
-}

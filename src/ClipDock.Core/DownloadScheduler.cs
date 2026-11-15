@@ -1,6 +1,6 @@
 namespace ClipDock.Core;
 
-// Owns a slot until the operation (including process and cookie cleanup) has finished.
+// Owns a slot until the operation and its process have finished.
 // Work runs on the thread pool; callers marshal UI updates onto their dispatcher.
 public sealed class DownloadScheduler
 {
@@ -137,4 +137,5 @@ public sealed class DownloadOperation
     }
 }
 
-public sealed record AppSettings(string OutputDirectory, string Quality, int MaxConcurrentDownloads = DownloadScheduler.DefaultConcurrency);
+public sealed record AppSettings(string OutputDirectory, string Quality, int MaxConcurrentDownloads = DownloadScheduler.DefaultConcurrency,
+    string Format = "mp4", bool BrowserOverlayEnabled = false, bool UseLogin = true);

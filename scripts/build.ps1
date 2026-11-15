@@ -1,4 +1,5 @@
-param([switch]$BundleTools, [switch]$Zip, [switch]$SkipTests)
+#Requires -Version 7.0
+param([switch]$Zip, [switch]$SkipTests)
 $ErrorActionPreference = 'Stop'
 $root = [System.IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $artifactRoot = [System.IO.Path]::GetFullPath((Join-Path $root 'artifacts'))
@@ -12,7 +13,7 @@ try {
         dotnet run --project tests/ClipDock.Checks -c Release --no-build
         if ($LASTEXITCODE -ne 0) { throw '.NET checks failed.' }
         npm.cmd test
-        if ($LASTEXITCODE -ne 0) { throw 'Extension checks failed.' }
+        if ($LASTEXITCODE -ne 0) { throw 'JavaScript checks failed.' }
         npm.cmd run check
         if ($LASTEXITCODE -ne 0) { throw 'JavaScript syntax check failed.' }
     }
@@ -21,8 +22,6 @@ try {
     New-Item -ItemType Directory -Path $output -Force | Out-Null
     dotnet publish src/ClipDock.App -c Release -r win-x64 --self-contained true -o $output --nologo
     if ($LASTEXITCODE -ne 0) { throw 'App publish failed.' }
-    dotnet publish src/ClipDock.NativeHost -c Release -r win-x64 --self-contained true -o $output --nologo
-    if ($LASTEXITCODE -ne 0) { throw 'Native host publish failed.' }
     $runtime = Get-Content -LiteralPath (Join-Path $output 'ClipDock.runtimeconfig.json') -Raw | ConvertFrom-Json
     $assets = Get-Content -LiteralPath (Join-Path $root 'src\ClipDock.App\obj\project.assets.json') -Raw | ConvertFrom-Json
     foreach ($framework in $runtime.runtimeOptions.includedFrameworks) {
@@ -42,7 +41,17 @@ try {
         if (Test-Path -LiteralPath $notices -PathType Leaf) { Copy-Item -LiteralPath $notices -Destination $licenseOutput -Force }
         elseif ($framework.name -eq 'Microsoft.NETCore.App') { throw "Runtime third-party notices not found: $packageId/$($framework.version)" }
     }
-    Copy-Item -LiteralPath (Join-Path $root 'extension') -Destination $output -Recurse -Force
+    $webViewPackageName = $assets.libraries.PSObject.Properties.Name | Where-Object { $_ -like 'Microsoft.Web.WebView2/*' } | Select-Object -First 1
+    if (-not $webViewPackageName) { throw 'WebView2 package metadata is missing.' }
+    $webViewPackage = $null
+    foreach ($folder in $assets.packageFolders.PSObject.Properties.Name) {
+        $candidate = Join-Path $folder $webViewPackageName.ToLowerInvariant()
+        if (Test-Path -LiteralPath $candidate -PathType Container) { $webViewPackage = $candidate; break }
+    }
+    if (-not $webViewPackage) { throw 'WebView2 SDK package was not found.' }
+    $webViewLicenseOutput = Join-Path $output 'licenses\webview2'
+    New-Item -ItemType Directory -Path $webViewLicenseOutput -Force | Out-Null
+    foreach ($name in @('LICENSE.txt', 'NOTICE.txt')) { Copy-Item -LiteralPath (Join-Path $webViewPackage $name) -Destination $webViewLicenseOutput -Force }
     Copy-Item -LiteralPath (Join-Path $root 'docs') -Destination $output -Recurse -Force
     foreach ($name in @('README.md', 'PRIVACY.md', 'THIRD-PARTY.md', 'LICENSE', 'START-HERE.html')) {
         Copy-Item -LiteralPath (Join-Path $root $name) -Destination $output -Force
@@ -50,12 +59,12 @@ try {
     foreach ($name in @('Install.ps1', 'Uninstall.ps1', 'INSTALL.cmd', 'UNINSTALL.cmd')) {
         Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination $output -Force
     }
-    if ($BundleTools) {
-        & (Join-Path $output 'ClipDock.NativeHost.exe') --install-tools (Join-Path $output 'tools')
-        if ($LASTEXITCODE -ne 0) { throw 'Tool installation failed.' }
-    }
+    $files = @(Get-ChildItem -LiteralPath $output -File -Recurse | ForEach-Object {
+        @{ path = [IO.Path]::GetRelativePath($output, $_.FullName).Replace('\', '/'); sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash }
+    })
+    @{ files = $files } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $output '.clipdock-package.json') -Encoding utf8
     node scripts/check-package.mjs $output
-    if ($LASTEXITCODE -ne 0) { throw 'Packaged native host checks failed.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Standalone package checks failed.' }
     if ($Zip) {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         $archive = Join-Path $root 'artifacts\ClipDock-win-x64.zip'

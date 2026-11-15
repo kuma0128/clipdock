@@ -7,6 +7,7 @@ The .NET runtime licenses and third-party notices are included under `licenses/d
 | Component | Official distribution / license information |
 | --- | --- |
 | .NET / WPF | https://github.com/dotnet/runtime/blob/main/LICENSE.TXT / https://github.com/dotnet/wpf/blob/main/LICENSE.TXT (MIT and bundled third-party notices) |
+| Microsoft Edge WebView2 SDK | https://www.nuget.org/packages/Microsoft.Web.WebView2 (Microsoft license and notices included under `licenses/webview2`) |
 | yt-dlp | https://github.com/yt-dlp/yt-dlp#license (source: Unlicense; standalone bundles contain separately licensed dependencies) |
 | FFmpeg / ffprobe | https://github.com/yt-dlp/FFmpeg-Builds / https://ffmpeg.org/legal.html (the selected `win64-gpl` build includes GPL components) |
 | Deno | https://github.com/denoland/deno/blob/main/LICENSE.md (MIT and third-party components) |

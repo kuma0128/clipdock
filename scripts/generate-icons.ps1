@@ -1,18 +1,12 @@
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $root = Split-Path -Parent $PSScriptRoot
-$iconDir = Join-Path $root 'extension\icons'
-New-Item -ItemType Directory -Path $iconDir -Force | Out-Null
-foreach ($size in @(16, 32, 48, 128, 256)) {
+foreach ($size in @(256)) {
     $bitmap = [System.Drawing.Bitmap]::new($size, $size)
     $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
     $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
     $graphics.Clear([System.Drawing.Color]::Transparent)
     $scale = $size / 128.0
-    if ($size -eq 128) {
-        $graphics.TranslateTransform(16, 16)
-        $scale = 96 / 128.0
-    }
     $graphics.ScaleTransform($scale, $scale)
     $shape = [System.Drawing.Drawing2D.GraphicsPath]::new()
     $shape.AddArc(2, 2, 32, 32, 180, 90)
@@ -29,15 +23,16 @@ foreach ($size in @(16, 32, 48, 128, 256)) {
     $graphics.DrawLine($pen, 44, 60, 64, 80)
     $graphics.DrawLine($pen, 84, 60, 64, 80)
     $graphics.DrawLine($pen, 34, 99, 94, 99)
-    $png = Join-Path $iconDir "$size.png"
+    $png = [System.IO.MemoryStream]::new()
     $bitmap.Save($png, [System.Drawing.Imaging.ImageFormat]::Png)
+    $imageBytes = $png.ToArray()
+    $png.Dispose()
     $pen.Dispose(); $brush.Dispose(); $shape.Dispose(); $graphics.Dispose(); $bitmap.Dispose()
 }
-$imageBytes = [System.IO.File]::ReadAllBytes((Join-Path $iconDir '256.png'))
 $stream = [System.IO.File]::Create((Join-Path $root 'src\ClipDock.App\app.ico'))
 $writer = [System.IO.BinaryWriter]::new($stream)
 $writer.Write([uint16]0); $writer.Write([uint16]1); $writer.Write([uint16]1)
 $writer.Write([byte]0); $writer.Write([byte]0); $writer.Write([byte]0); $writer.Write([byte]0)
 $writer.Write([uint16]1); $writer.Write([uint16]32); $writer.Write([uint32]$imageBytes.Length); $writer.Write([uint32]22)
 $writer.Write($imageBytes); $writer.Dispose()
-Write-Output 'Created ClipDock icons.'
+Write-Output 'Created ClipDock app icon.'

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://clipdock-d6z.pages.dev/sitemap.xml
