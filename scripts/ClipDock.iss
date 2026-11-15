@@ -13,7 +13,7 @@
 #ifndef UnsignedRelease
   #define UnsignedRelease 0
 #endif
-#if UnsignedDevelopment && UnsignedRelease
+#if Int(UnsignedDevelopment) && Int(UnsignedRelease)
   #error Choose only one unsigned build mode.
 #endif
 
@@ -46,11 +46,11 @@ Compression=lzma2
 SolidCompression=yes
 LicenseFile={#PackageDirectory}\LICENSE
 VersionInfoVersion={#AppVersion}
-#if UnsignedDevelopment
+#if Int(UnsignedDevelopment)
 OutputBaseFilename=ClipDock-{#AppVersion}-win-x64-unsigned-dev-setup
 SignedUninstaller=no
 AppVerName=ClipDock {#AppVersion} (unsigned development build)
-#elif UnsignedRelease
+#elif Int(UnsignedRelease)
 OutputBaseFilename=ClipDock-{#AppVersion}-win-x64-unsigned-setup
 SignedUninstaller=no
 #else
@@ -104,7 +104,7 @@ Filename: "{app}\ClipDock.exe"; WorkingDir: "{app}"; Description: "{cm:LaunchCli
 const
   NativeKey = 'Software\Google\Chrome\NativeMessagingHosts\com.clipdock.downloader';
 
-#if UnsignedRelease
+#if Int(UnsignedRelease)
 procedure InitializeWizard;
 begin
   CreateOutputMsgPage(wpWelcome, CustomMessage('UnsignedTitle'),
