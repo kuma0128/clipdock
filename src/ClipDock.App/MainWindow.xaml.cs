@@ -263,10 +263,10 @@ public partial class MainWindow : Window
         try
         {
             var manifest = Path.Combine(AppPaths.Data, "native-host.json");
-            File.WriteAllText(manifest, JsonSerializer.Serialize(new { name = Integration.HostName, description = "ClipDock Chrome bridge", path = host, type = "stdio", allowed_origins = new[] { Integration.Origin } }, Json.Options));
+            File.WriteAllText(manifest, JsonSerializer.Serialize(new { name = Integration.HostName, description = "ClipDock Chrome bridge", path = host, type = "stdio", allowed_origins = Integration.AllowedOrigins }, Json.Options));
             using var key = Registry.CurrentUser.CreateSubKey(@"Software\Google\Chrome\NativeMessagingHosts\" + Integration.HostName);
             key.SetValue("", manifest);
-            Notice.Text = "Chrome連携を設定しました。次に「拡張フォルダーを開く」を押して、Chromeに拡張を読み込んでください。";
+            Notice.Text = "Chrome連携を設定しました。ChromeでClipDockの拡張を開き直してください。";
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         { Notice.Text = "Chrome連携を設定できませんでした: " + ex.Message; }

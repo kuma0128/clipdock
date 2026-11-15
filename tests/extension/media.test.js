@@ -29,12 +29,17 @@ test("bounds storage size and sanitizes metadata", () => {
   const result = mergeCandidates([], data);
   assert.equal(result.length, 50); assert.equal(result[0].title.length, 180); assert.equal(result[0].referer, "");
 });
-test("public manifest key, host registration and packaged files agree", () => {
+test("local manifest key, registered extension identities and packaged files agree", () => {
   const manifest = JSON.parse(readFileSync(new URL("../../extension/manifest.json", import.meta.url)));
   const id = [...createHash("sha256").update(Buffer.from(manifest.key, "base64")).digest().subarray(0, 16)].flatMap(b => [b >> 4, b & 15]).map(n => String.fromCharCode(97 + n)).join("");
   const integration = readFileSync(new URL("../../src/ClipDock.Core/Integration.cs", import.meta.url), "utf8");
   const installer = readFileSync(new URL("../../scripts/Install.ps1", import.meta.url), "utf8");
-  assert.ok(integration.includes(id)); assert.ok(installer.includes(id));
+  const storeId = "okehkphoehepefjddoiinohnhpjghefe";
+  assert.equal(integration.match(/const string ExtensionId = "([a-p]{32})"/)?.[1], id);
+  assert.equal(integration.match(/const string StoreExtensionId = "([a-p]{32})"/)?.[1], storeId);
+  assert.notEqual(id, storeId);
+  const origins = installer.match(/allowed_origins\s*=\s*@\(([^)]*)\)/)?.[1].match(/chrome-extension:\/\/[^'"\s]+/g) || [];
+  assert.deepEqual(origins.sort(), [id, storeId].map(value => `chrome-extension://${value}/`).sort());
   assert.equal(manifest.manifest_version, 3);
   assert.ok(!manifest.permissions.includes("cookies")); assert.ok(manifest.optional_permissions.includes("cookies"));
   for (const file of [...Object.values(manifest.icons), manifest.action.default_popup, manifest.background.service_worker, ...manifest.content_scripts[0].js])

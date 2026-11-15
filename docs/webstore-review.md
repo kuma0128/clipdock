@@ -1,12 +1,14 @@
 # Chromeウェブストア提出手順
 
-## 初回アップロード用ZIP
+初回アップロードは完了しています。ストアの拡張IDは `okehkphoehepefjddoiinohnhpjghefe` です。公開鍵から算出したIDも一致しています。ストア版拡張での接続確認、1.0.2への更新、審査への提出が残っています。
+
+## 更新用ZIP（1.0.2）
 
 ```powershell
 node scripts/package-extension.mjs
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $package = Join-Path $PWD 'artifacts\webstore\package'
-$archive = Join-Path $PWD 'artifacts\webstore\ClipDock-webstore-initial-upload-1.0.1.zip'
+$archive = Join-Path $PWD 'artifacts\webstore\ClipDock-webstore-1.0.2.zip'
 [System.IO.Compression.ZipFile]::CreateFromDirectory($package, $archive)
 ```
 
@@ -14,15 +16,12 @@ ZIPの直下に `manifest.json` があることを確認してください。同
 
 ## 提出前に必要な作業
 
-初回アップロード用ZIPの作成と、公開審査への提出は別の段階です。現在はストアの拡張IDが未発行のため、初回ZIPをアップロードするだけでWindowsアプリと接続できる状態ではありません。
-
-1. Chromeウェブストアのデベロッパー登録を完了します。
-2. 初回アップロード用ZIPを新しいアイテムとしてアップロードし、発行されたアイテムIDと公開鍵を取得します。この段階では審査へ提出しません。
-3. 実際のストアIDをWindowsアプリのNative Messaging許可リストと送信元照合に追加します。ストアIDからの要求には、YouTube除外をアプリ側でも適用します。既存のローカル版IDと取り違えないでください。
-4. 対応するWindowsアプリをビルド・検証して配布し、ストア版拡張との接続を確認します。アップロードしたZIPに変更が必要な場合は、新しい版数で更新します。
-5. 下記の公開サンプル動画を使い、ストア版拡張と配布アプリで保存できることを確認します。
-6. 掲載画像、[掲載情報](webstore-listing-ja.md)、[プライバシーポリシー](../PRIVACY.md)、権限とデータ利用の申告を揃え、下記の操作を確認します。
-7. 公開範囲を「公開」にして審査へ提出します。公開はストアの審査完了後です。
+1. 上記のコマンドで公開鍵入りのパッケージを生成します。`artifacts/webstore/package` をChromeに読み込み、拡張IDが `okehkphoehepefjddoiinohnhpjghefe` と一致することを確認します。
+2. ストアIDに対応したWindowsアプリ1.0.2をインストールし、「Chrome連携を設定」を実行します。ストアIDからの要求にYouTube除外が適用されることも確認します。
+3. 下記の公開サンプル動画を使い、ストア版拡張との接続・保存を確認して、対応するWindowsアプリを配布します。
+4. 1.0.2の更新用ZIPを、既存のアイテム `okehkphoehepefjddoiinohnhpjghefe` にアップロードします。新しいアイテムは作りません。
+5. 掲載画像、[掲載情報](webstore-listing-ja.md)、[プライバシーポリシー](../PRIVACY.md)、権限とデータ利用の申告を管理画面に入力します。
+6. 公開範囲を「公開」にして審査へ提出します。管理画面への入力と提出は手動で行います。アップロードだけでは公開されません。
 
 ## 審査用メモ
 
@@ -30,7 +29,7 @@ ZIPの直下に `manifest.json` があることを確認してください。同
 
 アプリ配布先: https://github.com/kuma0128/clipdock/releases/latest
 
-ZIPを展開して `INSTALL.cmd` を実行し、ClipDockで「Chrome連携を設定」を押してください。管理者権限は不要です。アプリの「エンジンを準備 / 更新」で保存エンジンを取得し、拡張を開き直すと「ClipDockに接続済み」と表示されます。
+Windowsアプリ1.0.2以降のZIPを展開して `INSTALL.cmd` を実行し、ClipDockで「Chrome連携を設定」を押してください。管理者権限は不要です。ストアの拡張を導入済みなら、同梱のローカル拡張を追加で読み込む必要はありません。アプリの「エンジンを準備 / 更新」で保存エンジンを取得し、拡張を開き直すと「ClipDockに接続済み」と表示されます。
 
 拡張のコードはすべてパッケージ内に含まれます。外部で配布するWindowsアプリと保存エンジンの役割は掲載文とプライバシーポリシーに記載しています。拡張経由のYouTube保存、DRMの解除、アクセス制限の解除は提供しません。
 
@@ -51,7 +50,7 @@ ZIPを展開して `INSTALL.cmd` を実行し、ClipDockで「Chrome連携を設
 
 | 項目 | 完了条件 |
 | --- | --- |
-| 拡張ID | ストアの実際のIDを取得し、Windowsアプリの許可リストと照合済み |
+| 拡張ID | `okehkphoehepefjddoiinohnhpjghefe` とWindowsアプリの許可リストを照合済み |
 | 配布アプリ | ストアIDとYouTube除外に対応した版を公開済み |
 | 接続・保存 | ストア版拡張と配布アプリで保存まで確認済み |
 | 画像 | 個人の閲覧履歴・ログイン情報を含まない、機能が分かる画像を用意済み |

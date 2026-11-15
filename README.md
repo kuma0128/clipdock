@@ -2,9 +2,13 @@
 
 Chromeで開いている動画をMP4として保存するWindowsアプリです。
 
+[導入案内](https://clipdock.japan-digita-2504.chatgpt.site) · [ダウンロード](https://github.com/kuma0128/clipdock/releases/latest)
+
 ## はじめに
 
 対応環境: **Windows 10 / 11、x64、Google Chrome**。
+
+Chromeウェブストアから拡張を導入済みなら、手順1の後は5へ進んでください。ローカル拡張の追加読み込みは不要です。
 
 1. 配布ZIPをすべて展開し、`INSTALL.cmd` をダブルクリックします。管理者権限は不要です。
 2. Chromeのアドレスバーに `chrome://extensions` を入力します。
@@ -15,7 +19,7 @@ Chromeで開いている動画をMP4として保存するWindowsアプリです�
 
 アプリはデスクトップ／スタートメニューのClipDockから起動できます。.NETやPythonの別途インストールは不要です。エンジン未同梱版では初回にインターネット接続が必要です。
 
-ポータブル利用も可能です。展開先の `ClipDock.exe` を起動して「Chrome連携を設定」を押し、同じ場所の `extension` フォルダーをChromeに読み込んでください。アプリを移動したら、Chrome連携の設定と拡張の読み込みをやり直します。
+ポータブル利用も可能です。展開先の `ClipDock.exe` を起動して「Chrome連携を設定」を押してください。ストアの拡張を導入していない場合は、同じ場所の `extension` フォルダーをChromeに読み込みます。アプリを移動したらChrome連携を再設定し、ローカル拡張を使う場合は読み込みもやり直します。
 
 ## 使い方
 
@@ -42,6 +46,7 @@ Cookieは待機中の受け渡しファイルではWindows DPAPIで暗号化し�
 ## 対応範囲
 
 - 通常のHTTP(S)動画、yt-dlpの対応サイト、非DRMのHLS/DASHを対象とします。
+- Chromeウェブストア版の拡張はYouTubeの動画保存に対応していません。
 - DRM保護された動画の解除・保存は行いません。サイト側の変更や制限により、すべての動画を取得できるわけではありません。
 - `blob:` URLそのものは保存できません。「このページの動画を保存」で解析するか、検出したHLS/DASHを選んでください。
 - Chrome内部ページ、Chrome Web Store、シークレットウィンドウには対応しません。
@@ -106,7 +111,7 @@ node scripts/smoke-downloads.mjs artifacts/ClipDock-win-x64/tools
 
 生成先は `artifacts\ClipDock-win-x64` と `artifacts\ClipDock-win-x64.zip` です。GitHub Actionsでも同じチェックとエンジン未同梱パッケージの生成を行います。バイナリはソースリポジトリにコミットしません。コード署名は行っていません。
 
-Chromeウェブストア向けの拡張は `node scripts/package-extension.mjs` で `artifacts/webstore/package` に生成できます。ストア版はYouTubeの保存を除外します。公開には、ストアで発行された拡張IDをWindowsアプリへ登録し、接続・保存を検証する必要があります。[提出手順](docs/webstore-review.md) と [掲載情報](docs/webstore-listing-ja.md) を参照してください。
+Chromeウェブストア向けの拡張は `node scripts/package-extension.mjs` で `artifacts/webstore/package` に生成できます。ストア版はYouTubeの保存を除外します。審査への提出前に、ストアIDでのWindowsアプリとの接続・保存を確認してください。[提出手順](docs/webstore-review.md) と [掲載情報](docs/webstore-listing-ja.md) を参照してください。
 
 構成: `ClipDock.App`（WPFアプリ）、`ClipDock.NativeHost`（Chrome連携）、`ClipDock.Core`（ダウンロード処理・設定・エンジン取得）、`extension`（Manifest V3拡張）。
 

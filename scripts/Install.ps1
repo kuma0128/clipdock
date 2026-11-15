@@ -21,7 +21,7 @@ try {
     $manifest = @{
         name = 'com.clipdock.downloader'; description = 'ClipDock Chrome bridge'
         path = (Join-Path $installRoot 'ClipDock.NativeHost.exe'); type = 'stdio'
-        allowed_origins = @('chrome-extension://oeolbdjffnnmaanghklbkhfhgihepfhd/')
+        allowed_origins = @('chrome-extension://oeolbdjffnnmaanghklbkhfhgihepfhd/', 'chrome-extension://okehkphoehepefjddoiinohnhpjghefe/')
     } | ConvertTo-Json
     [System.IO.File]::WriteAllText($manifestPath, $manifest, [System.Text.UTF8Encoding]::new($false))
     $key = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Software\Google\Chrome\NativeMessagingHosts\com.clipdock.downloader')

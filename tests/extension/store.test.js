@@ -32,7 +32,9 @@ test("store rules reject YouTube hosts, subdomains, trailing dots and blob origi
 
 test("store packaging removes the local identity and unnecessary permission and ships only extension files", async () => {
   const manifest = JSON.parse(await readFile(resolve(output, "manifest.json"), "utf8"));
-  assert.equal(manifest.key, undefined);
+  const identity = JSON.parse(await readFile(resolve(root, "extension/store-identity.json"), "utf8"));
+  assert.equal(manifest.key, identity.key);
+  assert.equal(identity.id, "okehkphoehepefjddoiinohnhpjghefe");
   assert.equal(manifest.permissions.includes("activeTab"), false);
   assert.deepEqual(manifest.optional_permissions, ["cookies"]);
   assert.deepEqual(manifest.content_scripts[0].js, ["distribution.js", "site-policy.js", "content.js"]);

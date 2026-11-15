@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { spawnSync } from "node:child_process";
 
@@ -7,6 +7,7 @@ const directory = resolve(process.argv[2] || "artifacts/ClipDock-win-x64");
 const host = join(directory, "ClipDock.NativeHost.exe");
 const manifest = JSON.parse(readFileSync(join(directory, "extension/manifest.json"), "utf8"));
 const origin = "chrome-extension://oeolbdjffnnmaanghklbkhfhgihepfhd/";
+const storeOrigin = "chrome-extension://okehkphoehepefjddoiinohnhpjghefe/";
 function invoke(input, caller = origin) {
   const result = spawnSync(host, [caller], { input, timeout: 15000, windowsHide: true, maxBuffer: 1024 * 1024 });
   if (result.error) throw result.error;
@@ -29,6 +30,27 @@ const response = decode(health);
 assert.equal(response.ok, true);
 assert.equal(response.version, manifest.version, "Native host and extension versions must match");
 console.log(`PASS packaged native protocol handshake (engines ${response.ready ? "ready" : "not bundled"})`);
+const storeHealth = invoke(frame({ action: "ping" }), storeOrigin);
+assert.equal(storeHealth.status, 0);
+assert.equal(decode(storeHealth).ok, true);
+assert.equal(decode(storeHealth).version, manifest.version);
+console.log("PASS packaged native protocol accepts the public store origin");
+const inbox = join(process.env.LOCALAPPDATA, "ClipDock", "inbox");
+const queuedFiles = () => existsSync(inbox) ? readdirSync(inbox).filter(name => /\.request(?:\.tmp)?$/.test(name)) : [];
+const beforeStoreRequests = new Set(queuedFiles());
+for (const restriction of [{}, { restrictYouTube: false }]) {
+  for (const fields of [{ url: "https://www.youtube.com/watch?v=store-policy-test" },
+    { url: "https://example.com/video.mp4", pageUrl: "https://www.youtube.com/watch?v=store-policy-test" },
+    { url: "https://example.com/video.mp4", referer: "https://rr1.googlevideo.com/video.mp4" }]) {
+    const result = invoke(frame({ action: "download", ...fields, ...restriction }), storeOrigin);
+    assert.equal(result.status, 1);
+    const rejected = decode(result);
+    assert.equal(rejected.ok, false);
+    assert.match(rejected.error, /Chrome ウェブストア版はYouTube/);
+  }
+}
+assert.deepEqual(queuedFiles().filter(name => !beforeStoreRequests.has(name)), [], "Rejected store requests must not enter the inbox");
+console.log("PASS store origin enforces YouTube restrictions before creating queued files");
 assert.equal(decode(invoke(frame({ action: "execute", command: "not-run" }))).ok, false);
 console.log("PASS unsupported native action rejected");
 const invalidSize = Buffer.alloc(4); invalidSize.writeInt32LE(2147483647);

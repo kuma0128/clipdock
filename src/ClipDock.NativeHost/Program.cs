@@ -8,13 +8,13 @@ if (args is ["--install-tools", var destination])
     catch (Exception ex) { Console.Error.WriteLine(ex.Message); return 1; }
 }
 
-if (args.Length == 0 || args[0] != Integration.Origin) return 1;
+if (args.Length == 0 || !Integration.IsAllowedOrigin(args[0])) return 1;
 using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
 var output = Console.OpenStandardOutput();
 string? queuedFile = null;
 try
 {
-    var request = (await NativeProtocol.ReadAsync<DownloadRequest>(Console.OpenStandardInput(), timeout.Token)).Validated();
+    var request = Integration.ValidateRequest(args[0], await NativeProtocol.ReadAsync<DownloadRequest>(Console.OpenStandardInput(), timeout.Token));
     if (request.Action == "ping")
     {
         var version = typeof(DownloadRequest).Assembly.GetName().Version!.ToString(3);
