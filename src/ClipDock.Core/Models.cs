@@ -52,7 +52,12 @@ public sealed record DownloadRequest
         };
     }
 
-    public static string CleanText(string? text, int limit) => new((text ?? "").Where(c => !char.IsControl(c)).Take(limit).ToArray());
+    public static string CleanText(string? text, int limit)
+    {
+        var clean = new string((text ?? "").Where(c => !char.IsControl(c)).Take(limit).ToArray());
+        // The limit can fall inside a surrogate pair (emoji and the like); do not keep half of it.
+        return clean.Length > 0 && char.IsHighSurrogate(clean[^1]) ? clean[..^1] : clean;
+    }
     public static bool IsWebUrl(string? value) => value is { Length: > 0 and <= 16384 } && !value.Any(char.IsControl) &&
         Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http" && uri.Host.Length > 0 && uri.UserInfo.Length == 0;
     public static bool DomainMatches(string host, string domain, bool hostOnly)
