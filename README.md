@@ -2,7 +2,7 @@
 
 Chromeで開いている動画をMP4として保存するWindowsアプリです。
 
-[導入案内](https://clipdock.japan-digita-2504.chatgpt.site) · [ダウンロード](https://github.com/kuma0128/clipdock/releases/latest)
+[公式サイト](https://clipdock-d6z.pages.dev/) · [リリース](https://github.com/kuma0128/clipdock/releases/latest)
 
 ## はじめに
 
@@ -10,14 +10,16 @@ Chromeで開いている動画をMP4として保存するWindowsアプリです�
 
 Chromeウェブストアから拡張を導入済みなら、手順1の後は5へ進んでください。ローカル拡張の追加読み込みは不要です。
 
-1. 配布ZIPをすべて展開し、`INSTALL.cmd` をダブルクリックします。管理者権限は不要です。
+1. [公式サイト](https://clipdock-d6z.pages.dev/)からインストーラー（.exe）を取得して開き、画面の案内に沿ってインストールします。ZIP版を使う場合だけ、すべて展開して `INSTALL.cmd` を開いてください。管理者権限は不要です。
 2. Chromeのアドレスバーに `chrome://extensions` を入力します。
 3. 右上の「デベロッパーモード」をONにし、「パッケージ化されていない拡張機能を読み込む」をクリックします。
 4. `%LOCALAPPDATA%\Programs\ClipDock\extension` を選びます。アプリの「拡張フォルダーを開く」からも場所を確認できます。
 5. Chromeの拡張メニューでClipDockをピン留めし、すでに開いていた動画ページを再読み込みします。
 6. アプリ左下が「エンジンの準備完了」でなければ、「エンジンを準備 / 更新」をクリックします。
 
-アプリはデスクトップ／スタートメニューのClipDockから起動できます。.NETやPythonの別途インストールは不要です。エンジン未同梱版では初回にインターネット接続が必要です。
+**未署名版のインストーラーについて:** 発行元を証明書で確認できず、Windowsの警告が出る場合があります。公式サイトから取得したことを確認し、実行する場合はSmartScreenの「詳細情報」→「実行」を選びます。「実行」がない場合は中止し、保護機能を無効にせず端末の管理者に確認してください。
+
+アプリはスタートメニューのClipDockから起動できます。.NETやPythonの別途インストールは不要です。エンジン未同梱版では初回にインターネット接続が必要です。
 
 ポータブル利用も可能です。展開先の `ClipDock.exe` を起動して「Chrome連携を設定」を押してください。ストアの拡張を導入していない場合は、同じ場所の `extension` フォルダーをChromeに読み込みます。アプリを移動したらChrome連携を再設定し、ローカル拡張を使う場合は読み込みもやり直します。
 
@@ -86,7 +88,7 @@ Cookieは待機中の受け渡しファイルではWindows DPAPIで暗号化し�
 
 取り扱う情報・保持期間・削除方法の詳細は [プライバシーポリシー](PRIVACY.md) を参照してください。
 
-アンインストールする場合は、Chromeから拡張を削除してアプリを閉じ、インストール先（`%LOCALAPPDATA%\Programs\ClipDock`）の `UNINSTALL.cmd` をダブルクリックしてください。保存動画とアプリ設定・履歴は残します。不要な場合は `%LOCALAPPDATA%\ClipDock` を別途削除できます。
+アンインストールする場合は、Chromeから拡張を削除してアプリを閉じます。EXE版はWindowsの「設定」→「アプリ」からClipDockをアンインストールしてください。ZIP版はインストール先（`%LOCALAPPDATA%\Programs\ClipDock`）の `UNINSTALL.cmd` を開きます。保存動画とアプリ設定・履歴は残します。不要な場合は `%LOCALAPPDATA%\ClipDock` を別途削除できます。
 
 ## 開発
 
@@ -109,7 +111,7 @@ npm run check
 node scripts/smoke-downloads.mjs artifacts/ClipDock-win-x64/tools
 ```
 
-生成先は `artifacts\ClipDock-win-x64` と `artifacts\ClipDock-win-x64.zip` です。GitHub Actionsでも同じチェックとエンジン未同梱パッケージの生成を行います。バイナリはソースリポジトリにコミットしません。コード署名は行っていません。
+生成先は `artifacts\ClipDock-win-x64` と `artifacts\ClipDock-win-x64.zip` です。GitHub Actionsでも同じチェックとエンジン未同梱パッケージの生成を行います。バイナリはソースリポジトリにコミットしません。署名付き・未署名インストーラーの作成と検証は [配布手順](docs/distribution.md) を参照してください。
 
 Chromeウェブストア向けの拡張は `node scripts/package-extension.mjs` で `artifacts/webstore/package` に生成できます。ストア版はYouTubeの保存を除外します。審査への提出前に、ストアIDでのWindowsアプリとの接続・保存を確認してください。[提出手順](docs/webstore-review.md) と [掲載情報](docs/webstore-listing-ja.md) を参照してください。
 
