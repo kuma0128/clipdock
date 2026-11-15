@@ -1,7 +1,10 @@
 using System.IO.Compression;
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text.Json;
+
+[assembly: InternalsVisibleTo("ClipDock.Checks")]
 
 namespace ClipDock.Core;
 
@@ -19,7 +22,11 @@ public static class ToolInstaller
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(ct);
         deadline.CancelAfter(TimeSpan.FromMinutes(20));
         ct = deadline.Token;
+        ct.ThrowIfCancellationRequested();
+        destination = Path.GetFullPath(destination);
         Directory.CreateDirectory(destination);
+        // This also protects staging cleanup from another installer process.
+        using var installLock = AcquireInstallLock(destination);
         // A crash or power loss mid-install leaves hundreds of MB behind; nothing else uses these folders.
         foreach (var stale in Directory.EnumerateDirectories(destination, ".staging-*"))
             try { Directory.Delete(stale, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
@@ -102,22 +109,76 @@ public static class ToolInstaller
                 }
                 versions.Add(new { repository = repo, tag, asset = assetName, url, sha256 = digest[7..] });
             }
+            await File.WriteAllTextAsync(Path.Combine(staging, "versions.json"), JsonSerializer.Serialize(versions, Json.Options), ct);
             ct.ThrowIfCancellationRequested();
-            foreach (var name in Executables) File.Move(Path.Combine(staging, name), Path.Combine(destination, name), true);
-            var licenses = Path.Combine(staging, "licenses");
-            if (Directory.Exists(licenses))
-            {
-                foreach (var file in Directory.EnumerateFiles(licenses, "*", SearchOption.AllDirectories))
-                {
-                    var target = Path.Combine(destination, "licenses", Path.GetRelativePath(licenses, file));
-                    Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-                    File.Copy(file, target, true);
-                }
-            }
-            await File.WriteAllTextAsync(Path.Combine(destination, "versions.json"), JsonSerializer.Serialize(versions, Json.Options), ct);
+            PromoteStagedPackage(staging, destination);
             progress?.Report("ダウンロードエンジンの準備ができました。");
         }
         finally { try { Directory.Delete(staging, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+    }
+
+    internal static FileStream AcquireInstallLock(string destination)
+    {
+        try { return new FileStream(Path.Combine(destination, ".install.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 1, FileOptions.DeleteOnClose); }
+        catch (IOException ex) { throw new IOException("別のエンジン更新が実行中です。完了してから再実行してください。", ex); }
+    }
+
+    internal static void PromoteStagedPackage(string staging, string destination)
+    {
+        string[] entries = [.. Executables, "licenses", "versions.json"];
+        foreach (var name in entries)
+            if (!Exists(Path.Combine(staging, name))) throw new IOException($"エンジンの配布ファイルが不足しています: {name}");
+
+        var backup = Path.Combine(destination, ".backup-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(backup);
+        var saved = new List<string>();
+        var installed = new List<string>();
+        var cleanupBackup = false;
+        try
+        {
+            // Move every old entry out first. A running executable can block this step;
+            // in that case restore the old set before any new executable is exposed.
+            foreach (var name in entries)
+            {
+                if (!Exists(Path.Combine(destination, name))) continue;
+                Move(destination, backup, name);
+                saved.Add(name);
+            }
+            foreach (var name in entries)
+            {
+                Move(staging, destination, name);
+                installed.Add(name);
+            }
+            cleanupBackup = true;
+        }
+        catch (Exception installError) when (installError is IOException or UnauthorizedAccessException)
+        {
+            try
+            {
+                foreach (var name in installed.AsEnumerable().Reverse()) Move(destination, staging, name);
+                foreach (var name in saved.AsEnumerable().Reverse()) Move(backup, destination, name);
+                cleanupBackup = true;
+            }
+            catch (Exception restoreError) when (restoreError is IOException or UnauthorizedAccessException)
+            {
+                throw new IOException($"更新と復元に失敗しました。以前のエンジンは {backup} に保持されています。", new AggregateException(installError, restoreError));
+            }
+            throw;
+        }
+        // A failed rollback must retain its backup. A completed rollback leaves it empty.
+        finally
+        {
+            if (cleanupBackup)
+                try { Directory.Delete(backup, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
+
+        static bool Exists(string path) => File.Exists(path) || Directory.Exists(path);
+        static void Move(string source, string target, string name)
+        {
+            var from = Path.Combine(source, name);
+            var to = Path.Combine(target, name);
+            if (Directory.Exists(from)) Directory.Move(from, to); else File.Move(from, to);
+        }
     }
 
     private static async Task<JsonDocument> GetReleaseAsync(string repo, CancellationToken ct)

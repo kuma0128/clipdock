@@ -3,7 +3,9 @@ $ErrorActionPreference = 'Stop'
 try {
     $installRoot = [System.IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'Programs\ClipDock'))
     $sourceRoot = [System.IO.Path]::GetFullPath($PSScriptRoot)
-    if (-not (Test-Path -LiteralPath (Join-Path $sourceRoot 'ClipDock.exe'))) { throw 'Run INSTALL.cmd from the extracted distribution folder.' }
+    foreach ($required in @('ClipDock.exe', 'ClipDock.NativeHost.exe', 'ClipDock.runtimeconfig.json', 'extension\manifest.json', 'START-HERE.html', 'Uninstall.ps1')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $sourceRoot $required) -PathType Leaf)) { throw "Incomplete distribution: $required. Extract the entire ZIP before running INSTALL.cmd." }
+    }
     $running = Get-Process -Name ClipDock,ClipDock.NativeHost -ErrorAction SilentlyContinue
     if ($running) { throw 'Close ClipDock before installing or updating.' }
     New-Item -ItemType Directory -Path $installRoot -Force | Out-Null

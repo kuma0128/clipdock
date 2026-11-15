@@ -29,6 +29,7 @@ async function refresh(scan = false) {
   // Storage events start overlapping refreshes; only the newest one may render.
   if (seq !== refreshSeq) return;
   if (!result.ok) throw new Error(result.error);
+  if (activeTab.url !== result.tab.url) $("cookies").checked = false;
   activeTab = result.tab;
   $("page-title").textContent = activeTab.title || "動画ページを開いてください";
   $("page-host").textContent = isWebUrl(activeTab.url) ? new URL(activeTab.url).hostname : "Chromeの設定画面などでは利用できません";
@@ -37,12 +38,15 @@ async function refresh(scan = false) {
 }
 async function save(url, referer) {
   if (busy || !activeTab) return;
+  const useCookies = $("cookies").checked;
+  // Consent applies to this operation, including failed sends; a later click must opt in again.
+  $("cookies").checked = false;
   busy = true;
   $("save-page").disabled = true;
   document.querySelectorAll(".candidate button").forEach(b => { b.disabled = true; });
   try {
     const result = await request({ type: "download", tabId: activeTab.id, pageUrl: activeTab.url, url, referer,
-      quality: $("quality").value, useCookies: $("cookies").checked });
+      quality: $("quality").value, useCookies });
     if (!result.ok) throw new Error(result.error);
     notify("✓ ClipDockに追加しました。進捗はアプリで確認できます。");
   } catch (error) { notify(error.message, true); }

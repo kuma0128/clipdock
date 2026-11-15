@@ -1,7 +1,9 @@
 param([switch]$BundleTools, [switch]$Zip, [switch]$SkipTests)
 $ErrorActionPreference = 'Stop'
-$root = Split-Path -Parent $PSScriptRoot
-$output = Join-Path $root 'artifacts\ClipDock-win-x64'
+$root = [System.IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+$artifactRoot = [System.IO.Path]::GetFullPath((Join-Path $root 'artifacts'))
+$output = [System.IO.Path]::GetFullPath((Join-Path $artifactRoot 'ClipDock-win-x64'))
+if ([System.IO.Path]::GetDirectoryName($output) -ne $artifactRoot) { throw 'Package output must stay inside artifacts.' }
 Push-Location $root
 try {
     dotnet build ClipDock.slnx -c Release --nologo

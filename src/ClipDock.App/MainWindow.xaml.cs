@@ -60,9 +60,9 @@ public partial class MainWindow : Window
     private string Quality => (QualityBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "1080";
     private void Add(DownloadRequest source)
     {
+        if (shuttingDown) throw new InvalidOperationException("終了処理中です。アプリを開き直してから追加してください。");
         var request = source.Validated();
         if (request.Action != "download") return;
-        if (jobs.Count(j => j.CanCancel) >= 100) throw new InvalidOperationException("待機中の動画は100件までです。");
         if (jobs.FirstOrDefault(j => j.CanCancel && j.Request.Url == request.Url && j.Request.Quality == request.Quality) is { } existing)
         {
             // Sending again with login information must not be lost just because the first click is still waiting.
@@ -71,6 +71,7 @@ public partial class MainWindow : Window
             Notice.Text = refreshed ? "この動画はすでに待機中です。ログイン情報を更新しました。" : "この動画はすでにダウンロード一覧に追加されています。";
             return;
         }
+        if (jobs.Count(j => j.CanCancel) >= 100) throw new InvalidOperationException("待機中の動画は100件までです。");
         var item = new DownloadItem { Request = request, Title = request.Title.Length > 0 ? request.Title : new Uri(request.Url).Host, OutputDirectory = outputDirectory };
         Attach(item);
         jobs.Insert(0, item);
@@ -114,7 +115,7 @@ public partial class MainWindow : Window
         {
             try
             {
-                if (new FileInfo(file).Length > NativeProtocol.MaxMessageBytes + 4096) throw new InvalidDataException("リクエストが大きすぎます。");
+                if (new FileInfo(file).Length > NativeProtocol.MaxQueuedMessageBytes + 4096) throw new InvalidDataException("リクエストが大きすぎます。");
                 var bytes = WindowsProtection.Unprotect(File.ReadAllBytes(file));
                 var request = (JsonSerializer.Deserialize<DownloadRequest>(bytes, Json.Options) ?? throw new InvalidDataException()).Validated();
                 if (request.Action == "download") Add(request);
@@ -147,7 +148,13 @@ public partial class MainWindow : Window
     }
     private void Retry_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as FrameworkElement)?.DataContext is not DownloadItem item || !item.CanRetry) return;
+        if (shuttingDown || (sender as FrameworkElement)?.DataContext is not DownloadItem item || !item.CanRetry) return;
+        if (jobs.Any(j => j.CanCancel && j.Request.Url == item.Request.Url && j.Request.Quality == item.Request.Quality))
+        { Notice.Text = "この動画はすでにダウンロード一覧に追加されています。"; return; }
+        if (jobs.Count(j => j.CanCancel) >= 100) { Notice.Text = "待機中の動画は100件までです。"; return; }
+        // Retrying is a new queue insertion: wait behind work already queued and keep
+        // the retried item inside the persisted history window.
+        jobs.Move(jobs.IndexOf(item), 0);
         item.Percent = 0; item.State = "queued"; item.Detail = "再試行を待っています";
         Notice.Text = "ログイン情報が必要な動画は、Chrome拡張からもう一度送信してください。";
         SaveState(); StartQueue();
@@ -300,13 +307,14 @@ public partial class MainWindow : Window
     private async void OnClosing(object? sender, CancelEventArgs e)
     {
         if (allowClose) return;
-        if (!installing && !jobs.Any(j => j.CanCancel)) { inboxTimer.Stop(); SaveState(); return; }
+        var hasWork = installing || jobs.Any(j => j.CanCancel);
+        if (!hasWork && worker is not { IsCompleted: false }) { inboxTimer.Stop(); SaveState(); return; }
         e.Cancel = true;
         if (shuttingDown) return;
         // The engine download can take many minutes on a slow line; it is cancellable like any other work.
         var question = installing ? "エンジンの準備を中止して終了しますか？\n続ける場合は、このウィンドウを最小化してください。"
             : "ダウンロードを中断して終了しますか？\n続ける場合は、このウィンドウを最小化してください。";
-        if (MessageBox.Show(this, question, "ClipDock", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        if (hasWork && MessageBox.Show(this, question, "ClipDock", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         shuttingDown = true;
         inboxTimer.Stop();
         installCancellation?.Cancel();

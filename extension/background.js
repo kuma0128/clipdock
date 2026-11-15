@@ -51,6 +51,10 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
     const state = await getState(details.tabId);
     if (details.timeStamp < state.since) return;
     const frame = await chrome.webNavigation.getFrame({ tabId: details.tabId, frameId: details.frameId }).catch(() => null);
+    // A response can arrive after its frame navigated; its timestamp is the response time,
+    // so the navigation timestamp alone cannot tell which document initiated it.
+    if (details.documentId && (!frame || frame.documentId !== details.documentId)) return;
+    if (details.documentLifecycle && details.documentLifecycle !== "active") return;
     const candidate = { url: details.url, kind, title: mediaTitle(details.url),
       referer: isWebUrl(frame?.url) ? frame.url : tab.url,
       size: details.statusCode === 200 ? Number(header("content-length")) : 0 };
@@ -89,6 +93,10 @@ async function cookiesFor(tab, urls) {
 // allowCookies is true only for the popup: a page-side message must never be able to opt in to sending cookies.
 async function download(message, sender, { allowCookies = false } = {}) {
   const tab = sender.tab || await chrome.tabs.get(message.tabId);
+  if (sender.documentId) {
+    const frame = await chrome.webNavigation.getFrame({ tabId: tab.id, frameId: sender.frameId }).catch(() => null);
+    if (!frame || frame.documentId !== sender.documentId) throw new Error("ページが移動しました。拡張を開き直してください。");
+  }
   if (tab.incognito || !isWebUrl(tab.url)) throw new Error("通常のhttp/httpsページで動画を開いてください。");
   if (message.pageUrl && message.pageUrl !== tab.url) throw new Error("ページが移動しました。拡張を開き直してください。");
   const url = isWebUrl(message.url) ? message.url : tab.url;
@@ -120,8 +128,12 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
     if (message?.type === "download" && (fromPopup || sender.tab)) return download(message, sender, { allowCookies: fromPopup });
     if (!fromPopup) throw new Error("不明なリクエストです。");
     if (message.type === "snapshot") {
-      const tab = await chrome.tabs.get(message.tabId);
-      return { ok: true, tab: { id: tab.id, url: tab.url, title: tab.title }, ...(await getState(tab.id)) };
+      return serial(message.tabId, async () => {
+        const tab = await chrome.tabs.get(message.tabId);
+        const state = await getState(tab.id);
+        const candidates = withoutHash(state.pageUrl) === withoutHash(tab.url) ? state.candidates : [];
+        return { ok: true, ...state, candidates, tab: { id: tab.id, url: tab.url, title: tab.title } };
+      });
     }
     if (message.type === "ping" || message.type === "open") return native({ action: message.type });
     throw new Error("不明な操作です。");

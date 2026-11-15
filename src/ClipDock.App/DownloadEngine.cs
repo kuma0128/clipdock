@@ -20,6 +20,7 @@ public static partial class DownloadEngine
         string? cookieFile = null;
         var errors = new Queue<string>();
         string? resultPath = null;
+        Action? finish = null;
         try
         {
             Directory.CreateDirectory(item.OutputDirectory);
@@ -87,25 +88,37 @@ public static partial class DownloadEngine
             if (process.ExitCode != 0) throw new IOException(errors.Count > 0 ? string.Join("\n", errors) : "動画を取得できませんでした。ページを再読み込みして、もう一度送信してください。");
             if (resultPath is null || !DownloadPlan.IsOutputFile(resultPath, item.OutputDirectory) || !File.Exists(resultPath))
                 throw new IOException("MP4ファイルの保存を確認できませんでした。保存先を確認してください。");
-            dispatch(() => { item.FilePath = resultPath; item.Percent = 100; item.State = "completed"; item.Detail = Path.GetFileName(resultPath); });
+            finish = () => { item.FilePath = resultPath; item.Percent = 100; item.State = "completed"; item.Detail = Path.GetFileName(resultPath); };
         }
-        catch (OperationCanceledException) { dispatch(() => { item.State = "cancelled"; item.Detail = "中断しました。再試行すると取得済みの断片から再開を試みます。"; }); }
-        catch (Exception ex) { dispatch(() => { item.State = "failed"; item.Detail = ex.Message; }); }
+        catch (OperationCanceledException) { finish = () => { item.State = "cancelled"; item.Detail = "中断しました。再試行すると取得済みの断片から再開を試みます。"; }; }
+        catch (Exception ex) { finish = () => { item.State = "failed"; item.Detail = ex.Message; }; }
         finally
         {
-            if (cookieFile is not null) await DeleteSecretAsync(cookieFile);
+            var cleaned = cookieFile is null || await DeleteSecretAsync(cookieFile);
             item.Request = item.Request with { Cookies = [] };
             item.Cancellation = null;
+            // Terminal states enable retry/clear/close. Publish them only after the cookie
+            // cleanup has finished, so those actions cannot abandon an active cleanup task.
+            dispatch(() =>
+            {
+                finish?.Invoke();
+                if (!cleaned)
+                {
+                    item.State = "failed";
+                    item.Detail = "一時ログイン情報を削除できませんでした。ClipDockを再起動して削除を再試行してください。";
+                }
+            });
         }
     }
 
     // A killed engine or a virus scanner can hold the jar for a moment; plaintext cookies must not be left behind by one failed attempt.
-    private static async Task DeleteSecretAsync(string file)
+    private static async Task<bool> DeleteSecretAsync(string file)
     {
         for (var attempt = 0; attempt < 5; attempt++)
         {
-            try { File.Delete(file); return; }
+            try { File.Delete(file); return true; }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { await Task.Delay(200); }
         }
+        return false;
     }
 }

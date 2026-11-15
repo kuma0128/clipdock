@@ -48,6 +48,13 @@ test("background integration: discovery, navigation, consent and native bridge",
     await send({ type: "discovered", candidates: [{ url: "https://a.test/old.mp4" }] }, { ...content, documentId: "obsolete" });
     assert.equal((await candidates()).length, 1);
   });
+  await t.test("ignores delayed responses from a document that already navigated away", async () => {
+    const before = (await candidates()).length;
+    chrome.webRequest.onHeadersReceived.listeners[0]({ tabId: 7, frameId: 0, documentId: "obsolete", statusCode: 200, timeStamp: 140,
+      url: "https://cdn.example.com/stale.mp4", responseHeaders: [{ name: "Content-Type", value: "video/mp4" }] });
+    await flush();
+    assert.equal((await candidates()).length, before);
+  });
   await t.test("keeps candidates when the page only updates its history state", async () => {
     // replaceState with the same URL (scroll restoration) and hash-only changes are not navigations.
     chrome.webNavigation.onHistoryStateUpdated.listeners[0]({ tabId: 7, frameId: 0, timeStamp: 150, url: tab.url });
@@ -60,13 +67,20 @@ test("background integration: discovery, navigation, consent and native bridge",
     assert.equal((await candidates()).length, 2);
   });
   await t.test("clears candidates on SPA navigation to another URL", async () => {
+    tab.url = "https://example.com/watch?v=next";
     chrome.webNavigation.onHistoryStateUpdated.listeners[0]({ tabId: 7, frameId: 0, timeStamp: 200, url: "https://example.com/watch?v=next" });
-    await flush();
+    // The snapshot must wait for pending navigation work, even without an event-loop tick.
     assert.equal((await candidates()).length, 0);
     // A request that started before the navigation belongs to the previous video.
     chrome.webRequest.onHeadersReceived.listeners[0]({ tabId: 7, frameId: 0, statusCode: 200, timeStamp: 190, url: "https://cdn.example.com/previous.mp4", responseHeaders: [{ name: "Content-Type", value: "video/mp4" }] });
     await flush();
     assert.equal((await candidates()).length, 0);
+  });
+  await t.test("obsolete content scripts cannot enqueue downloads", async () => {
+    const before = nativeCalls.length;
+    const result = await send({ type: "download", url: "https://cdn.example.com/old.mp4" }, { ...content, documentId: "obsolete" });
+    assert.equal(result.ok, false);
+    assert.equal(nativeCalls.length, before);
   });
   await t.test("ordinary save never reads browser cookies", async () => {
     const result = await send({ type: "download", tabId: 7, pageUrl: tab.url, url: tab.url, quality: "720" });

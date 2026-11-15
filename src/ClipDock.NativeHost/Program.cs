@@ -28,9 +28,14 @@ try
     var id = Guid.NewGuid().ToString("N");
     queuedFile = Path.Combine(AppPaths.Inbox, id + ".request");
     var temporary = queuedFile + ".tmp";
-    await File.WriteAllBytesAsync(temporary, WindowsProtection.Protect(JsonSerializer.SerializeToUtf8Bytes(request, Json.Options)), timeout.Token);
+    var payload = JsonSerializer.SerializeToUtf8Bytes(request, Json.Options);
+    if (payload.Length > NativeProtocol.MaxQueuedMessageBytes) throw new InvalidDataException("リクエストが大きすぎます。");
+    await File.WriteAllBytesAsync(temporary, WindowsProtection.Protect(payload), timeout.Token);
     File.Move(temporary, queuedFile);
-    using var app = Process.Start(new ProcessStartInfo(executable) { UseShellExecute = false, CreateNoWindow = true });
+    // Shell launch gives the GUI its own lifetime and prevents it from inheriting the
+    // browser's stdin/stdout pipes. Otherwise the first launch keeps the native channel
+    // open until the entire GUI exits, even after this host has sent its response.
+    using var app = Process.Start(Integration.AppStartInfo(executable));
     await NativeProtocol.WriteAsync(output, new { ok = true, id, message = "ClipDockに追加しました" }, timeout.Token);
     return 0;
 }

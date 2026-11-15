@@ -6,6 +6,9 @@ namespace ClipDock.Core;
 public static class NativeProtocol
 {
     public const int MaxMessageBytes = 512 * 1024;
+    // Validated requests are reserialized with JSON escaping and indentation, then
+    // encrypted. Allow their worst-case expansion without relaxing the wire limit.
+    public const int MaxQueuedMessageBytes = MaxMessageBytes * 8;
 
     public static async Task<T> ReadAsync<T>(Stream input, CancellationToken cancellationToken = default)
     {

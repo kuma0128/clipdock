@@ -1,6 +1,20 @@
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 using ClipDock.Core;
+
+// A hidden helper outlives its launcher so the test can detect inherited protocol pipes.
+if (args is ["--stdio-holder"]) { Thread.Sleep(10000); return 0; }
+if (args is ["--launch-probe"])
+{
+    var start = Integration.AppStartInfo(Environment.ProcessPath!);
+    start.WindowStyle = ProcessWindowStyle.Hidden;
+    start.ArgumentList.Add("--stdio-holder");
+    using var child = Process.Start(start)!;
+    Console.WriteLine(child.Id);
+    return 0;
+}
 
 var passed = 0;
 var failed = 0;
@@ -132,6 +146,44 @@ Check("native messages reject truncated payloads", () =>
 {
     Throws<EndOfStreamException>(() => NativeProtocol.ReadAsync<DownloadRequest>(new MemoryStream([5, 0, 0, 0, 123])).GetAwaiter().GetResult());
 });
+Check("a launched app cannot keep the native messaging pipes open", () =>
+{
+    var start = new ProcessStartInfo(Environment.ProcessPath!)
+    {
+        UseShellExecute = false, CreateNoWindow = true,
+        RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true
+    };
+    start.ArgumentList.Add("--launch-probe");
+    using var launcher = Process.Start(start)!;
+    launcher.StandardInput.Close();
+    var childId = int.Parse(launcher.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult()!);
+    try
+    {
+        var stdout = launcher.StandardOutput.ReadToEndAsync();
+        var stderr = launcher.StandardError.ReadToEndAsync();
+        Assert(launcher.WaitForExit(5000));
+        Assert(Task.WaitAll([stdout, stderr], TimeSpan.FromSeconds(2)));
+        Assert(launcher.ExitCode == 0 && stdout.Result.Length == 0 && stderr.Result.Length == 0);
+    }
+    finally
+    {
+        try { using var child = Process.GetProcessById(childId); child.Kill(); child.WaitForExit(5000); }
+        catch (ArgumentException) { }
+    }
+});
+Check("a valid Unicode cookie request still fits the encrypted inbox after JSON escaping", () =>
+{
+    var request = new DownloadRequest { Url = "https://example.com/video", Cookies = Enumerable.Range(0, 30)
+        .Select(i => new BrowserCookie { Domain = "example.com", HostOnly = true, Name = "cookie" + i, Value = new string('あ', 4000) }).ToList() };
+    var wire = JsonSerializer.SerializeToUtf8Bytes(request, new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+    Assert(wire.Length < NativeProtocol.MaxMessageBytes);
+    var queued = JsonSerializer.SerializeToUtf8Bytes(request.Validated(), Json.Options);
+    Assert(queued.Length > NativeProtocol.MaxMessageBytes);
+    var encrypted = WindowsProtection.Protect(queued);
+    Assert(encrypted.Length <= NativeProtocol.MaxQueuedMessageBytes + 4096);
+    Assert(JsonSerializer.Deserialize<DownloadRequest>(WindowsProtection.Unprotect(encrypted), Json.Options)?.Cookies.Count == 30);
+});
 Check("DPAPI encrypts data at rest and rejects tampering", () =>
 {
     var bytes = Encoding.UTF8.GetBytes("signed-url-and-private-cookie");
@@ -141,6 +193,61 @@ Check("DPAPI encrypts data at rest and rejects tampering", () =>
     encrypted[^1] ^= 0x20;
     Throws<System.ComponentModel.Win32Exception>(() => WindowsProtection.Unprotect(encrypted));
 });
+Check("engine update replaces executables, licenses and version metadata together", () =>
+{
+    WithToolPackage((destination, staging, names) =>
+    {
+        ToolInstaller.PromoteStagedPackage(staging, destination);
+        foreach (var name in names) Assert(File.ReadAllText(Path.Combine(destination, name)) == "new");
+        Assert(!Directory.EnumerateDirectories(destination, ".backup-*").Any());
+    });
+});
+Check("a locked engine rolls back all earlier moves without losing the old package", () =>
+{
+    WithToolPackage((destination, staging, names) =>
+    {
+        using var locked = new FileStream(Path.Combine(destination, "ffprobe.exe"), FileMode.Open, FileAccess.Read, FileShare.Read);
+        Throws<IOException>(() => ToolInstaller.PromoteStagedPackage(staging, destination));
+        foreach (var name in names) Assert(File.ReadAllText(Path.Combine(destination, name)) == "old");
+        foreach (var name in names) Assert(File.ReadAllText(Path.Combine(staging, name)) == "new");
+        Assert(!Directory.EnumerateDirectories(destination, ".backup-*").Any());
+    });
+});
+Check("concurrent installers cannot remove each other's staging directories", () =>
+{
+    WithToolPackage((destination, staging, _) =>
+    {
+        using var held = ToolInstaller.AcquireInstallLock(destination);
+        Throws<IOException>(() => ToolInstaller.InstallAsync(destination).GetAwaiter().GetResult());
+        Assert(File.Exists(Path.Combine(staging, "yt-dlp.exe")));
+    });
+});
+Check("an incomplete engine package leaves the current installation untouched", () =>
+{
+    WithToolPackage((destination, staging, names) =>
+    {
+        File.Delete(Path.Combine(staging, "versions.json"));
+        Throws<IOException>(() => ToolInstaller.PromoteStagedPackage(staging, destination));
+        foreach (var name in names) Assert(File.ReadAllText(Path.Combine(destination, name)) == "old");
+    });
+});
+
+void WithToolPackage(Action<string, string, string[]> check)
+{
+    var directory = Path.Combine(Path.GetTempPath(), "ClipDock-check-" + Guid.NewGuid().ToString("N"));
+    var staging = Path.Combine(directory, ".staging-test");
+    string[] names = ["yt-dlp.exe", "ffmpeg.exe", "ffprobe.exe", "deno.exe", "versions.json", "licenses/NOTICE"];
+    try
+    {
+        foreach (var (path, value) in new[] { (directory, "old"), (staging, "new") })
+        {
+            Directory.CreateDirectory(Path.Combine(path, "licenses"));
+            foreach (var name in names) File.WriteAllText(Path.Combine(path, name), value);
+        }
+        check(directory, staging, names);
+    }
+    finally { Directory.Delete(directory, true); }
+}
 
 Console.WriteLine($"{passed} passed; {failed} failed.");
 return failed == 0 ? 0 : 1;
