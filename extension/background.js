@@ -1,7 +1,11 @@
 import { HOST, QUALITIES, isWebUrl, classifyMedia, mergeCandidates, mediaTitle } from "./media.js";
 
+// ClipDock.NativeHost rejects messages above 512 KiB; fail here with a clear reason instead.
+const MAX_NATIVE_REQUEST_BYTES = 480 * 1024;
+const WEB_PATTERNS = ["http://*/*", "https://*/*"];
 const locks = new Map();
 const keyFor = tabId => `tab-${tabId}`;
+const withoutHash = url => String(url || "").split("#")[0];
 function serial(tabId, action) {
   const previous = locks.get(tabId) || Promise.resolve();
   const next = previous.catch(() => {}).then(action);
@@ -18,13 +22,23 @@ async function putState(tabId, state) {
   await chrome.action.setBadgeText({ tabId, text: state.candidates.length ? String(state.candidates.length) : "" }).catch(() => {});
   await chrome.action.setBadgeBackgroundColor({ tabId, color: "#427758" }).catch(() => {});
 }
-function reset(details) {
+function reset(details, sameDocument) {
   if (details.frameId !== 0) return;
-  void serial(details.tabId, () => putState(details.tabId, { candidates: [], since: details.timeStamp, pageUrl: details.url })).catch(() => {});
+  void serial(details.tabId, async () => {
+    // Frameworks call replaceState without leaving the page (scroll restoration, state-only updates).
+    // The playlist was requested only once, so dropping it there would lose it for good:
+    // a same-document update counts as navigation only when the URL really changes.
+    if (sameDocument && withoutHash((await getState(details.tabId)).pageUrl) === withoutHash(details.url)) return;
+    await putState(details.tabId, { candidates: [], since: details.timeStamp, pageUrl: details.url });
+  }).catch(() => {});
 }
-chrome.webNavigation.onCommitted.addListener(reset);
-chrome.webNavigation.onHistoryStateUpdated.addListener(reset);
-chrome.tabs.onRemoved.addListener(tabId => { void serial(tabId, () => chrome.storage.session.remove(keyFor(tabId))); });
+function forget(tabId) {
+  void serial(tabId, () => chrome.storage.session.remove(keyFor(tabId))).catch(() => {});
+}
+chrome.webNavigation.onCommitted.addListener(details => reset(details, false));
+chrome.webNavigation.onHistoryStateUpdated.addListener(details => reset(details, true));
+chrome.tabs.onRemoved.addListener(forget);
+chrome.tabs.onReplaced.addListener((_addedTabId, removedTabId) => forget(removedTabId));
 
 chrome.webRequest.onHeadersReceived.addListener(details => {
   if (details.tabId < 0 || details.statusCode < 200 || details.statusCode >= 300) return;
@@ -40,20 +54,17 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
     const candidate = { url: details.url, kind, title: mediaTitle(details.url),
       referer: isWebUrl(frame?.url) ? frame.url : tab.url,
       size: details.statusCode === 200 ? Number(header("content-length")) : 0 };
-    await putState(details.tabId, { ...state, candidates: mergeCandidates(state.candidates, [candidate]) });
+    await putState(details.tabId, { ...state, pageUrl: state.pageUrl || tab.url || "", candidates: mergeCandidates(state.candidates, [candidate]) });
   }).catch(() => {});
-}, { urls: ["http://*/*", "https://*/*"], types: ["media", "xmlhttprequest", "other", "main_frame", "sub_frame"] }, ["responseHeaders"]);
+}, { urls: WEB_PATTERNS, types: ["media", "xmlhttprequest", "other", "main_frame", "sub_frame"] }, ["responseHeaders"]);
 
 async function native(request) {
-  try {
-    const result = await chrome.runtime.sendNativeMessage(HOST, request);
-    if (!result?.ok) throw new Error(result?.error || "ClipDockからの応答がありません。");
-    return result;
-  } catch (error) {
-    const message = String(error?.message || error);
-    if (/host|native|connect|forbidden/i.test(message)) throw new Error("ClipDockを起動して「Chrome連携を設定」を押してください。アプリの場所を変えた場合も再設定が必要です。");
-    throw error;
-  }
+  let result;
+  // A rejection here is always about reaching the host (not registered, moved, blocked or crashed).
+  try { result = await chrome.runtime.sendNativeMessage(HOST, request); }
+  catch { throw new Error("ClipDockを起動して「Chrome連携を設定」を押してください。アプリの場所を変えた場合も再設定が必要です。"); }
+  if (!result?.ok) throw new Error(result?.error || "ClipDockからの応答がありません。");
+  return result;
 }
 
 async function cookiesFor(tab, urls) {
@@ -75,7 +86,8 @@ async function cookiesFor(tab, urls) {
   return [...collected.values()];
 }
 
-async function download(message, sender) {
+// allowCookies is true only for the popup: a page-side message must never be able to opt in to sending cookies.
+async function download(message, sender, { allowCookies = false } = {}) {
   const tab = sender.tab || await chrome.tabs.get(message.tabId);
   if (tab.incognito || !isWebUrl(tab.url)) throw new Error("通常のhttp/httpsページで動画を開いてください。");
   if (message.pageUrl && message.pageUrl !== tab.url) throw new Error("ページが移動しました。拡張を開き直してください。");
@@ -84,8 +96,11 @@ async function download(message, sender) {
   const settings = await chrome.storage.local.get({ quality: "1080" });
   const quality = message.quality || settings.quality;
   if (!QUALITIES.has(quality)) throw new Error("画質を選び直してください。");
-  const cookies = message.useCookies === true ? await cookiesFor(tab, [tab.url, url, referer]) : [];
-  return native({ action: "download", url, pageUrl: tab.url, referer, title: tab.title || "動画", quality, userAgent: navigator.userAgent, cookies });
+  const cookies = allowCookies && message.useCookies === true ? await cookiesFor(tab, [tab.url, url, referer]) : [];
+  const request = { action: "download", url, pageUrl: tab.url, referer, title: tab.title || "動画", quality, userAgent: navigator.userAgent, cookies };
+  if (new TextEncoder().encode(JSON.stringify(request)).length > MAX_NATIVE_REQUEST_BYTES)
+    throw new Error(cookies.length ? "ログイン情報が大きすぎて送信できません。ログイン情報を使わずにお試しください。" : "URLが長すぎて送信できません。");
+  return native(request);
 }
 
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
@@ -98,11 +113,11 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
         if (!frame || frame.documentId !== sender.documentId) return { ok: true };
         const state = await getState(sender.tab.id);
         const incoming = Array.isArray(message.candidates) ? message.candidates.slice(0, 50).map(c => ({ ...c, referer: sender.url })) : [];
-        await putState(sender.tab.id, { ...state, candidates: mergeCandidates(state.candidates, incoming) });
+        await putState(sender.tab.id, { ...state, pageUrl: state.pageUrl || sender.tab.url || "", candidates: mergeCandidates(state.candidates, incoming) });
         return { ok: true };
       });
     }
-    if (message?.type === "download" && (fromPopup || sender.tab)) return download(message, sender);
+    if (message?.type === "download" && (fromPopup || sender.tab)) return download(message, sender, { allowCookies: fromPopup });
     if (!fromPopup) throw new Error("不明なリクエストです。");
     if (message.type === "snapshot") {
       const tab = await chrome.tabs.get(message.tabId);
@@ -114,17 +129,28 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   return true;
 });
 
-chrome.runtime.onInstalled.addListener(() => {
+function installMenus() {
+  // onInstalled and onStartup can both fire after a browser update; reading lastError keeps a duplicate id quiet.
+  const done = () => void chrome.runtime.lastError;
   chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({ id: "save-video", title: "ClipDockでMP4保存", contexts: ["video", "link"], targetUrlPatterns: ["http://*/*", "https://*/*"] });
-    chrome.contextMenus.create({ id: "save-page", title: "このページの動画をClipDockで保存", contexts: ["page"] });
+    // No targetUrlPatterns on the video item: most players use blob: sources, and the page is analyzed for those.
+    chrome.contextMenus.create({ id: "save-video", title: "ClipDockでMP4保存", contexts: ["video"], documentUrlPatterns: WEB_PATTERNS }, done);
+    chrome.contextMenus.create({ id: "save-link", title: "リンク先をClipDockでMP4保存", contexts: ["link"], targetUrlPatterns: WEB_PATTERNS, documentUrlPatterns: WEB_PATTERNS }, done);
+    chrome.contextMenus.create({ id: "save-page", title: "このページの動画をClipDockで保存", contexts: ["page"], documentUrlPatterns: WEB_PATTERNS }, done);
   });
-});
+}
+chrome.runtime.onInstalled.addListener(installMenus);
+chrome.runtime.onStartup.addListener(installMenus);
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!tab?.id) return;
-  const url = info.menuItemId === "save-page" ? tab.url : info.srcUrl || info.linkUrl || tab.url;
-  void download({ url }, { tab, url: info.frameUrl || tab.url }).catch(() => {
-    void chrome.action.setBadgeText({ tabId: tab.id, text: "!" });
-    void chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: "#A04B44" });
+  const frameUrl = info.frameUrl || tab.url;
+  const url = info.menuItemId === "save-link" ? info.linkUrl
+    : info.menuItemId === "save-video" ? (isWebUrl(info.srcUrl) ? info.srcUrl : frameUrl)
+    : tab.url;
+  void download({ url }, { tab, url: frameUrl }).catch(error => {
+    // There is no page UI for a context-menu save, so the reason goes on the toolbar icon.
+    void chrome.action.setBadgeText({ tabId: tab.id, text: "!" }).catch(() => {});
+    void chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: "#A04B44" }).catch(() => {});
+    void chrome.action.setTitle({ tabId: tab.id, title: `ClipDock: ${error?.message || "保存できませんでした。"}` }).catch(() => {});
   });
 });

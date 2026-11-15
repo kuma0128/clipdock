@@ -1,5 +1,7 @@
 (() => {
   "use strict";
+  // XML/SVG documents cannot host the overlay element and have no <video> to save.
+  if (!(document.documentElement instanceof HTMLElement)) return;
   const videos = new Set();
   const protectedVideos = new WeakSet();
   const host = document.createElement("clipdock-controls");
@@ -10,14 +12,28 @@
   button.type = "button";
   button.textContent = "↓ MP4で保存";
   shadow.append(style, button);
+  const STALE = "拡張を再読み込みした場合は、このページも再読み込みしてください。";
   let current = null;
   let hideTimer;
-  let reportTimer;
+  let reportTimer = 0;
+  let scanTimer = 0;
+  let observer = null;
+  let retired = false;
   let overlayEnabled = true;
   let busy = false;
   let sentSignature = "";
   const isWeb = url => { try { return ["http:", "https:"].includes(new URL(url).protocol); } catch { return false; } };
-  const send = message => chrome.runtime.sendMessage(message).catch(() => ({ ok: false, error: "拡張を再読み込みした場合は、このページも再読み込みしてください。" }));
+  // Once the extension is reloaded or removed, chrome.runtime throws synchronously in this orphaned script.
+  async function send(message) {
+    try { return (await chrome.runtime.sendMessage(message)) || { ok: false, error: STALE }; }
+    catch { if (!chrome.runtime?.id) retire(); return { ok: false, error: STALE }; }
+  }
+  // Stops background discovery for good; the button stays so a click can still explain what to do.
+  function retire() {
+    retired = true;
+    observer?.disconnect();
+    clearTimeout(scanTimer); clearTimeout(reportTimer);
+  }
   chrome.storage.local.get({ overlay: true }).then(s => { overlayEnabled = s.overlay; }).catch(() => {});
   chrome.storage.onChanged.addListener((changes, area) => { if (area === "local" && changes.overlay) { overlayEnabled = changes.overlay.newValue; if (!overlayEnabled) hide(); } });
 
@@ -54,7 +70,7 @@
     const src = current.currentSrc || current.src;
     const result = await send({ type: "download", url: isWeb(src) ? src : location.href });
     button.textContent = result.ok ? "✓ ClipDockに追加" : "接続を確認してください";
-    button.title = result.ok ? "ClipDockで進捗を確認できます" : result.error;
+    button.title = result.ok ? "ClipDockで進捗を確認できます" : result.error || STALE;
     busy = false;
     hideTimer = setTimeout(() => { button.disabled = false; hide(); }, result.ok ? 2400 : 7000);
   });
@@ -69,7 +85,10 @@
     for (const video of videos) if (!video.isConnected) videos.delete(video);
     scheduleReport();
   }
-  function scheduleReport() { clearTimeout(reportTimer); reportTimer = setTimeout(report, 350); }
+  // Both timers run once per interval instead of restarting on every event: pages that mutate
+  // the DOM continuously (tickers, chat, progress text) would otherwise postpone the scan forever.
+  function scheduleScan() { if (!scanTimer && !retired) scanTimer = setTimeout(() => { scanTimer = 0; discover(); }, 250); }
+  function scheduleReport() { if (!reportTimer && !retired) reportTimer = setTimeout(() => { reportTimer = 0; void report(); }, 350); }
   async function report(force = false) {
     const candidates = [];
     let index = 0;
@@ -77,18 +96,19 @@
       index++;
       if (protectedVideos.has(video) || video.mediaKeys) continue;
       const sources = [video.currentSrc, video.src, ...[...video.querySelectorAll("source")].map(s => s.src)];
-      for (const url of new Set(sources.filter(isWeb))) candidates.push({ url, kind: /\.m3u8(?:\?|$)/i.test(url) ? "HLS" : /\.mpd(?:\?|$)/i.test(url) ? "DASH" : /\.mp4(?:\?|$)/i.test(url) ? "MP4" : "VIDEO", title: `${document.title || "動画"} · ${index}` });
+      for (const url of new Set(sources.filter(isWeb))) candidates.push({ url, kind: /\.m3u8(?:[?#]|$)/i.test(url) ? "HLS" : /\.mpd(?:[?#]|$)/i.test(url) ? "DASH" : /\.mp4(?:[?#]|$)/i.test(url) ? "MP4" : "VIDEO", title: `${document.title || "動画"} · ${index}` });
     }
     const signature = JSON.stringify(candidates);
     if (!force && signature === sentSignature) return;
     sentSignature = signature;
     await send({ type: "discovered", candidates });
   }
-  let scanTimer;
-  new MutationObserver(records => {
-    if (records.every(r => r.target === host)) return;
-    clearTimeout(scanTimer); scanTimer = setTimeout(discover, 250);
-  }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });
+  // Appending the overlay itself is reported with its parent as the target, so compare the moved nodes.
+  const ownMutation = record => record.type === "childList" && [...record.addedNodes, ...record.removedNodes].every(node => node === host);
+  observer = new MutationObserver(records => { if (!records.every(ownMutation)) scheduleScan(); });
+  observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });
+  // A page restored from the back/forward cache keeps this script but the background list was cleared.
+  addEventListener("pageshow", event => { if (event.persisted) { sentSignature = ""; scheduleReport(); } });
   chrome.runtime.onMessage.addListener((message, _sender, respond) => {
     if (message?.type !== "scan") return;
     discover(); report(true).then(() => respond({ ok: true }));
