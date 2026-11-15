@@ -1,12 +1,14 @@
 # ClipDock
 
-動画をMP4、音声をMP3として保存するWindowsアプリです。
+動画をMP4、音声をMP3として保存するWindows / macOSアプリです。
 
 [公式サイト](https://clipdock-d6z.pages.dev/) · [使い方・ヘルプ](https://clipdock-d6z.pages.dev/help)
 
 ## はじめに
 
-対応環境: **Windows 10 / 11、x64**。
+対応環境: **Windows 10 / 11（x64）**、**macOS 14以降（Appleシリコン / Intel）**。
+
+### Windows
 
 1. [公式サイト](https://clipdock-d6z.pages.dev/)からインストーラー（.exe）を取得し、起動中のClipDockを閉じてから実行します。管理者権限は不要です。
 2. スタートメニューからClipDockを起動します。「エンジンの準備完了」と出ていなければ、「保存エンジンを準備」を押します。初回はインターネット接続が必要です。
@@ -17,6 +19,23 @@
 .NETやPythonの別途インストールは不要です。保存エンジンの導入後は「エンジンの更新を確認」で更新を確認できます。同じ版でファイルが正常なら再取得しません。旧版からの更新直後やファイルが壊れている場合は、一度取得し直すことがあります。
 
 ZIP版を使う場合だけ、すべて展開して `INSTALL.cmd` を開いてください。ポータブル利用では、展開先の `ClipDock.exe` を起動します。
+
+### macOS
+
+macOS版は同じ保存処理を使う別ビルドです。現在はGitHub Actionsの成果物 `ClipDock-mac` としてディスクイメージ（.dmg）を生成しています。公式サイトでの配布は準備中です。
+
+1. お使いのMacに合うディスクイメージを開きます。Appleシリコンは `arm64`、Intelは `x64` です。
+2. `ClipDock` を「アプリケーション」フォルダーへドラッグし、そこから起動します。
+3. 「保存エンジンを準備」を押します。初回はインターネット接続が必要です。以降の使い方はWindows版と同じです。
+
+**未署名版について:** macOS版にはApple Developer IDの署名と公証がありません。初回の起動時に、macOSが開発元を確認できないという警告を表示します。入手元を確認したうえで開く場合は、いったん警告を閉じ、「システム設定」→「プライバシーとセキュリティ」の「このまま開く」を選びます。この項目が出ない場合や入手元を確認できない場合は中止してください。Gatekeeperを無効にする必要はありません。
+
+Windows版との違い:
+
+- 「ブラウザー上部に保存タブ」はありません。URLは貼り付けるか、ログイン画面の「このページを取り込む」で渡します。
+- ログイン画面はmacOS標準のWebKitを使います。WebView2は不要で、Safari・Chromeのログインとは別です。
+- 「ログイン情報を削除」は、ClipDock内の全サイトのCookieを削除します。
+- 「場所」はFinderでファイルを表示します。
 
 ## 使い方
 
@@ -34,13 +53,13 @@ MP4はコンテナ形式で、元の映像コーデックを保持すること�
 
 ## ブラウザー上部の保存タブ
 
-「ブラウザー上部に保存タブ」は初期状態でOFFです。ONにすると、前面のChrome・Edgeの上中央にマウスを合わせて「ClipDockに取り込む」を使えます。読み取ったURLはアプリの入力欄に入るため、内容を確認して「追加」を押してください。取り込みだけでは保存を開始しません。
+Windows版の機能です。「ブラウザー上部に保存タブ」は初期状態でOFFです。ONにすると、前面のChrome・Edgeの上中央にマウスを合わせて「ClipDockに取り込む」を使えます。読み取ったURLはアプリの入力欄に入るため、内容を確認して「追加」を押してください。取り込みだけでは保存を開始しません。
 
 アドレスを編集中の場合や読み取れない場合は、URLを手動で貼り付けてください。表示で省略された `https://` が補われる場合もあるため、取り込んだURLを確認してください。このURL取り込みはChrome・EdgeのCookieやログイン情報を読み出しません。保存時の認証には、アプリ内のログイン設定を使います。
 
 ## ログインが必要な動画
 
-「この保存にログイン情報を使う」は初期ONで、変更した設定も保持します。初回は「ログイン」を押し、ClipDock専用の画面で保存対象のサイトへサインインしてください。ChromeやEdgeの既存ログインとは別です。ログイン画面には [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) が必要です。見つからない場合はMicrosoft公式の案内から導入します。
+「この保存にログイン情報を使う」は初期ONで、変更した設定も保持します。初回は「ログイン」を押し、ClipDock専用の画面で保存対象のサイトへサインインしてください。ChromeやEdgeの既存ログインとは別です。Windows版のログイン画面には [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) が必要です。見つからない場合はMicrosoft公式の案内から導入します。
 
 保存開始・再試行ごとに、専用画面の対象サイトのCookieを確認して利用します。OFFにすると次の追加・再試行でCookieをエンジンへ渡しません。動画の削除・公開条件・サイト制限によっては、ログインしていても保存できない場合があります。
 
@@ -93,6 +112,17 @@ node scripts/smoke-downloads.mjs "$env:LOCALAPPDATA\ClipDock\tools"
 
 生成先は `artifacts\ClipDock-win-x64` と `artifacts\ClipDock-win-x64.zip` です。インストーラーの作成・署名・検証は [配布手順](docs/distribution.md) を参照してください。
 
-構成は `ClipDock.App`（WPFアプリ）と `ClipDock.Core`（ダウンロード処理・設定・エンジン取得）です。自動チェックは保存処理、並列実行、ブラウザーからのURL取り込みを対象とします。実機での確認は [手動確認手順](docs/manual-checks.md) を使います。
+macOS版はmacOS上でビルドします（.NET 10 SDKが必要）。
+
+```bash
+bash scripts/build-mac.sh arm64   # または x64
+bash scripts/test-mac.sh arm64    # 署名・ディスクイメージ・実エンジンでの保存・画面の自動確認
+```
+
+生成先は `artifacts/mac-<arch>/ClipDock.app` と `artifacts/mac/ClipDock-<version>-mac-<arch>-unsigned.dmg` です。画面はAvalonia製でWindowsでも起動できるため、`dotnet run --project src/ClipDock.Mac -- --data-dir <作業用フォルダー>` で見た目と操作を確認できます。
+
+構成は `ClipDock.App`（Windows用のWPFアプリ）、`ClipDock.Mac`（macOS用のAvaloniaアプリ）、`ClipDock.Core`（ダウンロード処理・設定・エンジン取得）です。自動チェックは保存処理、並列実行、ブラウザーからのURL取り込みを対象とします。実機での確認は [手動確認手順](docs/manual-checks.md) を使います。
+
+macOS版では、設定・履歴・エンジンを `~/Library/Application Support/ClipDock` に保存します。macOSにはDPAPIがないため、履歴は暗号化せず、現在のユーザーだけが読み書きできるファイル（フォルダー700、ファイル600）として保存します。ログイン用のCookieはアプリ専用のWebKitデータに保持し、Safariとは共有しません。アンインストールは「アプリケーション」フォルダーの `ClipDock` をゴミ箱へ移します。設定・履歴・保存ファイルは残ります。
 
 同梱ソフトウェアのライセンスは [THIRD-PARTY.md](THIRD-PARTY.md) を参照してください。

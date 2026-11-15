@@ -62,4 +62,6 @@ pass "main window, sign-in session and sign-in window"
 
 [ "$(stat -f %Lp "$work/data")" = "700" ] && [ "$(stat -f %Lp "$work/data/history.dat")" = "600" ] && [ "$(stat -f %Lp "$work/data/settings.json")" = "600" ]
 pass "settings and history are readable by the current user only"
+# Where WebKit keeps the app's sign-in session (recorded for the privacy documentation).
+ls -d "$HOME/Library/WebKit/app.clipdock.ClipDock" "$HOME/Library/HTTPStorages/app.clipdock.ClipDock"* "$HOME/Library/Caches/app.clipdock.ClipDock" 2>/dev/null | sed 's/^/session data: /' || true
 echo "macOS checks passed."

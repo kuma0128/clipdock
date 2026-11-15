@@ -55,8 +55,10 @@ runtime_pack="$packages/microsoft.netcore.app.runtime.osx-$arch/$runtime_version
 mkdir -p "$contents/Resources/licenses/dotnet"
 cp "$runtime_pack/LICENSE.TXT" "$runtime_pack/THIRD-PARTY-NOTICES.TXT" "$contents/Resources/licenses/dotnet/"
 
-# Sign inside-out: libraries first, then the bundle, so the seal covers everything that is finally shipped.
-find "$contents/MacOS" -type f \( -name "*.dylib" -o -name "ClipDock" \) -exec codesign --force --sign - {} \;
+# Sign inside-out: every file beside the executable first, then the bundle, so the seal covers all that is shipped.
+# codesign treats everything in Contents/MacOS as code, including the managed assemblies and JSON files.
+find "$contents/MacOS" -type f ! -name "ClipDock" -exec codesign --force --sign - {} \; 2>/dev/null
+codesign --force --sign - "$contents/MacOS/ClipDock"
 codesign --force --sign - "$app"
 codesign --verify --deep --strict "$app"
 

@@ -1,4 +1,4 @@
-# Windowsインストーラーの配布
+# 配布手順（Windows・macOS）
 
 ## 公式サイトとダウンロード
 
@@ -125,3 +125,39 @@ SmartScreenの操作は [Microsoftの案内](https://learn.microsoft.com/en-us/w
 ```
 
 出力先は `artifacts\installer\development\ClipDock-<version>-win-x64-unsigned-dev-setup.exe` です。インストーラーとアンインストーラーは未署名です。`-CertificateThumbprint` や `-AllowUnsignedRelease` とは併用できません。このモードの成果物を正式リリースや公式サイトに掲載しないでください。
+
+## macOS版
+
+macOS版は `src/ClipDock.Mac`（Avalonia）を自己完結型でビルドし、アプリバンドルとディスクイメージにまとめます。ビルドにはmacOSと.NET 10 SDKが必要です。Windowsからは作成できません。
+
+```bash
+bash scripts/build-mac.sh arm64
+bash scripts/build-mac.sh x64
+bash scripts/test-mac.sh arm64
+```
+
+出力は `artifacts/mac/ClipDock-<version>-mac-<arch>-unsigned.dmg` と、その `.sha256` ファイルです。GitHub Actionsの `macos` ジョブも同じスクリプトを実行し、成果物 `ClipDock-mac` として両方のアーキテクチャを保存します。
+
+`test-mac.sh` は次を確認し、不一致なら停止します。
+
+- バンドルとディスクイメージ内のアプリの署名が壊れていないこと、バージョン、アイコン、同梱ライセンス、実行ファイルのアーキテクチャ。
+- ディスクイメージのSHA-256と内容（アプリと「アプリケーション」へのリンク）。
+- 実行中のMacと同じアーキテクチャの場合：実際の保存エンジンの取得・再利用と、合成した動画のMP4・MP3保存。
+- 同じく：メイン画面とログイン画面を開き、ページの読み込みとURLの取得ができること。設定・履歴のアクセス権が現在のユーザーに限定されていること。
+
+### 署名と公証
+
+現在のスクリプトはアドホック署名（`codesign --sign -`）だけを行います。Appleシリコンで実行するために必要な最小限の署名で、発行元は証明しません。Developer IDによる署名とAppleの公証は行っていないため、ファイル名に `unsigned` を付けています。この表記を削除したり、署名済み・公証済みと表示したりしないでください。
+
+未署名版の利用者には次のように案内します。
+
+1. 公式の配布元から取得したファイルであることを確認します。SHA-256で配布物と一致するか確認できます。
+2. ディスクイメージを開き、`ClipDock` を「アプリケーション」へドラッグして起動します。
+3. macOSが開発元を確認できないという警告を表示したら、いったん閉じます。開く場合は「システム設定」→「プライバシーとセキュリティ」の「このまま開く」を選びます。
+4. この項目が表示されない場合は中止します。Gatekeeperの無効化や、隔離属性を削除するコマンドは案内しません。
+
+Developer IDで配布する場合は、Apple Developer Programの証明書でバンドル内のライブラリとアプリに署名し（Hardened Runtimeを有効化）、`notarytool` で公証を受けてからディスクイメージへ結果を添付します。その際はファイル名から `unsigned` を外します。
+
+### 公開
+
+公開する場合は、Windows版と同じ手順でR2バケットへディスクイメージと `.sha256` をアップロードし、`functions/downloads/[[file]].js` の公開ファイル名一覧へ追加してからサイトを更新します。公開先から取得したファイルのSHA-256が配布用ファイルと一致することを確認してください。実機のMacで、新規インストール、URLからのMP4・MP3保存、ログイン保存を確認してから公開します。
