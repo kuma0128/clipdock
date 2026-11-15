@@ -86,7 +86,7 @@ public static partial class DownloadEngine
             ct.ThrowIfCancellationRequested();
             if (process.ExitCode != 0) throw new IOException(errors.Count > 0 ? string.Join("\n", errors) : "動画を取得できませんでした。ページを再読み込みして、もう一度送信してください。");
             if (resultPath is null || !DownloadPlan.IsOutputFile(resultPath, item.OutputDirectory, request.Format) || !File.Exists(resultPath))
-                throw new IOException("このURLから保存できる動画が見つかりませんでした。動画そのもののページを開いてURLを追加してください。");
+                throw new IOException("このURLから保存できる動画が見つかりませんでした。動画そのもののページのURLを入力してください。");
             finish = () => { item.FilePath = resultPath; item.Percent = 100; item.State = "completed"; item.Detail = Path.GetFileName(resultPath); };
             try { DownloadPlan.CleanWorkDirectory(item.OutputDirectory, item.Id); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }

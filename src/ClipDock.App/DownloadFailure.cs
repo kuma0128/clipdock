@@ -2,7 +2,7 @@ namespace ClipDock.App;
 
 public static class DownloadFailure
 {
-    private const string TwitterHint = "Xの動画情報を取得できませんでした。ログインや投稿の公開条件が影響する場合があります。「ログイン」からClipDock内でXにログインし、「この保存にログイン情報を使う」をONにして再試行してください。接続済みならログインし直すか、エンジンの更新を確認してください。";
+    private const string TwitterHint = "Xの動画情報を取得できませんでした。ログインや投稿の公開条件が影響する場合があります。「ログイン」からClipDock内でXにログインし、「この保存にログイン情報を使う」をONにして再試行してください。接続済みならログインし直すか、ClipDockを開き直して保存エンジンを更新してください。";
 
     public static string Describe(string? url, string? detail)
     {

@@ -27,6 +27,8 @@ public partial class MainWindow : Window
     private Task? installTask;
     private CancellationTokenSource? installCancellation;
     private bool installing;
+    // The launch-time update of an engine that already works: it reports nothing and never asks before closing.
+    private bool updatingQuietly;
     private bool shuttingDown;
     private bool allowClose;
     private bool loaded;
@@ -57,6 +59,7 @@ public partial class MainWindow : Window
         Opened += async (_, _) =>
         {
             if (App.SmokeResultFile is { } result) { await RunSmokeAsync(result); return; }
+            installTask = InstallEngineAsync();
             try { await browserSession.RefreshStatusAsync(); }
             catch (Exception ex) { LoginStatus.Text = ex.Message; }
         };
@@ -72,26 +75,26 @@ public partial class MainWindow : Window
     private void LoginPreference_Changed(object? sender, RoutedEventArgs e)
     {
         SaveState();
-        Notice.Text = UseLogin ? "接続済みサイトのログイン情報を保存に使います。初回は「ログイン」から接続してください。" : "次の追加・再試行ではログイン情報を使いません。";
+        Notice.Text = UseLogin ? "接続済みサイトのログイン情報を保存に使います。初回は「ログイン」から接続してください。" : "次の保存・再試行ではログイン情報を使いません。";
     }
     private void Login_Click(object? sender, RoutedEventArgs e) => browserSession.Show((UrlInput.Text ?? "").Trim() is { Length: > 0 } url ? url : jobs.FirstOrDefault()?.Request.Url,
-        () => jobs.Any(j => j.CanCancel), url => { UrlInput.Text = url; Notice.Text = "URLと保存先を確認して追加してください。"; Activate(); });
+        () => jobs.Any(j => j.CanCancel), url => { UrlInput.Text = url; Notice.Text = "URLと保存先を確認して「保存」を押してください。"; Activate(); });
 
     private void Add(DownloadRequest source)
     {
-        if (shuttingDown) throw new InvalidOperationException("終了処理中です。アプリを開き直してから追加してください。");
+        if (shuttingDown) throw new InvalidOperationException("終了処理中です。アプリを開き直してから保存してください。");
         var request = source.Validated();
         request.ValidateVideoPage();
         if (jobs.Any(j => j.CanCancel && j.Request.Url == request.Url && j.Request.Quality == request.Quality && j.Request.Format == request.Format))
         {
-            Notice.Text = "この動画はすでにダウンロード一覧に追加されています。";
+            Notice.Text = "この動画はすでにダウンロード一覧にあります。";
             return;
         }
         if (jobs.Count(j => j.CanCancel) >= 100) throw new InvalidOperationException("待機中の動画は100件までです。");
         var item = new DownloadItem { Request = request, Title = request.Title.Length > 0 ? request.Title : new Uri(request.Url).Host, OutputDirectory = outputDirectory };
         Attach(item);
         jobs.Insert(0, item);
-        Notice.Text = ToolInstaller.IsReady(ToolInstaller.FindTools()) ? "ダウンロード一覧に追加しました。" : "待機リストに追加しました。「保存エンジンを準備」を押すと開始します。";
+        Notice.Text = ToolInstaller.IsReady(ToolInstaller.FindTools()) ? "ダウンロード一覧に追加しました。" : "待機リストに追加しました。初期セットアップが終わると開始します。";
         SaveState(); RefreshSummary(); StartQueue();
     }
 
@@ -166,7 +169,7 @@ public partial class MainWindow : Window
         try { item.Request.ValidateVideoPage(); }
         catch (ArgumentException ex) { Notice.Text = ex.Message; return; }
         if (jobs.Any(j => j.CanCancel && j.Request.Url == item.Request.Url && j.Request.Quality == item.Request.Quality && j.Request.Format == item.Request.Format))
-        { Notice.Text = "この動画はすでにダウンロード一覧に追加されています。"; return; }
+        { Notice.Text = "この動画はすでにダウンロード一覧にあります。"; return; }
         if (jobs.Count(j => j.CanCancel) >= 100) { Notice.Text = "待機中の動画は100件までです。"; return; }
         // Retrying is a new queue insertion: wait behind work already queued and keep
         // the retried item inside the persisted history window.
@@ -207,7 +210,7 @@ public partial class MainWindow : Window
             });
             if (folders.Count == 0 || folders[0].TryGetLocalPath() is not { Length: > 0 } chosen || !Path.IsPathFullyQualified(chosen)) return;
             outputDirectory = chosen; OutputLabel.Text = outputDirectory; ToolTip.SetTip(OutputLabel, outputDirectory); SaveState();
-            Notice.Text = "次に追加する動画から、新しい保存先を使います。";
+            Notice.Text = "次に保存する動画から、新しい保存先を使います。";
         }
         catch (Exception ex) { Notice.Text = "保存先を選択できませんでした: " + ex.Message; }
     }
@@ -255,23 +258,40 @@ public partial class MainWindow : Window
         await installTask;
     }
     // Never throws: closing the window awaits this task to know the download has really stopped.
+    // Runs by itself at launch: the first time it fetches the engine, afterwards it updates it quietly.
     private async Task InstallEngineAsync()
     {
+        var quiet = updatingQuietly = ToolInstaller.IsReady(ToolInstaller.FindTools());
         installing = true; EngineButton.IsEnabled = false;
+        UpdateEngineStatus();
+        if (!quiet) Notice.Text = "初期セットアップ中です。保存エンジンを取得しています…";
         using var cancellation = installCancellation = new CancellationTokenSource();
+        // Downloads wait for this task, so a quiet update gives up once the network stops answering.
+        var patience = TimeSpan.FromSeconds(45);
+        if (quiet) cancellation.CancelAfter(patience);
         try
         {
-            await ToolInstaller.InstallAsync(AppPaths.Tools, new Progress<string>(message => { EngineStatus.Text = message; Notice.Text = message; }), cancellation.Token);
+            await ToolInstaller.InstallAsync(AppPaths.Tools, new Progress<string>(message =>
+            {
+                if (installCancellation != cancellation) return;
+                if (quiet) { EngineStatus.Text = message; cancellation.CancelAfter(patience); }
+                else Notice.Text = "初期セットアップ中: " + message;
+            }), cancellation.Token);
         }
-        catch (OperationCanceledException) { Notice.Text = cancellation.IsCancellationRequested ? "エンジンの準備を中止しました。" : "エンジンの取得が時間内に終わりませんでした。通信環境を確認して再実行してください。"; }
+        catch (OperationCanceledException) when (quiet) { }
+        catch (OperationCanceledException) { Notice.Text = shuttingDown ? "エンジンの準備を中止しました。" : "エンジンの取得が時間内に終わりませんでした。通信環境を確認して「保存エンジンを準備」を押してください。"; }
+        // The installed engine keeps working when an update cannot be fetched.
+        catch (Exception) when (quiet) { }
         catch (Exception ex) { Notice.Text = "エンジンの取得に失敗しました: " + ex.Message; }
-        finally { installCancellation = null; installing = false; EngineButton.IsEnabled = !shuttingDown; UpdateEngineStatus(); StartQueue(); }
+        finally { installCancellation = null; installing = false; updatingQuietly = false; EngineButton.IsEnabled = !shuttingDown; UpdateEngineStatus(); StartQueue(); }
+        if (!quiet && ToolInstaller.IsReady(ToolInstaller.FindTools())) Notice.Text = "初期セットアップが完了しました。URLを貼り付けて「保存」を押してください。";
     }
     private void UpdateEngineStatus()
     {
         var ready = ToolInstaller.IsReady(ToolInstaller.FindTools());
-        EngineStatus.Text = ready ? "● エンジンの準備完了" : "○ 初回はエンジンを準備してください";
-        EngineButton.Content = ready ? "エンジンの更新を確認" : "保存エンジンを準備";
+        EngineStatus.Text = ready ? "● エンジンの準備完了" : installing ? "○ 初期セットアップ中…" : "○ 保存エンジンを取得できていません";
+        // Only a failed download leaves something to press; updates run by themselves at launch.
+        EngineButton.IsVisible = !ready && !installing;
     }
     private void ClearHistory_Click(object? sender, RoutedEventArgs e)
     {
@@ -320,7 +340,7 @@ public partial class MainWindow : Window
                 var terminal = item.State is "completed" or "failed" or "cancelled";
                 var job = new DownloadItem { Id = item.Id, Request = request, CreatedAt = item.CreatedAt,
                     OutputDirectory = item.OutputDirectory, Title = item.Title ?? "", State = terminal ? item.State : "interrupted", FilePath = item.FilePath ?? "",
-                    Detail = item.State == "failed" ? DownloadFailure.Describe(request.Url, item.Detail) : terminal ? item.Detail ?? "" : "前回の終了で中断しました。再試行するか、URLを追加し直してください。", Percent = item.State == "completed" ? 100 : 0 };
+                    Detail = item.State == "failed" ? DownloadFailure.Describe(request.Url, item.Detail) : terminal ? item.Detail ?? "" : "前回の終了で中断しました。再試行するか、URLを入力し直してください。", Percent = item.State == "completed" ? 100 : 0 };
                 Attach(job); jobs.Add(job);
             }
         }
@@ -341,8 +361,8 @@ public partial class MainWindow : Window
     private async void OnClosing(object? sender, WindowClosingEventArgs e)
     {
         if (allowClose) return;
-        var hasWork = installing || jobs.Any(j => j.CanCancel);
-        if (!hasWork && operations.Count == 0) { SaveState(); return; }
+        var hasWork = installing && !updatingQuietly || jobs.Any(j => j.CanCancel);
+        if (!hasWork && !installing && operations.Count == 0) { SaveState(); return; }
         e.Cancel = true;
         if (shuttingDown) return;
         // The engine download can take many minutes on a slow line; it is cancellable like any other work.

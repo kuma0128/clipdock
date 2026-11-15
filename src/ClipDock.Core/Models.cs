@@ -45,7 +45,7 @@ public sealed record DownloadRequest
         if (!IsWebUrl(Url)) throw new ArgumentException("http または https の動画・ページURLを指定してください。");
         var page = new Uri(Url);
         if (SiteSessionScope.IsYouTube(page.Host) && !IsYouTubeVideo(page))
-            throw new ArgumentException("YouTubeの動画ページを開いて、そのURLを追加してください。トップページや検索結果のURLでは保存できません。");
+            throw new ArgumentException("YouTubeの動画ページを開いて、そのURLを入力してください。トップページや検索結果のURLでは保存できません。");
     }
 
     private static bool IsYouTubeVideo(Uri page)

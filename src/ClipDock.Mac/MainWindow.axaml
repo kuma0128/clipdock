@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:app="using:ClipDock.App"
         x:Class="ClipDock.Mac.MainWindow"
-        Title="ClipDock — 動画と音声を保存。" Width="1120" Height="820" MinWidth="960" MinHeight="740" WindowStartupLocation="CenterScreen"
+        Title="ClipDock" Width="1120" Height="820" MinWidth="960" MinHeight="740" WindowStartupLocation="CenterScreen"
         Background="#F8FBF8" Foreground="#20352B" FontSize="13">
   <Grid ColumnDefinitions="228,*">
     <Border Background="#F0F7F1" BorderBrush="#D5E2D8" BorderThickness="0,0,1,0">
@@ -11,14 +11,13 @@
             <Border Background="#C6EBCF" CornerRadius="10" Width="38" Height="38"><TextBlock Text="↓" Foreground="#14271C" FontSize="27" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
             <TextBlock Text="ClipDock" FontSize="23" FontWeight="SemiBold" Margin="10,2,0,0" VerticalAlignment="Center" />
           </StackPanel>
-          <TextBlock Text="動画と音声を、手元に。" FontSize="10" Foreground="{StaticResource Muted}" Margin="0,14,0,35" />
-          <TextBlock Text="ライブラリ" Foreground="{StaticResource Muted}" FontSize="11" Margin="8,0,0,12" />
+          <TextBlock Text="ライブラリ" Foreground="{StaticResource Muted}" FontSize="11" Margin="8,35,0,12" />
           <Button x:Name="AllFilter" Content="↓    すべてのダウンロード" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="Filter_Click" Tag="all" Margin="0,0,0,7" Background="#D9EEDF" />
           <Button x:Name="ActiveFilter" Content="◷    ダウンロード中" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="Filter_Click" Tag="active" Margin="0,0,0,7" Background="Transparent" />
           <Button x:Name="CompletedFilter" Content="✓    保存したファイル" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="Filter_Click" Tag="completed" Background="Transparent" />
         </StackPanel>
         <StackPanel DockPanel.Dock="Bottom" VerticalAlignment="Bottom">
-          <Button x:Name="EngineButton" Content="保存エンジンを準備" HorizontalAlignment="Stretch" ToolTip.Tip="動画・音声の取得と変換に使う補助プログラムを準備します。導入済みなら更新を確認します。" Click="InstallEngine_Click" Margin="0,0,0,8" />
+          <Button x:Name="EngineButton" Content="保存エンジンを準備" HorizontalAlignment="Stretch" ToolTip.Tip="動画・音声の取得と変換に使う補助プログラムをもう一度取得します。" Click="InstallEngine_Click" Margin="0,0,0,8" />
           <TextBlock x:Name="EngineStatus" Foreground="{StaticResource Muted}" FontSize="10" TextWrapping="Wrap" Margin="4,4,0,15" />
           <TextBlock x:Name="VersionLabel" Foreground="#5C7163" FontSize="10" Margin="4,0,0,0" />
         </StackPanel>
@@ -30,13 +29,12 @@
         <StackPanel>
           <TextBlock Text="ClipDock for Mac" FontSize="10" Foreground="{StaticResource Accent}" Margin="0,0,0,8" />
           <TextBlock Text="ダウンロード" FontSize="30" FontWeight="SemiBold" />
-          <TextBlock Text="URLを追加して、MP4またはMP3で保存。" Foreground="{StaticResource Muted}" Margin="0,8,0,0" />
         </StackPanel>
         <Border HorizontalAlignment="Right" VerticalAlignment="Top" Background="#E6F4E9" CornerRadius="14" Padding="12,6"><TextBlock Text="MP4 / MP3" Foreground="{StaticResource Accent}" FontSize="11" /></Border>
       </Grid>
       <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#D5E2D8" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,18">
         <StackPanel>
-          <TextBlock Text="URLから追加" FontWeight="SemiBold" Margin="0,0,0,12" />
+          <TextBlock Text="URLから保存" FontWeight="SemiBold" Margin="0,0,0,12" />
           <Grid ColumnDefinitions="*,98,122,94">
             <TextBox x:Name="UrlInput" ToolTip.Tip="動画ページまたは動画ファイルのURL" KeyDown="UrlInput_KeyDown" AutomationProperties.Name="動画ページのURL" />
             <ComboBox x:Name="FormatBox" Grid.Column="1" SelectedIndex="0" Margin="10,0,0,0" AutomationProperties.Name="保存形式">
@@ -45,7 +43,7 @@
             <ComboBox x:Name="QualityBox" Grid.Column="2" SelectedIndex="1" Margin="10,0" AutomationProperties.Name="最大画質" ToolTip.Tip="選んだ画質は上限です。4Kを選んでも元の動画より高画質にはなりません。">
               <ComboBoxItem Content="最高画質" Tag="best" /><ComboBoxItem Content="1080p" Tag="1080" /><ComboBoxItem Content="720p" Tag="720" /><ComboBoxItem Content="480p" Tag="480" /><ComboBoxItem Content="4K" Tag="2160" />
             </ComboBox>
-            <Button Grid.Column="3" Content="↓  追加" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#C6EBCF" Foreground="#132B1D" FontWeight="SemiBold" Click="Add_Click" />
+            <Button Grid.Column="3" Content="↓  保存" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#C6EBCF" Foreground="#132B1D" FontWeight="SemiBold" Click="Add_Click" />
           </Grid>
           <Grid Margin="0,15,0,0" ColumnDefinitions="*,Auto">
             <StackPanel>
@@ -67,7 +65,7 @@
           <Button Grid.Column="2" Content="開く" Click="OpenOutput_Click" Padding="12,10" />
         </Grid>
       </Border>
-      <Border Grid.Row="3" Background="#EDF5EF" CornerRadius="7" Padding="12,10" Margin="0,0,0,18"><TextBlock x:Name="Notice" Text="URLを貼り付け、保存形式と保存先を選んで追加してください。" Foreground="#435F4D" TextWrapping="Wrap" FontSize="12" /></Border>
+      <Border Grid.Row="3" Background="#EDF5EF" CornerRadius="7" Padding="12,10" Margin="0,0,0,18"><TextBlock x:Name="Notice" Text="URLを貼り付け、保存形式と保存先を選んで「保存」を押してください。" Foreground="#435F4D" TextWrapping="Wrap" FontSize="12" /></Border>
       <Grid Grid.Row="4" Margin="0,0,0,12" ColumnDefinitions="*,Auto">
         <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
           <TextBlock x:Name="CountLabel" Text="ライブラリ  /  0 件" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
@@ -118,8 +116,7 @@
         </ScrollViewer>
         <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,15">
           <TextBlock Text="↓" FontSize="44" Foreground="#4D8060" HorizontalAlignment="Center" />
-          <TextBlock Text="保存したい動画を見つけよう" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,12,0,10" />
-          <TextBlock Text="上の入力欄にURLを貼り付けて追加。" Foreground="{StaticResource Muted}" TextAlignment="Center" />
+          <TextBlock Text="上の入力欄にURLを貼り付けて「保存」を押してください。" Foreground="{StaticResource Muted}" TextAlignment="Center" Margin="0,12,0,0" />
           <TextBlock Text="ログインが必要なサイトは「ログイン」から接続できます。" Foreground="{StaticResource Muted}" TextAlignment="Center" Margin="0,6,0,0" />
         </StackPanel>
       </Grid>
