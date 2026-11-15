@@ -64,8 +64,21 @@ public static class AppPaths
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     private static extern int SHGetKnownFolderPath(in Guid folderId, uint flags, IntPtr token, out IntPtr path);
 
-    public static string Data => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipDock");
+    private static string? dataOverride;
+
+    // Windows: %LOCALAPPDATA%\ClipDock. macOS: ~/Library/Application Support/ClipDock.
+    public static string Data => dataOverride ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipDock");
     public static string Tools => Path.Combine(Data, "tools");
+
+    // Development and automated checks only: keeps a test run away from the user's real settings and history.
+    public static void UseDataDirectory(string directory)
+    {
+        if (!Path.IsPathFullyQualified(directory)) throw new ArgumentException("The data directory must be an absolute path.");
+        dataOverride = Path.GetFullPath(directory);
+    }
+
+    // Engine executables carry the platform's usual file name: "yt-dlp.exe" on Windows, "yt-dlp" elsewhere.
+    public static string Executable(string name) => OperatingSystem.IsWindows() ? name + ".exe" : name;
     public static string DefaultOutput => Path.Combine(DownloadsDirectory(), "ClipDock");
 
     private static string DownloadsDirectory()

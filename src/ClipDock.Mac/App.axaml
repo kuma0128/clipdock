@@ -1,0 +1,40 @@
+<Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="ClipDock.Mac.App" Name="ClipDock" RequestedThemeVariant="Light">
+  <Application.Resources>
+    <SolidColorBrush x:Key="Muted" Color="#596D60" />
+    <SolidColorBrush x:Key="Accent" Color="#28734B" />
+    <Color x:Key="SystemAccentColor">#28734B</Color>
+    <!-- One flat, rounded button everywhere; each button keeps its own background while hovered or disabled. -->
+    <ControlTheme x:Key="{x:Type Button}" TargetType="Button">
+      <Setter Property="Foreground" Value="#243C2E" />
+      <Setter Property="Background" Value="#E7F1E9" />
+      <Setter Property="Padding" Value="16,10" />
+      <Setter Property="CornerRadius" Value="7" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <ContentPresenter x:Name="PART_ContentPresenter" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Foreground="{TemplateBinding Foreground}" FontSize="{TemplateBinding FontSize}" FontWeight="{TemplateBinding FontWeight}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Opacity" Value="0.8" /></Style>
+      <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Opacity" Value="0.4" /></Style>
+    </ControlTheme>
+  </Application.Resources>
+  <Application.Styles>
+    <FluentTheme />
+    <Style Selector="TextBox"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#20352B" /><Setter Property="BorderBrush" Value="#C6D7CB" /><Setter Property="Padding" Value="12,10" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
+    <Style Selector="ComboBox"><Setter Property="Foreground" Value="#20352B" /><Setter Property="Background" Value="White" /><Setter Property="BorderBrush" Value="#C6D7CB" /><Setter Property="HorizontalAlignment" Value="Stretch" /><Setter Property="VerticalAlignment" Value="Stretch" /></Style>
+    <Style Selector="CheckBox"><Setter Property="Foreground" Value="#20352B" /></Style>
+    <Style Selector="ProgressBar"><Setter Property="Foreground" Value="#4E9970" /><Setter Property="Background" Value="#E4EEE6" /><Setter Property="Height" Value="4" /><Setter Property="MinHeight" Value="4" /><Setter Property="CornerRadius" Value="2" /></Style>
+  </Application.Styles>
+  <NativeMenu.Menu>
+    <NativeMenu>
+      <NativeMenuItem Header="ClipDock について" Click="About_Click" />
+    </NativeMenu>
+  </NativeMenu.Menu>
+</Application>

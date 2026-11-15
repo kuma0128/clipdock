@@ -1,0 +1,132 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:app="using:ClipDock.App"
+        x:Class="ClipDock.Mac.MainWindow"
+        Title="ClipDock — 動画と音声を保存。" Width="1120" Height="820" MinWidth="960" MinHeight="740" WindowStartupLocation="CenterScreen"
+        Background="#F8FBF8" Foreground="#20352B" FontSize="13">
+  <Grid ColumnDefinitions="228,*">
+    <Border Background="#F0F7F1" BorderBrush="#D5E2D8" BorderThickness="0,0,1,0">
+      <DockPanel Margin="22,28">
+        <StackPanel DockPanel.Dock="Top">
+          <StackPanel Orientation="Horizontal">
+            <Border Background="#C6EBCF" CornerRadius="10" Width="38" Height="38"><TextBlock Text="↓" Foreground="#14271C" FontSize="27" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+            <TextBlock Text="ClipDock" FontSize="23" FontWeight="SemiBold" Margin="10,2,0,0" VerticalAlignment="Center" />
+          </StackPanel>
+          <TextBlock Text="動画と音声を、手元に。" FontSize="10" Foreground="{StaticResource Muted}" Margin="0,14,0,35" />
+          <TextBlock Text="ライブラリ" Foreground="{StaticResource Muted}" FontSize="11" Margin="8,0,0,12" />
+          <Button x:Name="AllFilter" Content="↓    すべてのダウンロード" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="Filter_Click" Tag="all" Margin="0,0,0,7" Background="#D9EEDF" />
+          <Button x:Name="ActiveFilter" Content="◷    ダウンロード中" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="Filter_Click" Tag="active" Margin="0,0,0,7" Background="Transparent" />
+          <Button x:Name="CompletedFilter" Content="✓    保存したファイル" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="Filter_Click" Tag="completed" Background="Transparent" />
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" VerticalAlignment="Bottom">
+          <Button x:Name="EngineButton" Content="保存エンジンを準備" HorizontalAlignment="Stretch" ToolTip.Tip="動画・音声の取得と変換に使う補助プログラムを準備します。導入済みなら更新を確認します。" Click="InstallEngine_Click" Margin="0,0,0,8" />
+          <TextBlock x:Name="EngineStatus" Foreground="{StaticResource Muted}" FontSize="10" TextWrapping="Wrap" Margin="4,4,0,15" />
+          <TextBlock x:Name="VersionLabel" Foreground="#5C7163" FontSize="10" Margin="4,0,0,0" />
+        </StackPanel>
+        <Panel />
+      </DockPanel>
+    </Border>
+    <Grid Grid.Column="1" Margin="32,28,32,24" RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
+      <Grid Margin="0,0,0,24">
+        <StackPanel>
+          <TextBlock Text="ClipDock for Mac" FontSize="10" Foreground="{StaticResource Accent}" Margin="0,0,0,8" />
+          <TextBlock Text="ダウンロード" FontSize="30" FontWeight="SemiBold" />
+          <TextBlock Text="URLを追加して、MP4またはMP3で保存。" Foreground="{StaticResource Muted}" Margin="0,8,0,0" />
+        </StackPanel>
+        <Border HorizontalAlignment="Right" VerticalAlignment="Top" Background="#E6F4E9" CornerRadius="14" Padding="12,6"><TextBlock Text="MP4 / MP3" Foreground="{StaticResource Accent}" FontSize="11" /></Border>
+      </Grid>
+      <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#D5E2D8" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,18">
+        <StackPanel>
+          <TextBlock Text="URLから追加" FontWeight="SemiBold" Margin="0,0,0,12" />
+          <Grid ColumnDefinitions="*,98,122,94">
+            <TextBox x:Name="UrlInput" ToolTip.Tip="動画ページまたは動画ファイルのURL" KeyDown="UrlInput_KeyDown" AutomationProperties.Name="動画ページのURL" />
+            <ComboBox x:Name="FormatBox" Grid.Column="1" SelectedIndex="0" Margin="10,0,0,0" AutomationProperties.Name="保存形式">
+              <ComboBoxItem Content="MP4" Tag="mp4" /><ComboBoxItem Content="MP3" Tag="mp3" />
+            </ComboBox>
+            <ComboBox x:Name="QualityBox" Grid.Column="2" SelectedIndex="1" Margin="10,0" AutomationProperties.Name="最大画質" ToolTip.Tip="選んだ画質は上限です。4Kを選んでも元の動画より高画質にはなりません。">
+              <ComboBoxItem Content="最高画質" Tag="best" /><ComboBoxItem Content="1080p" Tag="1080" /><ComboBoxItem Content="720p" Tag="720" /><ComboBoxItem Content="480p" Tag="480" /><ComboBoxItem Content="4K" Tag="2160" />
+            </ComboBox>
+            <Button Grid.Column="3" Content="↓  追加" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#C6EBCF" Foreground="#132B1D" FontWeight="SemiBold" Click="Add_Click" />
+          </Grid>
+          <Grid Margin="0,15,0,0" ColumnDefinitions="*,Auto">
+            <StackPanel>
+              <CheckBox x:Name="UseLoginBox" IsChecked="True" Content="この保存にログイン情報を使う" AutomationProperties.Name="この保存にログイン情報を使う" />
+              <TextBlock x:Name="LoginStatus" Text="ログインが必要なサイトは「ログイン」から接続できます。" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,5,10,0" TextWrapping="Wrap" />
+            </StackPanel>
+            <Button Grid.Column="1" Content="ログイン" Click="Login_Click" VerticalAlignment="Center" ToolTip.Tip="ClipDock内で保存するサイトにログインします。" />
+          </Grid>
+          <TextBlock Text="MP4は動画、MP3は音声を保存します。画質は元の動画が上限です。" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,10,0,0" />
+        </StackPanel>
+      </Border>
+      <Border Grid.Row="2" Background="#F0F8F2" BorderBrush="#BBD7C4" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,14">
+        <Grid ColumnDefinitions="*,Auto,Auto">
+          <StackPanel>
+            <TextBlock Text="保存先" FontSize="12" Foreground="{StaticResource Muted}" />
+            <TextBlock x:Name="OutputLabel" TextTrimming="CharacterEllipsis" FontSize="12" Margin="0,5,12,0" />
+          </StackPanel>
+          <Button Grid.Column="1" Content="保存先を変更" Click="ChooseOutput_Click" Background="#C6EBCF" Foreground="#132B1D" FontWeight="SemiBold" Padding="14,10" Margin="0,0,8,0" />
+          <Button Grid.Column="2" Content="開く" Click="OpenOutput_Click" Padding="12,10" />
+        </Grid>
+      </Border>
+      <Border Grid.Row="3" Background="#EDF5EF" CornerRadius="7" Padding="12,10" Margin="0,0,0,18"><TextBlock x:Name="Notice" Text="URLを貼り付け、保存形式と保存先を選んで追加してください。" Foreground="#435F4D" TextWrapping="Wrap" FontSize="12" /></Border>
+      <Grid Grid.Row="4" Margin="0,0,0,12" ColumnDefinitions="*,Auto">
+        <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+          <TextBlock x:Name="CountLabel" Text="ライブラリ  /  0 件" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+          <TextBlock x:Name="QueueStatus" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,5,0,0" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Text="同時保存" VerticalAlignment="Center" FontSize="11" Margin="0,0,8,0" />
+          <ComboBox x:Name="ConcurrencyBox" SelectedIndex="1" Width="84" AutomationProperties.Name="同時保存数" ToolTip.Tip="動画の取得から変換までを同時に処理する件数。変更しても進行中の保存は中断しません。">
+            <ComboBoxItem Content="1件" Tag="1" /><ComboBoxItem Content="2件" Tag="2" /><ComboBoxItem Content="3件" Tag="3" /><ComboBoxItem Content="4件" Tag="4" />
+          </ComboBox>
+          <Button Content="履歴を消去" Margin="12,0,0,0" Background="Transparent" Foreground="{StaticResource Muted}" Padding="5" FontSize="11" Click="ClearHistory_Click" />
+        </StackPanel>
+      </Grid>
+      <Grid Grid.Row="5">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl x:Name="JobList">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="app:DownloadItem">
+                <Border Background="#FFFFFF" BorderBrush="#D5E2D8" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,0,10">
+                  <StackPanel>
+                    <Grid ColumnDefinitions="46,*,Auto">
+                      <Border Width="34" Height="38" Background="#E7F4EB" CornerRadius="6" VerticalAlignment="Top" HorizontalAlignment="Left"><TextBlock Text="▶" Foreground="#28734B" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+                      <StackPanel Grid.Column="1">
+                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Title}" />
+                        <TextBlock Text="{Binding Meta}" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="2" Text="{Binding FormatLabel}" Foreground="#28734B" FontSize="10" Margin="12,3,0,0" />
+                    </Grid>
+                    <ProgressBar Value="{Binding Percent, Mode=OneWay}" Minimum="0" Maximum="100" Margin="0,16,0,12" />
+                    <Grid ColumnDefinitions="*,Auto">
+                      <StackPanel>
+                        <TextBlock Text="{Binding StateLabel}" FontSize="11" Foreground="#316748" />
+                        <TextBlock Text="{Binding Detail}" FontSize="11" Foreground="{StaticResource Muted}" TextWrapping="Wrap" MaxHeight="72" ToolTip.Tip="{Binding Detail}" Margin="0,5,12,0" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                        <Button Content="キャンセル" Padding="10,7" FontSize="11" Click="Cancel_Click" IsVisible="{Binding CanCancel}" />
+                        <Button Content="元ページ" Padding="10,7" Margin="0,0,6,0" FontSize="11" Click="OpenPage_Click" IsVisible="{Binding CanRetry}" ToolTip.Tip="ブラウザーで元のページを開きます。" />
+                        <Button Content="再試行" Padding="10,7" FontSize="11" Click="Retry_Click" IsVisible="{Binding CanRetry}" ToolTip.Tip="同じURLと保存形式でもう一度取得します。" />
+                        <Button Content="開く" Padding="10,7" FontSize="11" Click="OpenFile_Click" IsVisible="{Binding IsCompleted}" />
+                        <Button Content="場所" Padding="10,7" Margin="6,0,0,0" FontSize="11" Click="ShowFile_Click" IsVisible="{Binding IsCompleted}" ToolTip.Tip="Finderでファイルの場所を表示します。" />
+                      </StackPanel>
+                    </Grid>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+        <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,15">
+          <TextBlock Text="↓" FontSize="44" Foreground="#4D8060" HorizontalAlignment="Center" />
+          <TextBlock Text="保存したい動画を見つけよう" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,12,0,10" />
+          <TextBlock Text="上の入力欄にURLを貼り付けて追加。" Foreground="{StaticResource Muted}" TextAlignment="Center" />
+          <TextBlock Text="ログインが必要なサイトは「ログイン」から接続できます。" Foreground="{StaticResource Muted}" TextAlignment="Center" Margin="0,6,0,0" />
+        </StackPanel>
+      </Grid>
+    </Grid>
+    <!-- Holds the app's sign-in session so cookies can be read while the sign-in window is closed.
+         Kept last and out of the accessibility tree: assistive tools must not walk into an empty web view. -->
+    <NativeWebView x:Name="SessionStore" Width="1" Height="1" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                   IsHitTestVisible="False" Focusable="False" IsTabStop="False" AutomationProperties.AccessibilityView="Raw" />
+  </Grid>
+</Window>

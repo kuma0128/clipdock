@@ -1,4 +1,3 @@
-using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
@@ -7,7 +6,6 @@ namespace ClipDock.Core;
 
 public sealed record SessionCookie(string Domain, string Path, string Name, string Value, bool Secure, bool HttpOnly, long Expires);
 
-[SupportedOSPlatform("windows")]
 public sealed class SessionCookieFile : IDisposable
 {
     public string FilePath { get; }
@@ -24,15 +22,26 @@ public sealed class SessionCookieFile : IDisposable
         if (cookies.Length == 0) return null;
         var dir = new DirectoryInfo(directory);
         if (dir.Exists && dir.Attributes.HasFlag(FileAttributes.ReparsePoint)) throw new IOException("ログイン情報の一時保存先を使用できません。");
-        var security = new DirectorySecurity();
-        security.SetAccessRuleProtection(true, false);
-        security.AddAccessRule(new FileSystemAccessRule(WindowsIdentity.GetCurrent().User!, FileSystemRights.FullControl,
-            InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
-        if (!dir.Exists) dir.Create(security); else dir.SetAccessControl(security);
+        // Only the current user may read the folder that briefly holds session cookies.
+        if (OperatingSystem.IsWindows())
+        {
+            var security = new DirectorySecurity();
+            security.SetAccessRuleProtection(true, false);
+            security.AddAccessRule(new FileSystemAccessRule(WindowsIdentity.GetCurrent().User!, FileSystemRights.FullControl,
+                InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
+            if (!dir.Exists) dir.Create(security); else dir.SetAccessControl(security);
+        }
+        else
+        {
+            const UnixFileMode ownerOnly = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+            if (!dir.Exists) Directory.CreateDirectory(dir.FullName, ownerOnly); else File.SetUnixFileMode(dir.FullName, ownerOnly);
+        }
         var path = Path.Combine(dir.FullName, Guid.NewGuid().ToString("N") + ".cookies");
         try
         {
-            using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+            var options = new FileStreamOptions { Mode = FileMode.CreateNew, Access = FileAccess.Write, Share = FileShare.None };
+            if (!OperatingSystem.IsWindows()) options.UnixCreateMode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
+            using var stream = new FileStream(path, options);
             using var writer = new StreamWriter(stream, new UTF8Encoding(false));
             writer.WriteLine("# Netscape HTTP Cookie File");
             foreach (var c in cookies)

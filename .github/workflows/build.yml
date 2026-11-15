@@ -6,6 +6,36 @@ on:
 permissions:
   contents: read
 jobs:
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-dotnet@v6.1.0
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build app bundles and disk images
+        run: |
+          bash scripts/build-mac.sh arm64
+          bash scripts/build-mac.sh x64
+      - name: Check bundles, the real engine and the windows
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          bash scripts/test-mac.sh x64
+          bash scripts/test-mac.sh arm64
+      - name: Upload macOS check logs
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: mac-check-logs
+          path: artifacts/mac-checks
+          if-no-files-found: ignore
+          retention-days: 7
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: ClipDock-mac
+          path: artifacts/mac
   windows:
     runs-on: windows-latest
     timeout-minutes: 25

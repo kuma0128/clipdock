@@ -14,7 +14,7 @@ public static class DownloadPlan
         var request = input.Validated();
         request.ValidateVideoPage();
         if (!Guid.TryParseExact(jobId, "N", out _)) throw new ArgumentException("Invalid job identifier.");
-        var start = new ProcessStartInfo(Path.Combine(tools, "yt-dlp.exe"))
+        var start = new ProcessStartInfo(Path.Combine(tools, AppPaths.Executable("yt-dlp")))
         {
             // stdin is redirected so the caller can close it: the engine must never wait on (or inherit) a console or pipe.
             UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true,
@@ -24,7 +24,7 @@ public static class DownloadPlan
         string[] args = ["--ignore-config", "--no-playlist", "--no-colors", "--newline", "--progress", "--no-simulate",
             "--encoding", "utf-8", "--windows-filenames", "--trim-filenames", "160", "--no-overwrites",
             "--socket-timeout", "30", "--retries", "3", "--fragment-retries", "3", "--abort-on-unavailable-fragments",
-            "--ffmpeg-location", tools, "--js-runtimes", "deno:" + Path.Combine(tools, "deno.exe"),
+            "--ffmpeg-location", tools, "--js-runtimes", "deno:" + Path.Combine(tools, AppPaths.Executable("deno")),
             "--paths", Path.GetFullPath(output), "--paths", "temp:" + WorkDirectory(output, jobId), "--output", $"%(title).100B [%(id).50B]-{jobId[..8]}.%(ext)s",
             "--progress-template", "download:CLIPDOCK_PROGRESS %(progress)j",
             "--print", "before_dl:CLIPDOCK_TITLE %(title)j", "--print", "before_dl:CLIPDOCK_PARTS %(requested_formats.:.format_id)j",

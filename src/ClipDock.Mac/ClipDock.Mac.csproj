@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The macOS app. Avalonia also runs on Windows, which is how the window is exercised during development. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>ClipDock</AssemblyName><RootNamespace>ClipDock.Mac</RootNamespace><ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- The sign-in window is only created from code. -->
+    <NoWarn>$(NoWarn);AVLN3001</NoWarn>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../ClipDock.Core/ClipDock.Core.csproj" /></ItemGroup>
+  <!-- Shared with the Windows app: these sources have no UI framework dependency. -->
+  <ItemGroup>
+    <Compile Include="../ClipDock.App/DownloadItem.cs" Link="Shared/DownloadItem.cs" />
+    <Compile Include="../ClipDock.App/DownloadEngine.cs" Link="Shared/DownloadEngine.cs" />
+    <Compile Include="../ClipDock.App/DownloadFailure.cs" Link="Shared/DownloadFailure.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Controls.WebView" Version="12.1.2" />
+  </ItemGroup>
+</Project>

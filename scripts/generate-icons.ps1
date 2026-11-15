@@ -36,3 +36,30 @@ $writer.Write([byte]0); $writer.Write([byte]0); $writer.Write([byte]0); $writer.
 $writer.Write([uint16]1); $writer.Write([uint16]32); $writer.Write([uint32]$imageBytes.Length); $writer.Write([uint32]22)
 $writer.Write($imageBytes); $writer.Dispose()
 Write-Output 'Created ClipDock app icon.'
+# macOS app icon source: the same mark inside the margin macOS icons keep around their shape.
+# scripts/build-mac.sh turns this PNG into ClipDock.icns.
+$macSize = 1024
+$macBitmap = [System.Drawing.Bitmap]::new($macSize, $macSize)
+$macGraphics = [System.Drawing.Graphics]::FromImage($macBitmap)
+$macGraphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+$macGraphics.Clear([System.Drawing.Color]::Transparent)
+$macGraphics.TranslateTransform(100, 100)
+$macGraphics.ScaleTransform(824 / 128.0, 824 / 128.0)
+$macShape = [System.Drawing.Drawing2D.GraphicsPath]::new()
+$macShape.AddArc(0, 0, 58, 58, 180, 90)
+$macShape.AddArc(70, 0, 58, 58, 270, 90)
+$macShape.AddArc(70, 70, 58, 58, 0, 90)
+$macShape.AddArc(0, 70, 58, 58, 90, 90)
+$macShape.CloseFigure()
+$macBrush = [System.Drawing.SolidBrush]::new([System.Drawing.ColorTranslator]::FromHtml('#A5E7BA'))
+$macGraphics.FillPath($macBrush, $macShape)
+$macPen = [System.Drawing.Pen]::new([System.Drawing.ColorTranslator]::FromHtml('#142B1D'), 10)
+$macPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+$macPen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+$macGraphics.DrawLine($macPen, 64, 29, 64, 78)
+$macGraphics.DrawLine($macPen, 44, 60, 64, 80)
+$macGraphics.DrawLine($macPen, 84, 60, 64, 80)
+$macGraphics.DrawLine($macPen, 34, 99, 94, 99)
+$macBitmap.Save((Join-Path $root 'src\ClipDock.Mac\icon.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+$macPen.Dispose(); $macBrush.Dispose(); $macShape.Dispose(); $macGraphics.Dispose(); $macBitmap.Dispose()
+Write-Output 'Created ClipDock macOS icon source.'

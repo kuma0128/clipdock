@@ -5,22 +5,45 @@ using System.Security.Cryptography;
 using System.Text.Json;
 
 [assembly: InternalsVisibleTo("ClipDock.Checks")]
+// The app's own engine check (--engine-check) supplies its HTTP client.
+[assembly: InternalsVisibleTo("ClipDock")]
 
 namespace ClipDock.Core;
 
 public static class ToolInstaller
 {
     private static readonly HttpClient Client = new() { Timeout = TimeSpan.FromMinutes(15) };
-    private static readonly string[] Executables = ["yt-dlp.exe", "ffmpeg.exe", "ffprobe.exe", "deno.exe"];
-    private static readonly Component[] Components =
+    private static readonly string[] Executables = [.. new[] { "yt-dlp", "ffmpeg", "ffprobe", "deno" }.Select(AppPaths.Executable)];
+    private static readonly Component[] Components = OperatingSystem.IsMacOS() ? MacComponents() :
     [
         new("yt-dlp/yt-dlp", "yt-dlp.exe", ["yt-dlp.exe"], ["LICENSE", "THIRD_PARTY_LICENSES.txt"]),
         new("yt-dlp/FFmpeg-Builds", "ffmpeg-master-latest-win64-gpl.zip", ["ffmpeg.exe", "ffprobe.exe"], []),
         new("denoland/deno", "deno-x86_64-pc-windows-msvc.zip", ["deno.exe"], ["LICENSE.md"])
     ];
-    private sealed record Component(string Repository, string Asset, string[] Names, string[] Licenses)
+    // Folder: the license folder name when one repository supplies more than one component.
+    // ReleaseLicenses: license files are assets of the same release instead of files in the tagged source tree.
+    private sealed record Component(string Repository, string Asset, string[] Names, string[] Licenses, string? Folder = null, bool ReleaseLicenses = false)
     {
-        public string LicenseFolder => "licenses/" + Repository.Replace('/', '-');
+        public string LicenseFolder => "licenses/" + (Folder ?? Repository.Replace('/', '-'));
+        public string LicenseUrl(string tag, string file) => ReleaseLicenses
+            ? $"https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{file}"
+            : $"https://raw.githubusercontent.com/{Repository}/{Uri.EscapeDataString(tag)}/{file}";
+    }
+
+    // yt-dlp/FFmpeg-Builds has no macOS builds; eugeneware/ffmpeg-static republishes the static GPL builds
+    // per architecture as plain release assets with GitHub digests. Rosetta processes get the x64 set.
+    private static Component[] MacComponents()
+    {
+        var arm = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture == System.Runtime.InteropServices.Architecture.Arm64;
+        var arch = arm ? "arm64" : "x64";
+        string[] ffmpegLicenses = [$"darwin-{arch}.LICENSE"];
+        return
+        [
+            new("yt-dlp/yt-dlp", "yt-dlp_macos", ["yt-dlp"], ["LICENSE", "THIRD_PARTY_LICENSES.txt"]),
+            new("eugeneware/ffmpeg-static", $"ffmpeg-darwin-{arch}", ["ffmpeg"], ffmpegLicenses, "eugeneware-ffmpeg-static-ffmpeg", true),
+            new("eugeneware/ffmpeg-static", $"ffprobe-darwin-{arch}", ["ffprobe"], ffmpegLicenses, "eugeneware-ffmpeg-static-ffprobe", true),
+            new("denoland/deno", $"deno-{(arm ? "aarch64" : "x86_64")}-apple-darwin.zip", ["deno"], ["LICENSE.md"])
+        ];
     }
     private sealed record InstalledComponent(string Repository, string Tag, string Asset, string Url, string Sha256,
         Dictionary<string, string>? Files = null);
@@ -199,9 +222,16 @@ public static class ToolInstaller
             foreach (var entry in zip.Entries.Where(e => e.Name.Contains("license", StringComparison.OrdinalIgnoreCase) || e.Name.Contains("copying", StringComparison.OrdinalIgnoreCase)))
                 if (entry.Name.Length > 0) entry.ExtractToFile(Path.Combine(folder, Path.GetFileName(entry.Name)), true);
         }
+        // A release asset that is the executable itself (macOS) is stored under the engine's own file name.
+        else if (component.Names is [var executable] && executable != component.Asset)
+            File.Move(archive, Path.Combine(staging, executable));
+        if (!OperatingSystem.IsWindows())
+            foreach (var name in component.Names)
+                File.SetUnixFileMode(Path.Combine(staging, name), UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                    UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
         foreach (var licenseFile in component.Licenses)
         {
-            var text = await client.GetStringAsync($"https://raw.githubusercontent.com/{component.Repository}/{Uri.EscapeDataString(release.Tag)}/{licenseFile}", ct);
+            var text = await client.GetStringAsync(component.LicenseUrl(release.Tag, licenseFile), ct);
             await File.WriteAllTextAsync(Path.Combine(folder, licenseFile), text, ct);
         }
         var files = new Dictionary<string, string>(StringComparer.Ordinal);

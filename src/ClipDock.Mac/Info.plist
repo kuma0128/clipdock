@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- @VERSION@ is replaced by scripts/build-mac.sh. The bundle identifier also names the sign-in session's
+     storage; changing it signs every user out. -->
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key><string>ClipDock</string>
+  <key>CFBundleDisplayName</key><string>ClipDock</string>
+  <key>CFBundleIdentifier</key><string>app.clipdock.ClipDock</string>
+  <key>CFBundleExecutable</key><string>ClipDock</string>
+  <key>CFBundleIconFile</key><string>ClipDock</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+  <key>CFBundleShortVersionString</key><string>@VERSION@</string>
+  <key>CFBundleVersion</key><string>@VERSION@</string>
+  <key>CFBundleDevelopmentRegion</key><string>ja</string>
+  <key>LSMinimumSystemVersion</key><string>14.0</string>
+  <key>LSApplicationCategoryType</key><string>public.app-category.video</string>
+  <key>NSHighResolutionCapable</key><true/>
+  <key>NSPrincipalClass</key><string>NSApplication</string>
+</dict>
+</plist>
