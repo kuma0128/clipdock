@@ -24,7 +24,9 @@ public partial class MainWindow : Window
     private readonly ICollectionView view;
     private string outputDirectory = AppPaths.DefaultOutput;
     private string filter = "all";
-    private Task? worker;
+    private readonly DownloadScheduler scheduler = new();
+    private readonly Dictionary<DownloadItem, DownloadOperation> operations = [];
+    private readonly HashSet<DownloadItem> closingJobs = [];
     private Task? installTask;
     private CancellationTokenSource? installCancellation;
     private bool installing;
@@ -53,6 +55,7 @@ public partial class MainWindow : Window
         inboxTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(700) };
         inboxTimer.Tick += (_, _) => ReadInbox();
         inboxTimer.Start();
+        ConcurrencyBox.SelectionChanged += Concurrency_Changed;
         Loaded += (_, _) => ReadInbox();
         Closing += OnClosing;
     }
@@ -86,22 +89,44 @@ public partial class MainWindow : Window
 
     private void StartQueue()
     {
-        if (shuttingDown || installing || worker is { IsCompleted: false } || !ToolInstaller.IsReady(ToolInstaller.FindTools())) return;
-        worker = ProcessQueue();
+        var tools = ToolInstaller.FindTools();
+        if (shuttingDown || installing || !ToolInstaller.IsReady(tools)) return;
+        // The list is newest first; the scheduler consumes work in insertion order.
+        foreach (var item in jobs.Reverse().Where(j => j.State == "queued" && !operations.ContainsKey(j)).ToList())
+        {
+            var operation = scheduler.Enqueue(ct => DownloadEngine.RunAsync(item, tools, action => Dispatcher.Invoke(action), ct));
+            operations.Add(item, operation);
+            _ = ObserveDownloadAsync(item, operation);
+        }
+        EngineButton.IsEnabled = operations.Count == 0;
     }
 
-    private async Task ProcessQueue()
+    private async Task ObserveDownloadAsync(DownloadItem item, DownloadOperation operation)
     {
-        EngineButton.IsEnabled = false;
-        try
+        try { await operation.Completion; }
+        catch (OperationCanceledException)
         {
-            while (!shuttingDown && jobs.LastOrDefault(j => j.State == "queued") is { } item)
-            {
-                await DownloadEngine.RunAsync(item, action => Dispatcher.Invoke(action));
-                SaveState();
-            }
+            // Queued work can be cancelled without invoking the download engine at all.
+            item.State = shuttingDown ? "interrupted" : "cancelled";
+            item.Detail = shuttingDown ? "終了に伴い待機を中断しました。" : "待機を取り消しました。";
         }
-        finally { EngineButton.IsEnabled = true; RefreshSummary(); }
+        catch (Exception ex) { item.State = "failed"; item.Detail = ex.Message; }
+        finally
+        {
+            item.Request = item.Request with { Cookies = [] };
+            operations.Remove(item);
+            EngineButton.IsEnabled = !shuttingDown && !installing && operations.Count == 0;
+            if (!shuttingDown) SaveState();
+            RefreshSummary();
+        }
+    }
+
+    private void Concurrency_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (shuttingDown || ConcurrencyBox.SelectedItem is not ComboBoxItem choice || !int.TryParse(choice.Tag as string, out var count)) return;
+        scheduler.MaxConcurrency = count;
+        SaveState(); StartQueue(); RefreshSummary();
+        Notice.Text = $"同時に保存する動画を{count}件に設定しました。進行中の保存は中断しません。";
     }
 
     private void ReadInbox()
@@ -142,13 +167,13 @@ public partial class MainWindow : Window
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not DownloadItem item) return;
-        if (item.State == "queued") { item.State = "cancelled"; item.Detail = "待機を取り消しました。"; item.Request = item.Request with { Cookies = [] }; }
-        else item.Cancellation?.Cancel();
+        if (operations.TryGetValue(item, out var operation)) { item.Detail = "キャンセルしています…"; operation.Cancel(); }
+        else if (item.State == "queued") { item.State = "cancelled"; item.Detail = "待機を取り消しました。"; item.Request = item.Request with { Cookies = [] }; }
         SaveState();
     }
     private void Retry_Click(object sender, RoutedEventArgs e)
     {
-        if (shuttingDown || (sender as FrameworkElement)?.DataContext is not DownloadItem item || !item.CanRetry) return;
+        if (shuttingDown || (sender as FrameworkElement)?.DataContext is not DownloadItem item || !item.CanRetry || operations.ContainsKey(item)) return;
         if (jobs.Any(j => j.CanCancel && j.Request.Url == item.Request.Url && j.Request.Quality == item.Request.Quality))
         { Notice.Text = "この動画はすでにダウンロード一覧に追加されています。"; return; }
         if (jobs.Count(j => j.CanCancel) >= 100) { Notice.Text = "待機中の動画は100件までです。"; return; }
@@ -171,6 +196,7 @@ public partial class MainWindow : Window
     {
         view.Refresh();
         CountLabel.Text = $"{(filter == "active" ? "ダウンロード中" : filter == "completed" ? "保存した動画" : "ライブラリ")}  /  {view.Cast<object>().Count()} 件     ·     保存完了 {jobs.Count(j => j.IsCompleted)} 件";
+        QueueStatus.Text = $"保存中 {jobs.Count(j => j.IsBusy)} 件  ·  待機 {jobs.Count(j => j.State == "queued")} 件";
         EmptyState.Visibility = view.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
     }
     private void ChooseOutput_Click(object sender, RoutedEventArgs e)
@@ -236,7 +262,7 @@ public partial class MainWindow : Window
     }
     private async void InstallEngine_Click(object sender, RoutedEventArgs e)
     {
-        if (worker is { IsCompleted: false } || installing || shuttingDown) return;
+        if (operations.Count > 0 || installing || shuttingDown) return;
         installTask = InstallEngineAsync();
         await installTask;
     }
@@ -252,12 +278,12 @@ public partial class MainWindow : Window
         }
         catch (OperationCanceledException) { Notice.Text = cancellation.IsCancellationRequested ? "エンジンの準備を中止しました。" : "エンジンの取得が時間内に終わりませんでした。通信環境を確認して再実行してください。"; }
         catch (Exception ex) { Notice.Text = "エンジンの取得に失敗しました: " + ex.Message; }
-        finally { installCancellation = null; installing = false; EngineButton.IsEnabled = true; UpdateEngineStatus(); StartQueue(); }
+        finally { installCancellation = null; installing = false; EngineButton.IsEnabled = !shuttingDown; UpdateEngineStatus(); StartQueue(); }
     }
     private void UpdateEngineStatus() => EngineStatus.Text = ToolInstaller.IsReady(ToolInstaller.FindTools()) ? "● エンジンの準備完了" : "○ 初回はエンジンを準備してください";
     private void ClearHistory_Click(object sender, RoutedEventArgs e)
     {
-        foreach (var job in jobs.Where(j => !j.CanCancel).ToList()) jobs.Remove(job);
+        foreach (var job in jobs.Where(j => !j.CanCancel && !operations.ContainsKey(j)).ToList()) jobs.Remove(job);
         SaveState(); RefreshSummary(); Notice.Text = "完了・失敗・キャンセルの履歴を消去しました。保存した動画ファイルはそのままです。";
     }
     private void LoadState()
@@ -266,10 +292,12 @@ public partial class MainWindow : Window
         // one unreadable file or record must not discard everything else.
         try
         {
-            if (File.Exists(settingsFile) && JsonSerializer.Deserialize<Settings>(File.ReadAllText(settingsFile), Json.Options) is { } settings)
+            if (File.Exists(settingsFile) && JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(settingsFile), Json.Options) is { } settings)
             {
                 if (settings.OutputDirectory is { Length: > 0 } directory && Path.IsPathFullyQualified(directory)) outputDirectory = directory;
                 foreach (ComboBoxItem quality in QualityBox.Items) if ((string)quality.Tag == settings.Quality) QualityBox.SelectedItem = quality;
+                scheduler.MaxConcurrency = Math.Clamp(settings.MaxConcurrentDownloads, 1, DownloadScheduler.MaximumConcurrency);
+                foreach (ComboBoxItem count in ConcurrencyBox.Items) if ((string)count.Tag == scheduler.MaxConcurrency.ToString()) ConcurrencyBox.SelectedItem = count;
             }
         }
         catch (Exception) { Notice.Text = "以前の設定を読み込めませんでした。既定の設定で続行します。"; }
@@ -277,10 +305,11 @@ public partial class MainWindow : Window
         {
             if (!File.Exists(historyFile)) return;
             var saved = JsonSerializer.Deserialize<List<SavedDownload?>>(WindowsProtection.Unprotect(File.ReadAllBytes(historyFile)), Json.Options) ?? [];
+            var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var item in saved.Take(300))
             {
                 if (item?.Request is null || !Guid.TryParseExact(item.Id, "N", out _) ||
-                    item.OutputDirectory is not { Length: > 0 } || !Path.IsPathFullyQualified(item.OutputDirectory)) continue;
+                    item.OutputDirectory is not { Length: > 0 } || !Path.IsPathFullyQualified(item.OutputDirectory) || !ids.Add(item.Id)) continue;
                 DownloadRequest request;
                 try { request = item.Request.Validated() with { Cookies = [] }; }
                 catch (ArgumentException) { continue; }
@@ -297,9 +326,9 @@ public partial class MainWindow : Window
     {
         try
         {
-            File.WriteAllText(settingsFile + ".tmp", JsonSerializer.Serialize(new Settings(outputDirectory, Quality), Json.Options));
+            File.WriteAllText(settingsFile + ".tmp", JsonSerializer.Serialize(new AppSettings(outputDirectory, Quality, scheduler.MaxConcurrency), Json.Options));
             File.Move(settingsFile + ".tmp", settingsFile, true);
-            File.WriteAllBytes(historyFile + ".tmp", WindowsProtection.Protect(JsonSerializer.SerializeToUtf8Bytes(jobs.Take(300).Select(j => j.Save()).ToList(), Json.Options)));
+            File.WriteAllBytes(historyFile + ".tmp", WindowsProtection.Protect(JsonSerializer.SerializeToUtf8Bytes(DownloadHistory.Snapshot(jobs, closingJobs), Json.Options)));
             File.Move(historyFile + ".tmp", historyFile, true);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception) { Notice.Text = "履歴を保存できませんでした: " + ex.Message; }
@@ -308,7 +337,7 @@ public partial class MainWindow : Window
     {
         if (allowClose) return;
         var hasWork = installing || jobs.Any(j => j.CanCancel);
-        if (!hasWork && worker is not { IsCompleted: false }) { inboxTimer.Stop(); SaveState(); return; }
+        if (!hasWork && operations.Count == 0) { inboxTimer.Stop(); SaveState(); return; }
         e.Cancel = true;
         if (shuttingDown) return;
         // The engine download can take many minutes on a slow line; it is cancellable like any other work.
@@ -318,12 +347,13 @@ public partial class MainWindow : Window
         shuttingDown = true;
         inboxTimer.Stop();
         installCancellation?.Cancel();
+        closingJobs.UnionWith(jobs.Where(j => j.CanCancel));
         foreach (var item in jobs.Where(j => j.State == "queued").ToList()) { item.State = "interrupted"; item.Request = item.Request with { Cookies = [] }; }
-        foreach (var item in jobs.Where(j => j.IsBusy).ToList()) item.Cancellation?.Cancel();
+        var stopDownloads = scheduler.StopAsync();
         try
         {
             if (installTask is not null) await installTask;
-            if (worker is not null) await worker;
+            await stopDownloads;
         }
         catch (Exception) { /* The window closes either way; the state below is still saved. */ }
         SaveState(); allowClose = true; Close();

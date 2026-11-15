@@ -12,28 +12,29 @@ public static partial class DownloadEngine
     [GeneratedRegex(@"https?://[^\s""<>]+", RegexOptions.IgnoreCase)]
     private static partial Regex UrlPattern();
 
-    public static async Task RunAsync(DownloadItem item, Action<Action> dispatch)
+    public static async Task RunAsync(DownloadItem item, string tools, Action<Action> dispatch, CancellationToken ct)
     {
-        using var cts = new CancellationTokenSource();
-        item.Cancellation = cts;
-        var ct = cts.Token;
         string? cookieFile = null;
         var errors = new Queue<string>();
         string? resultPath = null;
         Action? finish = null;
         try
         {
+            // Claim the item before the first async file operation. Cancellation during
+            // cookie preparation must stop this operation, not just change its UI label.
+            dispatch(() => { item.State = "downloading"; item.Detail = "動画情報を解析しています…"; });
+            ct.ThrowIfCancellationRequested();
+            var request = item.Request;
             Directory.CreateDirectory(item.OutputDirectory);
-            var tools = ToolInstaller.FindTools();
             if (!ToolInstaller.IsReady(tools)) throw new IOException("左下の「エンジンを準備 / 更新」を押してください。");
-            if (item.Request.Cookies.Count > 0)
+            if (request.Cookies.Count > 0)
             {
                 Directory.CreateDirectory(AppPaths.Secrets);
                 cookieFile = Path.Combine(AppPaths.Secrets, item.Id + ".cookies");
-                await File.WriteAllTextAsync(cookieFile, DownloadPlan.CookieFile(item.Request), new UTF8Encoding(false), ct);
+                await File.WriteAllTextAsync(cookieFile, DownloadPlan.CookieFile(request), new UTF8Encoding(false), ct);
             }
-            using var process = new Process { StartInfo = DownloadPlan.Create(item.Request, tools, item.OutputDirectory, item.Id, cookieFile) };
-            dispatch(() => { item.State = "downloading"; item.Detail = "動画情報を解析しています…"; });
+            ct.ThrowIfCancellationRequested();
+            using var process = new Process { StartInfo = DownloadPlan.Create(request, tools, item.OutputDirectory, item.Id, cookieFile) };
             process.Start();
             // Nothing is ever typed into the engine: an immediate EOF makes any prompt fail fast instead of hanging the queue.
             try { process.StandardInput.Close(); } catch (IOException) { }
@@ -75,7 +76,7 @@ public static partial class DownloadEngine
                     if (HandleLine(line) || string.IsNullOrWhiteSpace(line)) continue;
                     // Do not retain signed URL query strings or cookies in the diagnostic history.
                     var safe = UrlPattern().Replace(line, match => Uri.TryCreate(match.Value, UriKind.Absolute, out var u) ? u.GetLeftPart(UriPartial.Path) : "[URL]");
-                    foreach (var cookie in item.Request.Cookies.Where(c => c.Value.Length > 3)) safe = safe.Replace(cookie.Value, "[Cookie]", StringComparison.Ordinal);
+                    foreach (var cookie in request.Cookies.Where(c => c.Value.Length > 3)) safe = safe.Replace(cookie.Value, "[Cookie]", StringComparison.Ordinal);
                     errors.Enqueue(DownloadRequest.CleanText(safe, 500));
                     while (errors.Count > 6) errors.Dequeue();
                 }
@@ -95,12 +96,11 @@ public static partial class DownloadEngine
         finally
         {
             var cleaned = cookieFile is null || await DeleteSecretAsync(cookieFile);
-            item.Request = item.Request with { Cookies = [] };
-            item.Cancellation = null;
             // Terminal states enable retry/clear/close. Publish them only after the cookie
             // cleanup has finished, so those actions cannot abandon an active cleanup task.
             dispatch(() =>
             {
+                item.Request = item.Request with { Cookies = [] };
                 finish?.Invoke();
                 if (!cleaned)
                 {

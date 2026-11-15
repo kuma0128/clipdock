@@ -25,7 +25,9 @@ Chromeで開いている動画を、WindowsアプリでMP4として保存する�
 - **右クリック:** 動画・リンクまたはページのコンテキストメニューから保存できます。失敗した場合は拡張アイコンに「!」が付き、アイコンにマウスを乗せると理由が表示されます。
 - **URL貼り付け:** WindowsアプリにページURLや動画URLを貼り付け、画質を指定して追加できます。
 
-初期保存先は `Downloads\ClipDock`。保存先の変更は以降に追加する動画へ適用されます。動画は1件ずつ順番に処理します。最高画質／2160p／1080p／720p／480pを選べます。指定解像度は上限で、元動画によってはそれ以下になります。
+初期保存先は `Downloads\ClipDock`。保存先の変更は以降に追加する動画へ適用されます。最高画質／2160p／1080p／720p／480pを選べます。指定解像度は上限で、元動画によってはそれ以下になります。
+
+動画は初期設定で**2件を同時に保存**します。一覧上部の「同時保存」で1〜4件に変更でき、次回起動時にも設定が引き継がれます。空きができると待機中の動画を追加した順に開始します。変換中の動画も同時保存数に含みます。件数を減らしても進行中の保存は中断せず、空きができるまで新しい動画の開始を待ちます。1件のキャンセルや失敗は、ほかの保存に影響しません。
 
 映像と音声が分かれている場合は結合し、必要に応じてMP4に変換します。進捗が100%になった後も結合・変換は続くため、**「保存完了」になるまで待ってください**。MP4はコンテナ形式で、元からMP4の場合は映像コーデックを保持することがあります。画質は解像度を優先して選び、同じ解像度ならH.264 / AACを優先します。そのため、H.264が1080pまでのサイトで2160pや最高画質を選ぶと、映像がVP9やAV1になることがあります。再生できない機器向けには1080p以下を選んでください。
 
@@ -94,12 +96,15 @@ dotnet build ClipDock.slnx -c Release
 dotnet run --project tests/ClipDock.Checks -c Release
 npm test
 npm run check
+
+# 実エンジンで並列保存・変換・キャンセル・再開・終了を確認（ツール同梱版の生成後）
+node scripts/smoke-downloads.mjs artifacts/ClipDock-win-x64/tools
 ```
 
 生成先は `artifacts\ClipDock-win-x64` と `artifacts\ClipDock-win-x64.zip` です。GitHub Actionsでも同じチェックとエンジン未同梱パッケージの生成を行います。バイナリはソースリポジトリにコミットしません。コード署名やChrome Web Storeへの登録は行っていません。
 
 構成: `ClipDock.App`（WPF UI・キュー）、`ClipDock.NativeHost`（Chromeとのプロトコル・起動）、`ClipDock.Core`（検証・コマンド生成・DPAPI・ツール取得）、`extension`（Manifest V3）。各ダウンロードに識別子を付け、同名動画の衝突を避けています。
 
-自動チェックはURL／Cookie検証、引数の分離、進捗解析、出力先制約、Native Messagingの断片読み取り／サイズ制限、暗号化、拡張の検出／遷移／Cookie同意／通信を確認します。**実際のChrome操作・実サイトからの動画保存・UI表示は手動確認の対象です。** 手順は [docs/manual-checks.md](docs/manual-checks.md) を参照してください。
+自動チェックはURL／Cookie検証、引数の分離、進捗解析、出力先制約、並列保存数と待機順、個別キャンセルと終了時の後処理、履歴の保持、Native Messagingの断片読み取り／サイズ制限、暗号化、拡張の検出／遷移／Cookie同意／通信を確認します。任意の `smoke-downloads.mjs` は自作の動画をローカルHTTPで配信し、実際の同時転送と音声付きMP4を確認します。アプリの設定・履歴は変更せず、出力は `artifacts/parallel-smoke-*` に残します。**実際のChrome操作・実サイトからの動画保存・UI表示は手動確認の対象です。** 手順は [docs/manual-checks.md](docs/manual-checks.md) を参照してください。
 
 実装時に参照した公式資料: [Chrome Native Messaging](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging)、[webRequest](https://developer.chrome.com/docs/extensions/reference/api/webRequest)、[yt-dlp](https://github.com/yt-dlp/yt-dlp)、[yt-dlp EJS / Deno](https://github.com/yt-dlp/yt-dlp/wiki/EJS)。

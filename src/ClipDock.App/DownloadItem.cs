@@ -11,7 +11,6 @@ public sealed class DownloadItem : INotifyPropertyChanged
     public DownloadRequest Request { get; set; } = new();
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.Now;
     public string OutputDirectory { get; init; } = "";
-    public CancellationTokenSource? Cancellation { get; set; }
     private string title = "";
     private string state = "queued";
     private string detail = "順番を待っています";
@@ -53,4 +52,15 @@ public sealed class DownloadItem : INotifyPropertyChanged
 }
 
 public sealed record SavedDownload(string Id, DownloadRequest Request, DateTimeOffset CreatedAt, string OutputDirectory, string Title, string State, string FilePath, string Detail);
-public sealed record Settings(string OutputDirectory, string Quality);
+
+public static class DownloadHistory
+{
+    public static List<SavedDownload> Snapshot(IEnumerable<DownloadItem> source, IEnumerable<DownloadItem>? preserve = null)
+    {
+        var jobs = source.ToList();
+        var required = preserve?.ToHashSet() ?? [];
+        var selected = jobs.Where(j => j.CanCancel || required.Contains(j))
+            .Concat(jobs.Where(j => !j.CanCancel && !required.Contains(j))).Take(300).ToHashSet();
+        return jobs.Where(selected.Contains).Select(j => j.Save()).ToList();
+    }
+}

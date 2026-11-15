@@ -4,6 +4,9 @@ using System.Text;
 using System.Text.Json;
 using ClipDock.Core;
 
+if (args is ["--download-smoke", var tools, var server, var output])
+    return await DownloadSmokeChecks.RunAsync(tools, server, output);
+
 // A hidden helper outlives its launcher so the test can detect inherited protocol pipes.
 if (args is ["--stdio-holder"]) { Thread.Sleep(10000); return 0; }
 if (args is ["--launch-probe"])
@@ -249,6 +252,7 @@ void WithToolPackage(Action<string, string, string[]> check)
     finally { Directory.Delete(directory, true); }
 }
 
+QueueChecks.Run(Check);
 Console.WriteLine($"{passed} passed; {failed} failed.");
 return failed == 0 ? 0 : 1;
 
