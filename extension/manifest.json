@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "ClipDock — MP4で保存",
+  "version": "1.0.0",
+  "description": "Chromeで見ている動画を、ClipDockでMP4に保存。動画上の保存ボタンと検出一覧に対応。",
+  "minimum_chrome_version": "120",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwYpuBM1/qOHX+lvHOYVgYl0mxJwIgu6QRjTlnd5bSrFr8CiRn3nCUZl9bDqUK0wdxGQj/sSuYmG9YHKRmdDP14CddzrebtG1RJa7FqzSiLUZr58JSfMklq6TJDO49ALORW7vlY0VuKmYpUvyw5/BEcbck2llt9RyRagSAYk7DNsIiUYroPZOTjl8jTGuCGwzTWWYv/RucnP+4qxz9myDAoTQHp6WKzZjEWuCmav2pr/nNCfubyzfsczTLTLK/CV2W1dEb4dpt4105wN3ex1+sKJ2CrP2oEkUiOBWK0uRuChnwA6LHCToG4sTBM4lwcu2ZiYeG1aZkfyroVcz8CmXEwIDAQAB",
+  "permissions": ["activeTab", "storage", "nativeMessaging", "webRequest", "webNavigation", "contextMenus"],
+  "optional_permissions": ["cookies"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_popup": "popup.html", "default_title": "ClipDockで動画を保存" },
+  "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
+  "content_scripts": [{ "matches": ["http://*/*", "https://*/*"], "js": ["content.js"], "run_at": "document_idle", "all_frames": true }],
+  "incognito": "not_allowed",
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'" }
+}
