@@ -1,5 +1,19 @@
 # Windowsインストーラーの配布
 
+## 公式サイトとダウンロード
+
+公式サイトはCloudflare Pagesの `clipdock` プロジェクトへ配置します。R2の `clipdock-releases` バケットは非公開のまま使用し、Pages Functionsの `CLIPDOCK_RELEASES` バインディングから配布ファイルだけを読み出します。
+
+公開するEXEと `.exe.sha256` をバケット直下にアップロードします。公開可能なファイル名は `functions/downloads/[[file]].js` で指定し、新しいバージョンではこの一覧も更新してください。
+
+```powershell
+npm ci
+$env:CLOUDFLARE_ACCOUNT_ID = '<公開先のアカウントID>'
+npm run deploy:site
+```
+
+Cloudflareへログイン済みの環境で実行します。サイトは `website/`、配布ルートは `/downloads/<ファイル名>` です。公開URLから取得したEXEのSHA-256と、公開用ファイルのSHA-256が一致することを確認してください。R2やPages Functionsの利用量はCloudflareダッシュボードで確認できます。
+
 既定のビルドは公開CAのコード署名証明書を要求します。未署名で正式配布する場合は `-AllowUnsignedRelease` を明示します。署名に失敗しても未署名へ自動切り替えはしません。
 
 ## 必要なもの

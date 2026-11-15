@@ -3,6 +3,7 @@
 .vs/
 .vscode/
 .wrangler/
+node_modules/
 artifacts/
 TestResults/
 *.user

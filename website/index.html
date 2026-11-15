@@ -50,6 +50,7 @@
           <div class="requirements">
             <p>Windows 10 / 11（x64）・Google Chrome</p>
             <p>WindowsアプリとChrome拡張の両方が必要です。<br>拡張機能だけでは動画を保存できません。</p>
+            <p>インストーラーは未署名です。Windowsに警告が表示される場合があります。<a href="#windows-warning">確認方法</a></p>
           </div>
           <p class="store-status"><span class="status-dot" aria-hidden="true"></span>Chrome拡張はストア公開準備中</p>
         </div>
@@ -133,6 +134,10 @@
         <p>対応範囲と、データの扱いについて。</p>
       </div>
       <div class="questions">
+        <details id="windows-warning">
+          <summary>Windowsに警告が表示されたら？<span aria-hidden="true">+</span></summary>
+          <div class="answer"><p>現在のインストーラーにはコード署名がなく、Windowsが発行元を確認できません。この公式サイトから取得したファイルであることを確認してください。公開されているSHA-256と比較すると、ファイルが配布物と同じか確認できます。</p><p>確認したうえで実行する場合は、SmartScreenの「詳細情報」から「実行」を選びます。「実行」が表示されない場合や、取得元を確認できない場合は中止してください。Windowsの保護機能を無効にする必要はありません。</p></div>
+        </details>
         <details>
           <summary>拡張機能だけで使えますか？<span aria-hidden="true">+</span></summary>
           <div class="answer"><p>別途、ClipDockのWindowsアプリが必要です。動画の取得と変換はWindowsアプリで行います。Windows 10 / 11の64bit版とGoogle Chromeに対応しています。</p></div>
