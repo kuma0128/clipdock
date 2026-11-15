@@ -17,13 +17,14 @@ try
     var request = (await NativeProtocol.ReadAsync<DownloadRequest>(Console.OpenStandardInput(), timeout.Token)).Validated();
     if (request.Action == "ping")
     {
-        await NativeProtocol.WriteAsync(output, new { ok = true, version = "1.0.0", ready = ToolInstaller.IsReady(ToolInstaller.FindTools()) }, timeout.Token);
+        var version = typeof(DownloadRequest).Assembly.GetName().Version!.ToString(3);
+        await NativeProtocol.WriteAsync(output, new { ok = true, version, ready = ToolInstaller.IsReady(ToolInstaller.FindTools()) }, timeout.Token);
         return 0;
     }
     var executable = Path.Combine(AppContext.BaseDirectory, "ClipDock.exe");
     if (!File.Exists(executable)) throw new FileNotFoundException("ClipDock.exeが見つかりません。アプリを再配置してください。");
     Directory.CreateDirectory(AppPaths.Inbox);
-    if (Directory.EnumerateFiles(AppPaths.Inbox, "*.request").Take(101).Count() >= 100)
+    if (request.Action == "download" && Directory.EnumerateFiles(AppPaths.Inbox, "*.request").Take(100).Count() >= 100)
         throw new IOException("待機中のリクエストが多すぎます。ClipDockを開いてください。");
     var id = Guid.NewGuid().ToString("N");
     queuedFile = Path.Combine(AppPaths.Inbox, id + ".request");

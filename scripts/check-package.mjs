@@ -27,7 +27,7 @@ const health = invoke(frame({ action: "ping" }));
 assert.equal(health.status, 0);
 const response = decode(health);
 assert.equal(response.ok, true);
-assert.equal(response.version, "1.0.0");
+assert.equal(response.version, manifest.version, "Native host and extension versions must match");
 console.log(`PASS packaged native protocol handshake (engines ${response.ready ? "ready" : "not bundled"})`);
 assert.equal(decode(invoke(frame({ action: "execute", command: "not-run" }))).ok, false);
 console.log("PASS unsupported native action rejected");
@@ -39,14 +39,27 @@ assert.equal(unauthorized.status, 1); assert.equal(unauthorized.stdout.length, 0
 console.log("PASS unauthorized extension origin rejected");
 const runtime = JSON.parse(readFileSync(join(directory, "ClipDock.runtimeconfig.json"), "utf8"));
 assert.ok(runtime.runtimeOptions.includedFrameworks.some(f => f.name === "Microsoft.WindowsDesktop.App"));
-for (const file of ["ClipDock.exe", "INSTALL.cmd", "Install.ps1", "UNINSTALL.cmd", "Uninstall.ps1", "README.md", "START-HERE.html", "docs/manual-checks.md", ...Object.values(manifest.icons).map(f => "extension/" + f)])
+for (const framework of runtime.runtimeOptions.includedFrameworks) {
+  const folder = join(directory, "licenses", "dotnet", framework.name, framework.version);
+  assert.ok(["LICENSE.TXT", "LICENSE"].some(file => existsSync(join(folder, file))), `Missing ${framework.name} ${framework.version} license`);
+  if (framework.name === "Microsoft.NETCore.App")
+    assert.ok(existsSync(join(folder, "THIRD-PARTY-NOTICES.TXT")), "Missing .NET runtime third-party notices");
+}
+console.log("PASS licenses for the bundled .NET runtime");
+for (const file of ["ClipDock.exe", "INSTALL.cmd", "Install.ps1", "UNINSTALL.cmd", "Uninstall.ps1", "README.md", "LICENSE", "THIRD-PARTY.md", "START-HERE.html", "docs/manual-checks.md", ...Object.values(manifest.icons).map(f => "extension/" + f)])
   assert.ok(existsSync(join(directory, file)), file);
 console.log("PASS self-contained runtime and installation files present");
+const bundled = existsSync(join(directory, "tools"));
+if (bundled) {
+  for (const file of ["versions.json", "licenses"])
+    assert.ok(existsSync(join(directory, "tools", file)), `Missing bundled engine metadata: ${file}`);
+}
 for (const [exe, arg] of [["yt-dlp.exe", "--version"], ["ffmpeg.exe", "-version"], ["ffprobe.exe", "-version"], ["deno.exe", "--version"]]) {
+  if (!bundled) break;
   const path = join(directory, "tools", exe);
-  if (!existsSync(path)) continue;
+  assert.ok(existsSync(path), `Incomplete engine bundle: ${exe}`);
   const result = spawnSync(path, [arg], { timeout: 20000, windowsHide: true, maxBuffer: 1024 * 1024 });
   assert.equal(result.status, 0, `${exe}: ${result.error || result.stderr}`);
   console.log(`PASS ${exe}: ${result.stdout.toString().split(/\r?\n/)[0]}`);
 }
-console.log("Package checks passed. No desktop UI or browser was launched.");
+console.log("Package checks passed.");

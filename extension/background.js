@@ -3,7 +3,9 @@ import { HOST, QUALITIES, isWebUrl, classifyMedia, mergeCandidates, mediaTitle }
 // ClipDock.NativeHost rejects messages above 512 KiB; fail here with a clear reason instead.
 const MAX_NATIVE_REQUEST_BYTES = 480 * 1024;
 const WEB_PATTERNS = ["http://*/*", "https://*/*"];
+const MEDIA_REQUEST_FILTER = { urls: WEB_PATTERNS, types: ["media", "xmlhttprequest", "other", "main_frame", "sub_frame"] };
 const locks = new Map();
+const requestStarts = new Map();
 const keyFor = tabId => `tab-${tabId}`;
 const withoutHash = url => String(url || "").split("#")[0];
 function serial(tabId, action) {
@@ -19,8 +21,12 @@ async function getState(tabId) {
 }
 async function putState(tabId, state) {
   await chrome.storage.session.set({ [keyFor(tabId)]: state });
+  await updateAction(tabId, state);
+}
+async function updateAction(tabId, state) {
   await chrome.action.setBadgeText({ tabId, text: state.candidates.length ? String(state.candidates.length) : "" }).catch(() => {});
   await chrome.action.setBadgeBackgroundColor({ tabId, color: "#427758" }).catch(() => {});
+  await chrome.action.setTitle({ tabId, title: "ClipDockで動画を保存" }).catch(() => {});
 }
 function reset(details, sameDocument) {
   if (details.frameId !== 0) return;
@@ -33,6 +39,7 @@ function reset(details, sameDocument) {
   }).catch(() => {});
 }
 function forget(tabId) {
+  for (const [requestId, request] of requestStarts) if (request.tabId === tabId) requestStarts.delete(requestId);
   void serial(tabId, () => chrome.storage.session.remove(keyFor(tabId))).catch(() => {});
 }
 chrome.webNavigation.onCommitted.addListener(details => reset(details, false));
@@ -40,16 +47,25 @@ chrome.webNavigation.onHistoryStateUpdated.addListener(details => reset(details,
 chrome.tabs.onRemoved.addListener(forget);
 chrome.tabs.onReplaced.addListener((_addedTabId, removedTabId) => forget(removedTabId));
 
+chrome.webRequest.onBeforeRequest.addListener(details => {
+  if (details.tabId >= 0 && !requestStarts.has(details.requestId))
+    requestStarts.set(details.requestId, { tabId: details.tabId, timeStamp: details.timeStamp });
+}, MEDIA_REQUEST_FILTER);
+const finishRequest = details => requestStarts.delete(details.requestId);
+chrome.webRequest.onCompleted.addListener(finishRequest, MEDIA_REQUEST_FILTER);
+chrome.webRequest.onErrorOccurred.addListener(finishRequest, MEDIA_REQUEST_FILTER);
+
 chrome.webRequest.onHeadersReceived.addListener(details => {
   if (details.tabId < 0 || details.statusCode < 200 || details.statusCode >= 300) return;
   const header = name => details.responseHeaders?.find(h => h.name.toLowerCase() === name)?.value || "";
   const kind = classifyMedia(details.url, header("content-type"));
   if (!kind) return;
+  const startedAt = requestStarts.get(details.requestId)?.timeStamp ?? details.timeStamp;
   void serial(details.tabId, async () => {
     const tab = await chrome.tabs.get(details.tabId);
     if (tab.incognito) return;
     const state = await getState(details.tabId);
-    if (details.timeStamp < state.since) return;
+    if (startedAt < state.since) return;
     const frame = await chrome.webNavigation.getFrame({ tabId: details.tabId, frameId: details.frameId }).catch(() => null);
     // A response can arrive after its frame navigated; its timestamp is the response time,
     // so the navigation timestamp alone cannot tell which document initiated it.
@@ -60,7 +76,7 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
       size: details.statusCode === 200 ? Number(header("content-length")) : 0 };
     await putState(details.tabId, { ...state, pageUrl: state.pageUrl || tab.url || "", candidates: mergeCandidates(state.candidates, [candidate]) });
   }).catch(() => {});
-}, { urls: WEB_PATTERNS, types: ["media", "xmlhttprequest", "other", "main_frame", "sub_frame"] }, ["responseHeaders"]);
+}, MEDIA_REQUEST_FILTER, ["responseHeaders"]);
 
 async function native(request) {
   let result;
@@ -108,7 +124,9 @@ async function download(message, sender, { allowCookies = false } = {}) {
   const request = { action: "download", url, pageUrl: tab.url, referer, title: tab.title || "動画", quality, userAgent: navigator.userAgent, cookies };
   if (new TextEncoder().encode(JSON.stringify(request)).length > MAX_NATIVE_REQUEST_BYTES)
     throw new Error(cookies.length ? "ログイン情報が大きすぎて送信できません。ログイン情報を使わずにお試しください。" : "URLが長すぎて送信できません。");
-  return native(request);
+  const result = await native(request);
+  await serial(tab.id, async () => updateAction(tab.id, await getState(tab.id))).catch(() => {});
+  return result;
 }
 
 chrome.runtime.onMessage.addListener((message, sender, respond) => {

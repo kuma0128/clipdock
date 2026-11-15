@@ -3,7 +3,10 @@ $ErrorActionPreference = 'Stop'
 try {
     $installRoot = [System.IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'Programs\ClipDock'))
     $sourceRoot = [System.IO.Path]::GetFullPath($PSScriptRoot)
-    foreach ($required in @('ClipDock.exe', 'ClipDock.NativeHost.exe', 'ClipDock.runtimeconfig.json', 'extension\manifest.json', 'START-HERE.html', 'Uninstall.ps1')) {
+    foreach ($required in @('ClipDock.exe', 'ClipDock.dll', 'ClipDock.deps.json', 'ClipDock.runtimeconfig.json',
+            'ClipDock.Core.dll', 'ClipDock.NativeHost.exe', 'ClipDock.NativeHost.dll', 'ClipDock.NativeHost.deps.json',
+            'ClipDock.NativeHost.runtimeconfig.json', 'coreclr.dll', 'extension\manifest.json',
+            'START-HERE.html', 'LICENSE', 'THIRD-PARTY.md', 'Uninstall.ps1', 'UNINSTALL.cmd')) {
         if (-not (Test-Path -LiteralPath (Join-Path $sourceRoot $required) -PathType Leaf)) { throw "Incomplete distribution: $required. Extract the entire ZIP before running INSTALL.cmd." }
     }
     $running = Get-Process -Name ClipDock,ClipDock.NativeHost -ErrorAction SilentlyContinue
@@ -35,7 +38,6 @@ try {
     Write-Host 'Load the extension folder below from chrome://extensions (Developer mode).'
     Write-Host (Join-Path $installRoot 'extension')
     if (-not $NoLaunch) {
-        # These are the installer's intentional interactive UI, not background helpers.
         Start-Process -FilePath (Join-Path $installRoot 'ClipDock.exe')
         Start-Process -FilePath (Join-Path $installRoot 'START-HERE.html')
     }

@@ -1,6 +1,6 @@
 # ClipDock
 
-Chromeで開いている動画を、WindowsアプリでMP4として保存する個人用ダウンローダーです。RealPlayer Downloadsのような「動画の上から保存する」操作を目指した独立したアプリで、RealPlayerとは関係ありません。
+Chromeで開いている動画をMP4として保存するWindowsアプリです。
 
 ## はじめに
 
@@ -57,6 +57,7 @@ Cookieは待機中の受け渡しファイルではWindows DPAPIで暗号化し�
 | 動画上にボタンがない | ページを再読み込み。拡張の「動画上に保存ボタン」を確認。拡張アイコンから保存も可能 |
 | 検出一覧が空 | 動画を再生し「再検出」。上の「このページの動画を保存」も試す |
 | 403・ログイン要求 | ページを再読み込みし、CookieオプションをONにして再送信 |
+| Xで「No video could be found in this tweet」 | ログイン中のChromeで動画が再生できる場合は、拡張の「この保存にページのログイン情報を使う」をONにして再送信。「再試行」ではログイン情報は復元されない。動画が削除された投稿や動画のない投稿では保存できない |
 | 待機したまま | アプリでエンジンを準備。エンジンの取得中はキューが待機する |
 | 変換中の表示が続く | CPUで再エンコードしている可能性あり。時間がかかる場合がある |
 | yt-dlpの対応サイトで失敗 | アプリの「エンジンを準備 / 更新」を実行。サイト自体の制約で取得できないこともある |
@@ -76,7 +77,7 @@ Cookieは待機中の受け渡しファイルではWindows DPAPIで暗号化し�
 
 拡張の全HTTP(S)サイト権限は、動画上のボタンとメディア通信の検出に使います。検出一覧はChromeのセッションストレージにタブごと最大50件まで置き、ページ遷移・タブ終了で破棄します。Cookie権限はオプションです。シークレットモードは無効です。
 
-外部の収集サーバーやテレメトリーは使いません。通信先は選んだ動画の配信元、yt-dlpが解析で必要とするサイト、およびエンジン取得時のGitHubです。受信ブリッジはNative Messagingを使い、localhostのHTTPポートは開きません。入力URLはHTTP(S)に限定し、プロセスは引数配列で起動します。NativeHostの発信元IDも固定して照合します。
+外部の収集サーバーやテレメトリーは使いません。通信先は選んだ動画の配信元、yt-dlpが解析で必要とするサイト、およびエンジン取得時のGitHubです。Chromeとの連携にはNative Messagingを使います。
 
 アンインストールする場合は、Chromeから拡張を削除してアプリを閉じ、インストール先（`%LOCALAPPDATA%\Programs\ClipDock`）の `UNINSTALL.cmd` をダブルクリックしてください。保存動画とアプリ設定・履歴は残します。不要な場合は `%LOCALAPPDATA%\ClipDock` を別途削除できます。
 
@@ -103,8 +104,8 @@ node scripts/smoke-downloads.mjs artifacts/ClipDock-win-x64/tools
 
 生成先は `artifacts\ClipDock-win-x64` と `artifacts\ClipDock-win-x64.zip` です。GitHub Actionsでも同じチェックとエンジン未同梱パッケージの生成を行います。バイナリはソースリポジトリにコミットしません。コード署名やChrome Web Storeへの登録は行っていません。
 
-構成: `ClipDock.App`（WPF UI・キュー）、`ClipDock.NativeHost`（Chromeとのプロトコル・起動）、`ClipDock.Core`（検証・コマンド生成・DPAPI・ツール取得）、`extension`（Manifest V3）。各ダウンロードに識別子を付け、同名動画の衝突を避けています。
+構成: `ClipDock.App`（WPFアプリ）、`ClipDock.NativeHost`（Chrome連携）、`ClipDock.Core`（ダウンロード処理・設定・エンジン取得）、`extension`（Manifest V3拡張）。
 
-自動チェックはURL／Cookie検証、引数の分離、進捗解析、出力先制約、並列保存数と待機順、個別キャンセルと終了時の後処理、履歴の保持、Native Messagingの断片読み取り／サイズ制限、暗号化、拡張の検出／遷移／Cookie同意／通信を確認します。任意の `smoke-downloads.mjs` は自作の動画をローカルHTTPで配信し、実際の同時転送と音声付きMP4を確認します。アプリの設定・履歴は変更せず、出力は `artifacts/parallel-smoke-*` に残します。**実際のChrome操作・実サイトからの動画保存・UI表示は手動確認の対象です。** 手順は [docs/manual-checks.md](docs/manual-checks.md) を参照してください。
+自動チェックはダウンロード処理、並列実行、Native Messaging、拡張の検出・通信を対象とします。`smoke-downloads.mjs` は生成した動画をローカルHTTPで配信し、保存・変換・キャンセル・再開を確認します。出力先は `artifacts/parallel-smoke-*` です。Chromeの操作と実サイトでの保存は [手動確認手順](docs/manual-checks.md) に沿って確認してください。
 
-実装時に参照した公式資料: [Chrome Native Messaging](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging)、[webRequest](https://developer.chrome.com/docs/extensions/reference/api/webRequest)、[yt-dlp](https://github.com/yt-dlp/yt-dlp)、[yt-dlp EJS / Deno](https://github.com/yt-dlp/yt-dlp/wiki/EJS)。
+同梱ソフトウェアのライセンスは [THIRD-PARTY.md](THIRD-PARTY.md) を参照してください。

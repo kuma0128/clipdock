@@ -12,7 +12,7 @@ public static class ToolInstaller
 {
     private static readonly HttpClient Client = new() { Timeout = TimeSpan.FromMinutes(15) };
     private static readonly string[] Executables = ["yt-dlp.exe", "ffmpeg.exe", "ffprobe.exe", "deno.exe"];
-    static ToolInstaller() => Client.DefaultRequestHeaders.UserAgent.ParseAdd("ClipDock/1.0");
+    static ToolInstaller() => Client.DefaultRequestHeaders.UserAgent.ParseAdd($"ClipDock/{typeof(ToolInstaller).Assembly.GetName().Version!.ToString(3)}");
 
     public static bool IsReady(string path) => Executables.All(name => File.Exists(Path.Combine(path, name)));
     public static string FindTools() => IsReady(AppPaths.Tools) ? AppPaths.Tools : Path.Combine(AppContext.BaseDirectory, "tools");
