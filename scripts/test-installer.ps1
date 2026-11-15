@@ -113,6 +113,11 @@ function Invoke-Uninstall([string]$Step) {
     $uninstallers = @(Get-ChildItem -LiteralPath $installRoot -Filter 'unins*.exe' -File)
     Assert-True ($uninstallers.Count -eq 1) 'Expected one registered uninstaller after installation/update.'
     Invoke-Setup $uninstallers[0].FullName $Step -Uninstall
+    $cleanupDeadline = [DateTime]::UtcNow.AddSeconds(15)
+    while (@(Get-ChildItem -LiteralPath $installRoot -Filter 'unins*.exe' -File -ErrorAction SilentlyContinue).Count -gt 0) {
+        if ([DateTime]::UtcNow -ge $cleanupDeadline) { throw 'Uninstaller did not finish removing its bootstrap executable.' }
+        Start-Sleep -Milliseconds 100
+    }
     foreach ($file in @('ClipDock.exe', 'ClipDock.NativeHost.exe', 'ClipDock.Core.dll')) {
         Assert-True (-not (Test-Path -LiteralPath (Join-Path $installRoot $file))) "Uninstall left application file: $file"
     }
