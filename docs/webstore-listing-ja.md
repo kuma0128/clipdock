@@ -8,7 +8,7 @@
 | 言語 | 日本語 |
 | 価格 | 無料 |
 | 公開範囲 | 公開 |
-| ホームページ | https://github.com/kuma0128/clipdock |
+| ホームページ | https://clipdock-d6z.pages.dev/ |
 | サポート | https://github.com/kuma0128/clipdock/issues |
 | プライバシーポリシー | https://github.com/kuma0128/clipdock/blob/main/PRIVACY.md |
 
@@ -24,7 +24,7 @@ ClipDockは、Chromeで見つけた動画をWindowsアプリへ送り、MP4で�
 
 使い始めるには、下記の配布ページからWindowsアプリを入手してインストールし、「Chrome連携を設定」を実行してください。初回はアプリの「エンジンを準備 / 更新」で保存エンジンを取得します。
 
-https://github.com/kuma0128/clipdock/releases/latest
+https://clipdock-d6z.pages.dev/
 
 ログインが必要な動画では、「この保存にページのログイン情報を使う」を、その保存操作に限って選べます。CookieはPC内のアプリへ渡し、保存処理後に削除します。履歴には残しません。ページと動画のURL、タイトル、保存設定などは、動画の検出・保存のためにPC内で処理します。開発者への利用状況の送信や広告表示はありません。
 
