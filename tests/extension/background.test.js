@@ -9,6 +9,7 @@ let cookieReads = 0;
 const menus = [];
 const actionCalls = [];
 const tab = { id: 7, url: "https://example.com/watch", title: "テスト動画", incognito: false };
+let currentDocumentId = "doc1";
 const base = "chrome-extension://oeolbdjffnnmaanghklbkhfhgihepfhd/";
 globalThis.chrome = {
   runtime: { id: base.split("/")[2], onMessage: event(), onInstalled: event(), onStartup: event(), getURL: path => base + path,
@@ -18,7 +19,7 @@ globalThis.chrome = {
     local: { async get(defaults) { return defaults; } },
   },
   tabs: { async get() { return { ...tab }; }, onRemoved: event(), onReplaced: event() },
-  webNavigation: { onCommitted: event(), onHistoryStateUpdated: event(), async getFrame() { return { url: tab.url, documentId: "doc1" }; } },
+  webNavigation: { onCommitted: event(), onHistoryStateUpdated: event(), async getFrame() { return { url: tab.url, documentId: currentDocumentId }; } },
   webRequest: { onBeforeRequest: event(), onHeadersReceived: event(), onCompleted: event(), onErrorOccurred: event() },
   action: {
     async setBadgeText(details) { actionCalls.push(["badge", details]); }, async setBadgeBackgroundColor() {},
@@ -36,6 +37,16 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 const candidates = async () => (await send({ type: "snapshot", tabId: 7 })).candidates;
 
 test("background integration: discovery, navigation, consent and native bridge", async t => {
+  await t.test("accepts media from the new document when its request starts before navigation commits", async () => {
+    const request = { requestId: "first-media", tabId: 7, frameId: 0, documentId: "doc1", url: "https://cdn.example.com/initial.m3u8" };
+    chrome.webRequest.onBeforeRequest.listeners[0]({ ...request, timeStamp: 80 });
+    chrome.webNavigation.onCommitted.listeners[0]({ tabId: 7, frameId: 0, documentId: "doc1", timeStamp: 90, url: tab.url });
+    chrome.webRequest.onHeadersReceived.listeners[0]({ ...request, documentLifecycle: "active", statusCode: 200, timeStamp: 95,
+      responseHeaders: [{ name: "Content-Type", value: "application/vnd.apple.mpegurl" }] });
+    chrome.webRequest.onCompleted.listeners[0]({ ...request, timeStamp: 96 });
+    await flush();
+    assert.deepEqual((await candidates()).map(candidate => candidate.url), [request.url]);
+  });
   await t.test("captures a playlist with its frame referer", async () => {
     chrome.webNavigation.onCommitted.listeners[0]({ tabId: 7, frameId: 0, timeStamp: 100, url: tab.url });
     await flush();
@@ -93,6 +104,21 @@ test("background integration: discovery, navigation, consent and native bridge",
     chrome.webRequest.onCompleted.listeners[0]({ ...next, timeStamp: 251 });
     await flush();
     assert.deepEqual((await candidates()).map(candidate => candidate.url), [next.url]);
+  });
+  await t.test("a full navigation clears the previous same-document request boundary", async () => {
+    const request = { requestId: "new-document-media", tabId: 7, frameId: 0, documentId: "doc2", url: "https://cdn.example.com/new-page.m3u8" };
+    chrome.webRequest.onBeforeRequest.listeners[0]({ ...request, timeStamp: 215 });
+    tab.url = "https://example.com/new-page";
+    currentDocumentId = "doc2";
+    chrome.webNavigation.onCommitted.listeners[0]({ tabId: 7, frameId: 0, documentId: "doc2", timeStamp: 260, url: tab.url });
+    chrome.webRequest.onHeadersReceived.listeners[0]({ ...request, documentLifecycle: "active", statusCode: 200, timeStamp: 265,
+      responseHeaders: [{ name: "Content-Type", value: "application/vnd.apple.mpegurl" }] });
+    chrome.webRequest.onCompleted.listeners[0]({ ...request, timeStamp: 266 });
+    await flush();
+    assert.deepEqual((await candidates()).map(candidate => candidate.url), [request.url]);
+    content.documentId = currentDocumentId;
+    content.url = tab.url;
+    content.tab = { ...tab };
   });
   await t.test("obsolete content scripts cannot enqueue downloads", async () => {
     const before = nativeCalls.length;

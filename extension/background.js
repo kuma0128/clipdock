@@ -17,7 +17,7 @@ function serial(tabId, action) {
 }
 async function getState(tabId) {
   const key = keyFor(tabId);
-  return (await chrome.storage.session.get(key))[key] || { candidates: [], since: 0, pageUrl: "" };
+  return (await chrome.storage.session.get(key))[key] || { candidates: [], since: 0, historySince: 0, pageUrl: "" };
 }
 async function putState(tabId, state) {
   await chrome.storage.session.set({ [keyFor(tabId)]: state });
@@ -35,7 +35,8 @@ function reset(details, sameDocument) {
     // The playlist was requested only once, so dropping it there would lose it for good:
     // a same-document update counts as navigation only when the URL really changes.
     if (sameDocument && withoutHash((await getState(details.tabId)).pageUrl) === withoutHash(details.url)) return;
-    await putState(details.tabId, { candidates: [], since: details.timeStamp, pageUrl: details.url });
+    await putState(details.tabId, { candidates: [], since: details.timeStamp,
+      historySince: sameDocument ? details.timeStamp : 0, pageUrl: details.url });
   }).catch(() => {});
 }
 function forget(tabId) {
@@ -65,11 +66,12 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
     const tab = await chrome.tabs.get(details.tabId);
     if (tab.incognito) return;
     const state = await getState(details.tabId);
-    if (startedAt < state.since) return;
+    if (startedAt < (state.historySince || 0)) return;
     const frame = await chrome.webNavigation.getFrame({ tabId: details.tabId, frameId: details.frameId }).catch(() => null);
     // A response can arrive after its frame navigated; its timestamp is the response time,
     // so the navigation timestamp alone cannot tell which document initiated it.
     if (details.documentId && (!frame || frame.documentId !== details.documentId)) return;
+    if (!details.documentId && details.timeStamp < state.since) return;
     if (details.documentLifecycle && details.documentLifecycle !== "active") return;
     const candidate = { url: details.url, kind, title: mediaTitle(details.url),
       referer: isWebUrl(frame?.url) ? frame.url : tab.url,
