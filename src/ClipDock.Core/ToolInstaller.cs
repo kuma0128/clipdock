@@ -77,7 +77,21 @@ public static class ToolInstaller
                     foreach (var entry in zip.Entries.Where(e => e.Name.Contains("license", StringComparison.OrdinalIgnoreCase) || e.Name.Contains("copying", StringComparison.OrdinalIgnoreCase)))
                         if (entry.Name.Length > 0) entry.ExtractToFile(Path.Combine(licenseFolder, Path.GetFileName(entry.Name)), true);
                 }
-                versions.Add(new { repository = repo, tag = release.RootElement.GetProperty("tag_name").GetString(), asset = assetName, url, sha256 = digest[7..] });
+                var tag = release.RootElement.GetProperty("tag_name").GetString()!;
+                var licenseFiles = repo switch
+                {
+                    "yt-dlp/yt-dlp" => new[] { "LICENSE", "THIRD_PARTY_LICENSES.txt" },
+                    "denoland/deno" => ["LICENSE.md"],
+                    _ => Array.Empty<string>()
+                };
+                foreach (var licenseFile in licenseFiles)
+                {
+                    var text = await Client.GetStringAsync($"https://raw.githubusercontent.com/{repo}/{Uri.EscapeDataString(tag)}/{licenseFile}", ct);
+                    var folder = Path.Combine(staging, "licenses", repo.Replace('/', '-'));
+                    Directory.CreateDirectory(folder);
+                    await File.WriteAllTextAsync(Path.Combine(folder, licenseFile), text, ct);
+                }
+                versions.Add(new { repository = repo, tag, asset = assetName, url, sha256 = digest[7..] });
             }
             ct.ThrowIfCancellationRequested();
             foreach (var name in Executables) File.Move(Path.Combine(staging, name), Path.Combine(destination, name), true);

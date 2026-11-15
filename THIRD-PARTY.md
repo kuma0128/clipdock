@@ -9,6 +9,6 @@ ClipDock source is MIT licensed. Download engines and the self-contained .NET ru
 | FFmpeg / ffprobe | https://github.com/yt-dlp/FFmpeg-Builds / https://ffmpeg.org/legal.html (the selected `win64-gpl` build includes GPL components) |
 | Deno | https://github.com/denoland/deno/blob/main/LICENSE.md (MIT and third-party components) |
 
-The installer downloads release assets directly from the above official GitHub repositories and checks SHA-256 against GitHub's release asset digest before installation. The selected release, download URL and digest are recorded in `tools/versions.json`. License files included in upstream ZIP archives are retained under `tools/licenses`. Consult the exact upstream release and its source/build instructions before redistributing these binaries.
+The installer downloads release assets directly from the above official GitHub repositories and checks SHA-256 against GitHub's release asset digest before installation. The selected release, download URL and digest are recorded in `tools/versions.json`. License files included in upstream ZIP archives are retained under `tools/licenses`; yt-dlp's license and third-party notices and Deno's license are also fetched from the matching release tags. Consult the exact upstream release and its source/build instructions before redistributing these binaries.
 
 No RealPlayer code, branding or assets are included. Chrome and GitHub are trademarks of their respective owners.
