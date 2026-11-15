@@ -35,7 +35,8 @@ try {
         $shortcut.Save()
     }
     Write-Host "Installed: $installRoot"
-    Write-Host 'Load the extension folder below from chrome://extensions (Developer mode).'
+    Write-Host 'If ClipDock is installed from the Chrome Web Store, reopen the extension.'
+    Write-Host 'Otherwise, load the extension folder below from chrome://extensions (Developer mode).'
     Write-Host (Join-Path $installRoot 'extension')
     if (-not $NoLaunch) {
         Start-Process -FilePath (Join-Path $installRoot 'ClipDock.exe')
