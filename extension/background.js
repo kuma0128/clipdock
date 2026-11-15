@@ -1,4 +1,4 @@
-import { HOST, QUALITIES, isWebUrl, classifyMedia, mergeCandidates, mediaTitle } from "./media.js";
+import { HOST, QUALITIES, isWebUrl, classifyMedia, mergeCandidates, mediaTitle, isRestrictedUrl, restrictionMessage, storeBuild } from "./media.js";
 
 // ClipDock.NativeHost rejects messages above 512 KiB; fail here with a clear reason instead.
 const MAX_NATIVE_REQUEST_BYTES = 480 * 1024;
@@ -64,10 +64,11 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
   const startedAt = requestStarts.get(details.requestId)?.timeStamp ?? details.timeStamp;
   void serial(details.tabId, async () => {
     const tab = await chrome.tabs.get(details.tabId);
-    if (tab.incognito) return;
+    if (tab.incognito || isRestrictedUrl(tab.url)) return;
     const state = await getState(details.tabId);
     if (startedAt < (state.historySince || 0)) return;
     const frame = await chrome.webNavigation.getFrame({ tabId: details.tabId, frameId: details.frameId }).catch(() => null);
+    if (isRestrictedUrl(frame?.url) || isRestrictedUrl(details.initiator)) return;
     // A response can arrive after its frame navigated; its timestamp is the response time,
     // so the navigation timestamp alone cannot tell which document initiated it.
     if (details.documentId && (!frame || frame.documentId !== details.documentId)) return;
@@ -119,11 +120,14 @@ async function download(message, sender, { allowCookies = false } = {}) {
   if (message.pageUrl && message.pageUrl !== tab.url) throw new Error("ページが移動しました。拡張を開き直してください。");
   const url = isWebUrl(message.url) ? message.url : tab.url;
   const referer = sender.tab && isWebUrl(sender.url) ? sender.url : isWebUrl(message.referer) ? message.referer : tab.url;
+  if ([tab.url, message.pageUrl, message.url, message.referer, sender.url, url, referer].some(value => isRestrictedUrl(value)))
+    throw new Error(restrictionMessage);
   const settings = await chrome.storage.local.get({ quality: "1080" });
   const quality = message.quality || settings.quality;
   if (!QUALITIES.has(quality)) throw new Error("画質を選び直してください。");
   const cookies = allowCookies && message.useCookies === true ? await cookiesFor(tab, [tab.url, url, referer]) : [];
-  const request = { action: "download", url, pageUrl: tab.url, referer, title: tab.title || "動画", quality, userAgent: navigator.userAgent, cookies };
+  const request = { action: "download", url, pageUrl: tab.url, referer, title: tab.title || "動画", quality, userAgent: navigator.userAgent, cookies,
+    restrictYouTube: storeBuild };
   if (new TextEncoder().encode(JSON.stringify(request)).length > MAX_NATIVE_REQUEST_BYTES)
     throw new Error(cookies.length ? "ログイン情報が大きすぎて送信できません。ログイン情報を使わずにお試しください。" : "URLが長すぎて送信できません。");
   const result = await native(request);
@@ -137,6 +141,8 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   (async () => {
     if (message?.type === "discovered" && sender.tab && !sender.tab.incognito && isWebUrl(sender.url)) {
       return serial(sender.tab.id, async () => {
+        const tab = await chrome.tabs.get(sender.tab.id);
+        if (isRestrictedUrl(tab.url) || isRestrictedUrl(sender.url)) return { ok: true };
         const frame = await chrome.webNavigation.getFrame({ tabId: sender.tab.id, frameId: sender.frameId });
         if (!frame || frame.documentId !== sender.documentId) return { ok: true };
         const state = await getState(sender.tab.id);
@@ -151,7 +157,8 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       return serial(message.tabId, async () => {
         const tab = await chrome.tabs.get(message.tabId);
         const state = await getState(tab.id);
-        const candidates = withoutHash(state.pageUrl) === withoutHash(tab.url) ? state.candidates : [];
+        const candidates = !isRestrictedUrl(tab.url) && withoutHash(state.pageUrl) === withoutHash(tab.url)
+          ? mergeCandidates(state.candidates, []) : [];
         return { ok: true, ...state, candidates, tab: { id: tab.id, url: tab.url, title: tab.title } };
       });
     }

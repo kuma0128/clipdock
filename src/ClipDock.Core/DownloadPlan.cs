@@ -35,9 +35,24 @@ public static class DownloadPlan
             "--progress-template", "download:CLIPDOCK_PROGRESS %(progress)j",
             "--print", "before_dl:CLIPDOCK_TITLE %(title)j", "--print", "after_move:CLIPDOCK_FILE %(filepath)j"];
         foreach (var arg in args) start.ArgumentList.Add(arg);
+        if (request.RestrictYouTube)
+        {
+            start.ArgumentList.Add("--no-plugin-dirs");
+            start.ArgumentList.Add("--use-extractors");
+            start.ArgumentList.Add("default,-.*youtube.*");
+        }
         if (request.Referer.Length > 0) { start.ArgumentList.Add("--referer"); start.ArgumentList.Add(request.Referer); }
         if (request.UserAgent.Length > 0) { start.ArgumentList.Add("--user-agent"); start.ArgumentList.Add(request.UserAgent); }
-        if (cookieFile is not null) { start.ArgumentList.Add("--cookies"); start.ArgumentList.Add(cookieFile); }
+        if (cookieFile is not null)
+        {
+            request.ValidateCookieTransport();
+            if (request.RestrictYouTube)
+            {
+                start.ArgumentList.Add("--downloader-args");
+                start.ArgumentList.Add("ffmpeg_i:-protocol_whitelist https,tls,tcp,crypto,data");
+            }
+            start.ArgumentList.Add("--cookies"); start.ArgumentList.Add(cookieFile);
+        }
         start.ArgumentList.Add("--");
         start.ArgumentList.Add(request.Url);
         return start;

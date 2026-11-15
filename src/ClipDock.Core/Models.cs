@@ -29,28 +29,49 @@ public sealed record DownloadRequest
     public string Title { get; init; } = "";
     public string Quality { get; init; } = "1080";
     public string UserAgent { get; init; } = "";
+    public bool RestrictYouTube { get; init; }
     public List<BrowserCookie> Cookies { get; init; } = [];
+
+    private static readonly string[] YouTubeHosts = ["youtube.com", "youtube-nocookie.com", "youtu.be", "googlevideo.com", "ytimg.com", "youtube.googleapis.com", "youtubei.googleapis.com"];
 
     public DownloadRequest Validated()
     {
         if (Action is not ("download" or "open" or "ping")) throw new ArgumentException("不明な操作です。");
         if (Action != "download") return new DownloadRequest { Action = Action };
         if (!IsWebUrl(Url)) throw new ArgumentException("http または https の動画・ページURLを指定してください。");
+        if (RestrictYouTube && new[] { Url, PageUrl, Referer }.Any(IsYouTubeUrl))
+            throw new ArgumentException("Chrome ウェブストア版はYouTubeの動画保存に対応していません。");
         if (Quality is not ("best" or "2160" or "1080" or "720" or "480")) throw new ArgumentException("画質の指定が正しくありません。");
         if (Cookies is null || Cookies.Count > 500) throw new ArgumentException("Cookieの数が多すぎます。");
+        if (Cookies.Count > 0) ValidateCookieTransport();
         var hosts = new[] { Url, PageUrl, Referer }.Where(IsWebUrl).Select(u => new Uri(u).Host).ToArray();
         var cookies = Cookies.Where(c => c is not null && c.Domain is not null && c.Path is not null &&
             c.Name is not null && c.Value is not null &&
             hosts.Any(h => DomainMatches(h, c.Domain, c.HostOnly)) &&
             new[] { c.Domain, c.Path, c.Name, c.Value }.All(v => v.Length <= 16384 && !v.Any(char.IsControl)) &&
             c.Path.StartsWith('/') && c.Name.Length > 0 &&
-            (c.ExpirationDate is null || double.IsFinite(c.ExpirationDate.Value) && c.ExpirationDate >= 0 && c.ExpirationDate < 253402300799)).ToList();
+            (c.ExpirationDate is null || double.IsFinite(c.ExpirationDate.Value) && c.ExpirationDate >= 0 && c.ExpirationDate < 253402300799))
+            .Select(c => RestrictYouTube ? c with { Secure = true } : c).ToList();
         return this with
         {
             PageUrl = IsWebUrl(PageUrl) ? PageUrl : Url,
             Referer = IsWebUrl(Referer) ? Referer : IsWebUrl(PageUrl) ? PageUrl : "",
             Title = CleanText(Title, 200), UserAgent = CleanText(UserAgent, 512), Cookies = cookies
         };
+    }
+
+    internal void ValidateCookieTransport()
+    {
+        if (RestrictYouTube && new[] { Url, PageUrl, Referer }.Where(IsWebUrl).Any(u => new Uri(u).Scheme == "http"))
+            throw new ArgumentException("Chrome ウェブストア版では、ログイン情報はHTTPSのページ・動画だけに使用できます。");
+    }
+
+    private static bool IsYouTubeUrl(string? value)
+    {
+        while (value?.StartsWith("blob:", StringComparison.OrdinalIgnoreCase) == true) value = value[5..];
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) || uri.Host.Length == 0) return false;
+        var host = uri.IdnHost.TrimEnd('.');
+        return YouTubeHosts.Any(domain => host.Equals(domain, StringComparison.OrdinalIgnoreCase) || host.EndsWith("." + domain, StringComparison.OrdinalIgnoreCase));
     }
 
     public static string CleanText(string? text, int limit)

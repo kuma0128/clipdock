@@ -7,6 +7,8 @@ using ClipDock.Core;
 
 if (args is ["--download-smoke", var tools, var server, var output])
     return await DownloadSmokeChecks.RunAsync(tools, server, output);
+if (args is ["--store-policy-smoke", var storeTools])
+    return await StorePolicyChecks.RunEngineAsync(storeTools);
 
 // A hidden helper outlives its launcher so the test can detect inherited protocol pipes.
 if (args is ["--stdio-holder"]) { Thread.Sleep(10000); return 0; }
@@ -159,6 +161,42 @@ Check("native messages handle fragmented UTF-8 reads", () =>
     var decoded = NativeProtocol.ReadAsync<DownloadRequest>(fragmented).GetAwaiter().GetResult();
     Assert(decoded.Title == request.Title);
 });
+Check("native integration permits exactly the local and store origins", () =>
+{
+    Assert(Integration.AllowedOrigins.SequenceEqual(new[] { Integration.Origin, Integration.StoreOrigin }));
+    foreach (var origin in Integration.AllowedOrigins) Assert(Integration.IsAllowedOrigin(origin));
+    foreach (var origin in new string?[] { null, "", Integration.StoreOrigin.TrimEnd('/'), Integration.StoreOrigin + "popup.html",
+        Integration.StoreOrigin.Replace("chrome-extension://", "https://"), Integration.StoreOrigin.ToUpperInvariant(),
+        "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/" })
+    {
+        Assert(!Integration.IsAllowedOrigin(origin));
+        Throws<ArgumentException>(() => Integration.ValidateRequest(origin!, new DownloadRequest { Action = "ping" }));
+    }
+});
+Check("store origin forces download restrictions even when the sender omits or disables them", () =>
+{
+    foreach (var payload in new[] { "{\"url\":\"https://example.com/video\"}",
+        "{\"url\":\"https://example.com/video\",\"restrictYouTube\":false}" })
+    {
+        var source = JsonSerializer.Deserialize<DownloadRequest>(payload, Json.Options)!;
+        var request = Integration.ValidateRequest(Integration.StoreOrigin, source);
+        Assert(request.RestrictYouTube && !source.RestrictYouTube);
+        Assert(JsonSerializer.Deserialize<DownloadRequest>(JsonSerializer.Serialize(request, Json.Options), Json.Options)!.RestrictYouTube);
+        Throws<ArgumentException>(() => Integration.ValidateRequest(Integration.StoreOrigin, source with { Url = "https://youtu.be/video" }));
+        Throws<ArgumentException>(() => Integration.ValidateRequest(Integration.StoreOrigin, source with { PageUrl = "https://youtube.com/watch?v=video" }));
+    }
+});
+Check("local requests retain their chosen restrictions and non-download store actions remain valid", () =>
+{
+    var local = new DownloadRequest { Url = "https://youtu.be/video" };
+    Assert(!Integration.ValidateRequest(Integration.Origin, local).RestrictYouTube);
+    Throws<ArgumentException>(() => Integration.ValidateRequest(Integration.Origin, local with { RestrictYouTube = true }));
+    foreach (var action in new[] { "open", "ping" })
+    {
+        var request = Integration.ValidateRequest(Integration.StoreOrigin, new DownloadRequest { Action = action });
+        Assert(request.Action == action && !request.RestrictYouTube && request.Url == "");
+    }
+});
 Check("native messages reject negative and oversized lengths before allocation", () =>
 {
     foreach (var length in new[] { -1, 0, NativeProtocol.MaxMessageBytes + 1, int.MaxValue })
@@ -274,6 +312,7 @@ void WithToolPackage(Action<string, string, string[]> check)
     finally { Directory.Delete(directory, true); }
 }
 
+StorePolicyChecks.Run(Check);
 QueueChecks.Run(Check);
 Console.WriteLine($"{passed} passed; {failed} failed.");
 return failed == 0 ? 0 : 1;

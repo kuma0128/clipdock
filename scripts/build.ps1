@@ -44,7 +44,7 @@ try {
     }
     Copy-Item -LiteralPath (Join-Path $root 'extension') -Destination $output -Recurse -Force
     Copy-Item -LiteralPath (Join-Path $root 'docs') -Destination $output -Recurse -Force
-    foreach ($name in @('README.md', 'THIRD-PARTY.md', 'LICENSE', 'START-HERE.html')) {
+    foreach ($name in @('README.md', 'PRIVACY.md', 'THIRD-PARTY.md', 'LICENSE', 'START-HERE.html')) {
         Copy-Item -LiteralPath (Join-Path $root $name) -Destination $output -Force
     }
     foreach ($name in @('Install.ps1', 'Uninstall.ps1', 'INSTALL.cmd', 'UNINSTALL.cmd')) {
