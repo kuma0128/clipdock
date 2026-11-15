@@ -20,6 +20,9 @@ public static class ToolInstaller
         deadline.CancelAfter(TimeSpan.FromMinutes(20));
         ct = deadline.Token;
         Directory.CreateDirectory(destination);
+        // A crash or power loss mid-install leaves hundreds of MB behind; nothing else uses these folders.
+        foreach (var stale in Directory.EnumerateDirectories(destination, ".staging-*"))
+            try { Directory.Delete(stale, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
         var staging = Path.Combine(destination, ".staging-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(staging);
         var versions = new List<object>();
@@ -33,12 +36,18 @@ public static class ToolInstaller
             })
             {
                 progress?.Report($"{repo} の配布情報を取得しています…");
-                using var release = await Client.GetFromJsonAsync<JsonDocument>($"https://api.github.com/repos/{repo}/releases/latest", ct)
-                    ?? throw new IOException("配布情報を取得できませんでした。");
-                var asset = release.RootElement.GetProperty("assets").EnumerateArray().First(a => a.GetProperty("name").GetString() == assetName);
-                var url = asset.GetProperty("browser_download_url").GetString()!;
-                var digest = asset.GetProperty("digest").GetString();
-                if (digest is null || !digest.StartsWith("sha256:") || digest.Length != 71)
+                using var release = await GetReleaseAsync(repo, ct);
+                var asset = release.RootElement.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array
+                    ? assets.EnumerateArray().FirstOrDefault(a => a.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String && n.GetString() == assetName)
+                    : default;
+                if (asset.ValueKind != JsonValueKind.Object)
+                    throw new IOException($"{repo} の最新リリースに {assetName} が見つかりません。時間をおいて再実行してください。");
+                string? Text(string key) => asset.TryGetProperty(key, out var p) && p.ValueKind == JsonValueKind.String ? p.GetString() : null;
+                var url = Text("browser_download_url");
+                if (url is null || !Uri.TryCreate(url, UriKind.Absolute, out var location) || location.Scheme != Uri.UriSchemeHttps)
+                    throw new IOException($"{assetName} の取得先が正しくありません。");
+                var digest = Text("digest");
+                if (digest is null || !digest.StartsWith("sha256:", StringComparison.Ordinal) || digest.Length != 71)
                     throw new IOException($"{assetName} のSHA-256情報がありません。未検証のファイルはインストールしません。");
                 var archive = Path.Combine(staging, assetName);
                 using (var response = await Client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct))
@@ -64,7 +73,7 @@ public static class ToolInstaller
                     var hash = Convert.ToHexString(await SHA256.HashDataAsync(stream, ct));
                     if (!hash.Equals(digest[7..], StringComparison.OrdinalIgnoreCase)) throw new IOException($"{assetName} の整合性確認に失敗しました。再実行してください。");
                 }
-                if (assetName.EndsWith(".zip"))
+                if (assetName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
                     using var zip = ZipFile.OpenRead(archive);
                     foreach (var name in names)
@@ -109,5 +118,20 @@ public static class ToolInstaller
             progress?.Report("ダウンロードエンジンの準備ができました。");
         }
         finally { try { Directory.Delete(staging, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+    }
+
+    private static async Task<JsonDocument> GetReleaseAsync(string repo, CancellationToken ct)
+    {
+        try
+        {
+            return await Client.GetFromJsonAsync<JsonDocument>($"https://api.github.com/repos/{repo}/releases/latest", ct)
+                ?? throw new IOException("配布情報を取得できませんでした。");
+        }
+        // Unauthenticated GitHub API calls are limited per IP address (shared offices, VPNs).
+        catch (HttpRequestException ex) when (ex.StatusCode is System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.TooManyRequests)
+        {
+            throw new IOException("GitHubの利用制限に達しました。1時間ほど待ってから再実行してください。", ex);
+        }
+        catch (JsonException ex) { throw new IOException($"{repo} の配布情報を読み取れませんでした。", ex); }
     }
 }

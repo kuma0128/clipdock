@@ -11,6 +11,11 @@ foreach ($folder in @([Environment]::GetFolderPath('Desktop'), [Environment]::Ge
         Remove-Item -LiteralPath $shortcutPath -Force
     }
 }
+# A folder cannot be removed while it is a working directory, and "Run with PowerShell" starts inside it.
+# Set-Location moves PowerShell; the process itself keeps its own copy, so move that as well.
+$elsewhere = [System.IO.Path]::GetTempPath()
+Set-Location -LiteralPath $elsewhere
+[Environment]::CurrentDirectory = $elsewhere
 # Exact target validated above; never enumerate paths in another shell for deletion.
 Remove-Item -LiteralPath $target -Recurse -Force
 Write-Host 'ClipDock removed. Remove its Chrome extension from chrome://extensions.'

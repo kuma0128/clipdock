@@ -20,10 +20,14 @@ function render(candidates) {
     row.append(title, meta, button); $("candidates").append(row);
   }
 }
+let refreshSeq = 0;
 async function refresh(scan = false) {
   if (!activeTab?.id) return;
+  const seq = ++refreshSeq;
   if (scan) await chrome.tabs.sendMessage(activeTab.id, { type: "scan" }).catch(() => {});
   const result = await request({ type: "snapshot", tabId: activeTab.id });
+  // Storage events start overlapping refreshes; only the newest one may render.
+  if (seq !== refreshSeq) return;
   if (!result.ok) throw new Error(result.error);
   activeTab = result.tab;
   $("page-title").textContent = activeTab.title || "動画ページを開いてください";
@@ -68,10 +72,17 @@ async function init() {
   $("quality").value = settings.quality;
   $("overlay").checked = settings.overlay;
   [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  await refresh(true);
-  const health = await request({ type: "ping" });
-  $("connection").textContent = health.ok ? health.ready ? "● ClipDockに接続済み" : "● 接続済み · アプリでエンジンを準備してください" : "○ アプリの接続設定が必要です";
-  $("connection").classList.toggle("online", health.ok);
-  if (!health.ok) $("connection").title = health.error;
+  if (!activeTab?.id) $("page-title").textContent = "動画ページを開いてください";
+  // The page list and the app connection are independent: a failure in one must not hide the other.
+  await Promise.all([refresh(true).catch(error => notify(error.message, true)), checkConnection()]);
+}
+async function checkConnection() {
+  let health;
+  try { health = await request({ type: "ping" }); }
+  catch (error) { health = { ok: false, error: error.message }; }
+  const ok = health?.ok === true;
+  $("connection").textContent = ok ? health.ready ? "● ClipDockに接続済み" : "● 接続済み · アプリでエンジンを準備してください" : "○ アプリの接続設定が必要です";
+  $("connection").classList.toggle("online", ok);
+  $("connection").title = ok ? "" : health?.error || "";
 }
 init().catch(error => { $("connection").textContent = "○ 接続を確認してください"; notify(error.message, true); });

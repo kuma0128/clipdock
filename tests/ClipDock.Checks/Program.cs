@@ -32,6 +32,12 @@ Check("invalid referer and header controls are removed", () =>
     var r = new DownloadRequest { Url = "https://example.com/v", Referer = "https://evil.test/\r\nX: y", UserAgent = "Chrome\r\nBad", Title = new string('a', 500) }.Validated();
     Assert(r.Referer == "" && r.UserAgent == "ChromeBad" && r.Title.Length == 200);
 });
+Check("text limits never keep half of a surrogate pair", () =>
+{
+    Assert(DownloadRequest.CleanText("ab🎬", 3) == "ab");
+    Assert(DownloadRequest.CleanText("ab🎬", 4) == "ab🎬");
+    Assert(DownloadRequest.CleanText(null, 4) == "" && DownloadRequest.CleanText("a\tb", 0) == "");
+});
 Check("cookies are restricted to requested domains and cannot inject cookie lines", () =>
 {
     var r = new DownloadRequest { Url = "https://media.example.com/v", Cookies = [
@@ -67,6 +73,7 @@ Check("CLI uses discrete arguments and URL terminator, ignores external configs"
     var url = "https://example.com/v?x=\" & calc & echo \"";
     var start = DownloadPlan.Create(new DownloadRequest { Url = url, Title = "--exec calc" }, @"C:\tool space", @"C:\video space", new string('a', 32), @"C:\session space\cookie");
     Assert(!start.UseShellExecute && start.CreateNoWindow);
+    Assert(start.RedirectStandardInput && start.RedirectStandardOutput && start.RedirectStandardError);
     Assert(start.ArgumentList[^2] == "--" && start.ArgumentList[^1] == url);
     Assert(start.ArgumentList.Contains("--ignore-config") && start.ArgumentList.Contains("--no-playlist"));
     Assert(start.ArgumentList.Contains("bv*[height<=?1080]+ba/b[height<=?1080]"));
@@ -81,6 +88,19 @@ Check("best quality omits height cap; all specified qualities are bounded", () =
         var args = DownloadPlan.Create(new DownloadRequest { Url = "https://a.test", Quality = quality }, @"C:\tools", @"C:\videos", new string('b', 32), null).ArgumentList;
         Assert(args.Contains(quality == "best" ? "bv*+ba/b" : $"bv*[height<=?{quality}]+ba/b[height<=?{quality}]"));
     }
+});
+Check("format sort ranks resolution above the H.264/AAC preference", () =>
+{
+    var args = DownloadPlan.Create(new DownloadRequest { Url = "https://a.test", Quality = "2160" }, @"C:\tools", @"C:\videos", new string('c', 32), null).ArgumentList;
+    var fields = args[args.IndexOf("--format-sort") + 1].Split(',').ToList();
+    Assert(fields.IndexOf("res") >= 0 && fields.IndexOf("res") < fields.IndexOf("vcodec:h264") && fields.IndexOf("vcodec:h264") < fields.IndexOf("acodec:aac"));
+});
+Check("output verification tolerates missing or malformed paths", () =>
+{
+    Assert(!DownloadPlan.IsOutputFile(null, @"C:\videos") && !DownloadPlan.IsOutputFile("", @"C:\videos"));
+    Assert(!DownloadPlan.IsOutputFile(@"C:\videos\clip.mp4", null) && !DownloadPlan.IsOutputFile(@"C:\videos\clip.mp4", "  "));
+    Assert(!DownloadPlan.IsOutputFile("C:\\videos\\cl\0ip.mp4", @"C:\videos"));
+    Assert(DownloadPlan.IsOutputFile(@"D:\clip.MP4", @"D:\"));
 });
 Check("output verification rejects sibling path escapes and non-MP4", () =>
 {

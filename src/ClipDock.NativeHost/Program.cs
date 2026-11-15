@@ -36,7 +36,14 @@ try
 }
 catch (Exception ex)
 {
-    if (queuedFile is not null) { try { File.Delete(queuedFile); File.Delete(queuedFile + ".tmp"); } catch (IOException) { } }
-    try { await NativeProtocol.WriteAsync(output, new { ok = false, error = ex is ArgumentException or IOException ? ex.Message : "アプリとの通信に失敗しました。ClipDockのChrome連携設定を確認してください。" }); } catch (IOException) { }
+    if (queuedFile is not null)
+    {
+        try { File.Delete(queuedFile); File.Delete(queuedFile + ".tmp"); }
+        catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException) { }
+    }
+    // InvalidDataException (size limit, empty message) is not an IOException but carries a message written for the user.
+    var explained = ex is ArgumentException or IOException or InvalidDataException;
+    try { await NativeProtocol.WriteAsync(output, new { ok = false, error = explained ? ex.Message : "アプリとの通信に失敗しました。ClipDockのChrome連携設定を確認してください。" }); }
+    catch (Exception write) when (write is IOException or ObjectDisposedException) { }
     return 1;
 }

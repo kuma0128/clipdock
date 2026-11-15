@@ -34,6 +34,8 @@ public static partial class DownloadEngine
             using var process = new Process { StartInfo = DownloadPlan.Create(item.Request, tools, item.OutputDirectory, item.Id, cookieFile) };
             dispatch(() => { item.State = "downloading"; item.Detail = "動画情報を解析しています…"; });
             process.Start();
+            // Nothing is ever typed into the engine: an immediate EOF makes any prompt fail fast instead of hanging the queue.
+            try { process.StandardInput.Close(); } catch (IOException) { }
             using var registration = ct.Register(() => { try { if (!process.HasExited) process.Kill(true); } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { } });
             bool HandleLine(string line)
             {
@@ -49,11 +51,11 @@ public static partial class DownloadEngine
                                 (progress.SecondsRemaining is > 0 ? $"  ·  残り約 {TimeSpan.FromSeconds(Math.Min(progress.SecondsRemaining.Value, 8640000)):hh\\:mm\\:ss}" : "");
                         });
                     }
-                    else if (line.StartsWith("CLIPDOCK_TITLE "))
+                    else if (line.StartsWith("CLIPDOCK_TITLE ", StringComparison.Ordinal))
                     {
                         try { var title = JsonSerializer.Deserialize<string>(line[15..]); if (!string.IsNullOrWhiteSpace(title)) dispatch(() => item.Title = DownloadRequest.CleanText(title, 250)); } catch (JsonException) { }
                     }
-                    else if (line.StartsWith("CLIPDOCK_FILE "))
+                    else if (line.StartsWith("CLIPDOCK_FILE ", StringComparison.Ordinal))
                     {
                         try { resultPath = JsonSerializer.Deserialize<string>(line[14..]); } catch (JsonException) { }
                     }
@@ -91,9 +93,19 @@ public static partial class DownloadEngine
         catch (Exception ex) { dispatch(() => { item.State = "failed"; item.Detail = ex.Message; }); }
         finally
         {
-            if (cookieFile is not null) { try { File.Delete(cookieFile); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+            if (cookieFile is not null) await DeleteSecretAsync(cookieFile);
             item.Request = item.Request with { Cookies = [] };
             item.Cancellation = null;
+        }
+    }
+
+    // A killed engine or a virus scanner can hold the jar for a moment; plaintext cookies must not be left behind by one failed attempt.
+    private static async Task DeleteSecretAsync(string file)
+    {
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            try { File.Delete(file); return; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { await Task.Delay(200); }
         }
     }
 }

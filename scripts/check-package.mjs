@@ -39,7 +39,7 @@ assert.equal(unauthorized.status, 1); assert.equal(unauthorized.stdout.length, 0
 console.log("PASS unauthorized extension origin rejected");
 const runtime = JSON.parse(readFileSync(join(directory, "ClipDock.runtimeconfig.json"), "utf8"));
 assert.ok(runtime.runtimeOptions.includedFrameworks.some(f => f.name === "Microsoft.WindowsDesktop.App"));
-for (const file of ["ClipDock.exe", "INSTALL.cmd", "README.md", "START-HERE.html", "docs/manual-checks.md", ...Object.values(manifest.icons).map(f => "extension/" + f)])
+for (const file of ["ClipDock.exe", "INSTALL.cmd", "Install.ps1", "UNINSTALL.cmd", "Uninstall.ps1", "README.md", "START-HERE.html", "docs/manual-checks.md", ...Object.values(manifest.icons).map(f => "extension/" + f)])
   assert.ok(existsSync(join(directory, file)), file);
 console.log("PASS self-contained runtime and installation files present");
 for (const [exe, arg] of [["yt-dlp.exe", "--version"], ["ffmpeg.exe", "-version"], ["ffprobe.exe", "-version"], ["deno.exe", "--version"]]) {

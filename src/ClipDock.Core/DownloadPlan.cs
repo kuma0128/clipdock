@@ -7,6 +7,9 @@ namespace ClipDock.Core;
 
 public static class DownloadPlan
 {
+    // yt-dlp's default order (lang,quality,res,fps,hdr:12,vcodec,…,acodec,…) with only the codec preferences changed.
+    public const string FormatSort = "lang,quality,res,fps,hdr:12,vcodec:h264,acodec:aac";
+
     public static ProcessStartInfo Create(DownloadRequest input, string tools, string output, string jobId, string? cookieFile)
     {
         var request = input.Validated();
@@ -14,7 +17,8 @@ public static class DownloadPlan
         if (!Guid.TryParseExact(jobId, "N", out _)) throw new ArgumentException("Invalid job identifier.");
         var start = new ProcessStartInfo(Path.Combine(tools, "yt-dlp.exe"))
         {
-            UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true,
+            // stdin is redirected so the caller can close it: the engine must never wait on (or inherit) a console or pipe.
+            UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true,
             RedirectStandardError = true, StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8
         };
         var quality = request.Quality == "best" ? "" : $"[height<=?{request.Quality}]";
@@ -22,7 +26,9 @@ public static class DownloadPlan
             "--encoding", "utf-8", "--windows-filenames", "--trim-filenames", "160", "--no-overwrites",
             "--socket-timeout", "30", "--retries", "3", "--fragment-retries", "3", "--abort-on-unavailable-fragments",
             "--ffmpeg-location", tools, "--js-runtimes", "deno:" + Path.Combine(tools, "deno.exe"),
-            "--format", $"bv*{quality}+ba/b{quality}", "--format-sort", "vcodec:h264,acodec:aac",
+            // Resolution first, codec second: with vcodec ahead of res, sites that serve H.264 only up to 1080p
+            // (YouTube) would never reach the 2160p / best choices. H.264/AAC still wins at equal resolution.
+            "--format", $"bv*{quality}+ba/b{quality}", "--format-sort", FormatSort,
             "--merge-output-format", "mp4", "--recode-video", "mp4",
             "--postprocessor-args", "VideoConvertor+ffmpeg_o:-c:v libx264 -preset fast -crf 20 -c:a aac -b:a 192k -movflags +faststart",
             "--paths", Path.GetFullPath(output), "--output", $"%(title).100B [%(id).50B]-{jobId[..8]}.%(ext)s",
@@ -51,9 +57,17 @@ public static class DownloadPlan
         return result.ToString();
     }
 
-    public static bool IsOutputFile(string file, string directory) =>
-        Path.GetExtension(file).Equals(".mp4", StringComparison.OrdinalIgnoreCase) &&
-        Path.GetFullPath(file).StartsWith(Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+    public static bool IsOutputFile(string? file, string? directory)
+    {
+        // Both values can come from engine output or an old history file; anything malformed is simply "not ours".
+        if (string.IsNullOrWhiteSpace(file) || string.IsNullOrWhiteSpace(directory)) return false;
+        try
+        {
+            return Path.GetExtension(file).Equals(".mp4", StringComparison.OrdinalIgnoreCase) &&
+                Path.GetFullPath(file).StartsWith(Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or IOException) { return false; }
+    }
 }
 
 public sealed record DownloadProgress(double Percent, double BytesPerSecond, double? SecondsRemaining, bool Finished)
