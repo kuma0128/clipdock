@@ -34,7 +34,7 @@
   </Application.Styles>
   <NativeMenu.Menu>
     <NativeMenu>
-      <NativeMenuItem Header="ClipDock について" Click="About_Click" />
+      <NativeMenuItem Header="{DynamicResource LE4AB3511C9A2CE38}" Click="About_Click" />
     </NativeMenu>
   </NativeMenu.Menu>
 </Application>

@@ -61,7 +61,7 @@ public static class DownloadPlan
         foreach (var path in new[] { Path.GetDirectoryName(directory)!, directory })
         {
             var info = new DirectoryInfo(path);
-            if (info.Exists && info.Attributes.HasFlag(FileAttributes.ReparsePoint)) throw new IOException("一時保存先を使用できません。");
+            if (info.Exists && info.Attributes.HasFlag(FileAttributes.ReparsePoint)) throw new IOException(ClipDock.Core.Localization.Text("一時保存先を使用できません。"));
             info.Create();
         }
         if (OperatingSystem.IsWindows()) File.SetAttributes(Path.GetDirectoryName(directory)!, File.GetAttributes(Path.GetDirectoryName(directory)!) | FileAttributes.Hidden);
@@ -72,7 +72,7 @@ public static class DownloadPlan
         var directory = new DirectoryInfo(WorkDirectory(output, jobId));
         if (!directory.Exists) return;
         if (directory.Attributes.HasFlag(FileAttributes.ReparsePoint) || directory.Parent!.Attributes.HasFlag(FileAttributes.ReparsePoint))
-            throw new IOException("一時保存先を削除できません。");
+            throw new IOException(ClipDock.Core.Localization.Text("一時保存先を削除できません。"));
         directory.Delete(true);
     }
 

@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ClipDock.Core;
+using Localization = ClipDock.Core.Localization;
 using Microsoft.Win32;
 
 namespace ClipDock.App;
@@ -39,6 +40,8 @@ public partial class MainWindow : Window
 
     public MainWindow(EventWaitHandle activation)
     {
+        Localization.Initialize(Localization.ReadPreference(settingsFile));
+        foreach (var resource in Localization.Resources) System.Windows.Application.Current.Resources[resource.Key] = resource.Value;
         InitializeComponent();
         VersionLabel.Text = $"ClipDock  {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)}  /  Windows";
         Directory.CreateDirectory(AppPaths.Data);
@@ -50,6 +53,9 @@ public partial class MainWindow : Window
         view.Filter = value => value is DownloadItem item && (filter == "all" || filter == "active" && item.CanCancel || filter == "completed" && item.IsCompleted);
         JobList.ItemsSource = view;
         LoadState();
+        foreach (ComboBoxItem language in LanguageBox.Items)
+            if ((string?)language.Tag == Localization.Language) LanguageBox.SelectedItem = language;
+        LanguageBox.SelectionChanged += Language_Changed;
         browserSession = new BrowserSession(this);
         browserSession.StatusChanged += message => LoginStatus.Text = message;
         browserOverlay = new BrowserOverlay(ReceiveBrowserAddress);
@@ -83,23 +89,30 @@ public partial class MainWindow : Window
         Closed += (_, _) => { browserOverlay.Dispose(); browserSession.Dispose(); };
     }
 
+    private void Language_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (shuttingDown || LanguageBox.SelectedItem is not ComboBoxItem) return;
+        if (SaveState()) Notice.Text = Localization.Text("言語設定を保存しました。アプリを開き直すと適用されます。", SelectedLanguage);
+    }
+    private string SelectedLanguage => Localization.Normalize((LanguageBox.SelectedItem as ComboBoxItem)?.Tag as string);
+
     private string Quality => (QualityBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "1080";
     private string Format => (FormatBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "mp4";
     private void UpdateFormat() => QualityBox.IsEnabled = Format == "mp4";
     private void LoginPreference_Changed(object sender, RoutedEventArgs e)
     {
         SaveState();
-        Notice.Text = UseLoginBox.IsChecked == true ? "接続済みサイトのログイン情報を保存に使います。初回は「ログイン」から接続してください。" : "次の保存・再試行ではログイン情報を使いません。";
+        Notice.Text = UseLoginBox.IsChecked == true ? ClipDock.Core.Localization.Text("接続済みサイトのログイン情報を保存に使います。初回は「ログイン」から接続してください。") : ClipDock.Core.Localization.Text("次の保存・再試行ではログイン情報を使いません。");
     }
     private void Login_Click(object sender, RoutedEventArgs e) => browserSession.Show(UrlInput.Text.Trim() is { Length: > 0 } url ? url : jobs.FirstOrDefault()?.Request.Url,
-        () => jobs.Any(j => j.CanCancel), url => { UrlInput.Text = url; Notice.Text = "URLと保存先を確認して「保存」を押してください。"; Activate(); });
+        () => jobs.Any(j => j.CanCancel), url => { UrlInput.Text = url; Notice.Text = ClipDock.Core.Localization.Text("URLと保存先を確認して「保存」を押してください。"); Activate(); });
     private void BrowserOverlay_Changed(object sender, RoutedEventArgs e)
     {
         browserOverlay.Enabled = BrowserOverlayBox.IsChecked == true;
         SaveState();
         Notice.Text = browserOverlay.Enabled
-            ? "Chrome / Edgeの上中央にマウスを置くと、保存タブが表示されます。クリックしてURLを取り込んでください。"
-            : "ブラウザー上部の保存タブを非表示にしました。";
+            ? ClipDock.Core.Localization.Text("Chrome / Edgeの上中央にマウスを置くと、保存タブが表示されます。クリックしてURLを取り込んでください。")
+            : ClipDock.Core.Localization.Text("ブラウザー上部の保存タブを非表示にしました。");
     }
     private void ReceiveBrowserAddress(BrowserAddressResult result)
     {
@@ -110,28 +123,28 @@ public partial class MainWindow : Window
         {
             UrlInput.Text = url;
             Notice.Text = result.AddedScheme
-                ? "ブラウザーの表示に https:// を補いました。URLを確認して「保存」を押してください。"
-                : "URLを確認して「保存」を押してください。";
+                ? ClipDock.Core.Localization.Text("ブラウザーの表示に https:// を補いました。URLを確認して「保存」を押してください。")
+                : ClipDock.Core.Localization.Text("URLを確認して「保存」を押してください。");
         }
-        else Notice.Text = result.Message;
+        else Notice.Text = Localization.Text(result.Message);
         UrlInput.Focus();
         UrlInput.SelectAll();
     }
     private void Add(DownloadRequest source)
     {
-        if (shuttingDown) throw new InvalidOperationException("終了処理中です。アプリを開き直してから保存してください。");
+        if (shuttingDown) throw new InvalidOperationException(ClipDock.Core.Localization.Text("終了処理中です。アプリを開き直してから保存してください。"));
         var request = source.Validated();
         request.ValidateVideoPage();
         if (jobs.Any(j => j.CanCancel && j.Request.Url == request.Url && j.Request.Quality == request.Quality && j.Request.Format == request.Format))
         {
-            Notice.Text = "この動画はすでにダウンロード一覧にあります。";
+            Notice.Text = ClipDock.Core.Localization.Text("この動画はすでにダウンロード一覧にあります。");
             return;
         }
-        if (jobs.Count(j => j.CanCancel) >= 100) throw new InvalidOperationException("待機中の動画は100件までです。");
+        if (jobs.Count(j => j.CanCancel) >= 100) throw new InvalidOperationException(ClipDock.Core.Localization.Text("待機中の動画は100件までです。"));
         var item = new DownloadItem { Request = request, Title = request.Title.Length > 0 ? request.Title : new Uri(request.Url).Host, OutputDirectory = outputDirectory };
         Attach(item);
         jobs.Insert(0, item);
-        Notice.Text = ToolInstaller.IsReady(ToolInstaller.FindTools()) ? "ダウンロード一覧に追加しました。" : "待機リストに追加しました。初期セットアップが終わると開始します。";
+        Notice.Text = ToolInstaller.IsReady(ToolInstaller.FindTools()) ? ClipDock.Core.Localization.Text("ダウンロード一覧に追加しました。") : ClipDock.Core.Localization.Text("待機リストに追加しました。初期セットアップが終わると開始します。");
         SaveState(); RefreshSummary(); StartQueue();
     }
 
@@ -162,7 +175,7 @@ public partial class MainWindow : Window
         {
             // Queued work can be cancelled without invoking the download engine at all.
             item.State = shuttingDown ? "interrupted" : "cancelled";
-            item.Detail = shuttingDown ? "終了に伴い待機を中断しました。" : "待機を取り消しました。";
+            item.Detail = shuttingDown ? ClipDock.Core.Localization.Text("終了に伴い待機を中断しました。") : ClipDock.Core.Localization.Text("待機を取り消しました。");
         }
         catch (Exception ex) { item.State = "failed"; item.Detail = ex.Message; }
         finally
@@ -179,7 +192,7 @@ public partial class MainWindow : Window
         if (shuttingDown || ConcurrencyBox.SelectedItem is not ComboBoxItem choice || !int.TryParse(choice.Tag as string, out var count)) return;
         scheduler.MaxConcurrency = count;
         SaveState(); StartQueue(); RefreshSummary();
-        Notice.Text = $"同時に保存する動画を{count}件に設定しました。進行中の保存は中断しません。";
+        Notice.Text = ClipDock.Core.Localization.Format($"同時に保存する動画を{count}件に設定しました。進行中の保存は中断しません。");
     }
 
     private void Add_Click(object sender, RoutedEventArgs e) => AddUrl();
@@ -193,8 +206,8 @@ public partial class MainWindow : Window
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not DownloadItem item) return;
-        if (operations.TryGetValue(item, out var operation)) { item.Detail = "キャンセルしています…"; operation.Cancel(); }
-        else if (item.State == "queued") { item.State = "cancelled"; item.Detail = "待機を取り消しました。"; }
+        if (operations.TryGetValue(item, out var operation)) { item.Detail = ClipDock.Core.Localization.Text("キャンセルしています…"); operation.Cancel(); }
+        else if (item.State == "queued") { item.State = "cancelled"; item.Detail = ClipDock.Core.Localization.Text("待機を取り消しました。"); }
         SaveState();
     }
     private void Retry_Click(object sender, RoutedEventArgs e)
@@ -203,14 +216,14 @@ public partial class MainWindow : Window
         try { item.Request.ValidateVideoPage(); }
         catch (ArgumentException ex) { Notice.Text = ex.Message; return; }
         if (jobs.Any(j => j.CanCancel && j.Request.Url == item.Request.Url && j.Request.Quality == item.Request.Quality && j.Request.Format == item.Request.Format))
-        { Notice.Text = "この動画はすでにダウンロード一覧にあります。"; return; }
-        if (jobs.Count(j => j.CanCancel) >= 100) { Notice.Text = "待機中の動画は100件までです。"; return; }
+        { Notice.Text = ClipDock.Core.Localization.Text("この動画はすでにダウンロード一覧にあります。"); return; }
+        if (jobs.Count(j => j.CanCancel) >= 100) { Notice.Text = ClipDock.Core.Localization.Text("待機中の動画は100件までです。"); return; }
         // Retrying is a new queue insertion: wait behind work already queued and keep
         // the retried item inside the persisted history window.
         jobs.Move(jobs.IndexOf(item), 0);
         item.Request = item.Request with { UseLogin = UseLoginBox.IsChecked == true };
-        item.Percent = 0; item.State = "queued"; item.Detail = "再試行を待っています";
-        Notice.Text = item.Request.UseLogin ? "最新のログイン情報を確認して、もう一度取得します。" : "ログイン情報を使わずに、もう一度取得します。";
+        item.Percent = 0; item.State = "queued"; item.Detail = ClipDock.Core.Localization.Text("再試行を待っています");
+        Notice.Text = item.Request.UseLogin ? ClipDock.Core.Localization.Text("最新のログイン情報を確認して、もう一度取得します。") : ClipDock.Core.Localization.Text("ログイン情報を使わずに、もう一度取得します。");
         SaveState(); StartQueue();
     }
     private void Filter_Click(object sender, RoutedEventArgs e)
@@ -223,16 +236,16 @@ public partial class MainWindow : Window
     private void RefreshSummary()
     {
         view.Refresh();
-        CountLabel.Text = $"{(filter == "active" ? "ダウンロード中" : filter == "completed" ? "保存したファイル" : "ライブラリ")}  /  {view.Cast<object>().Count()} 件     ·     保存完了 {jobs.Count(j => j.IsCompleted)} 件";
-        QueueStatus.Text = $"保存中 {jobs.Count(j => j.IsBusy)} 件  ·  待機 {jobs.Count(j => j.State == "queued")} 件";
+        CountLabel.Text = ClipDock.Core.Localization.Format($"{(filter == "active" ? ClipDock.Core.Localization.Text("ダウンロード中") : filter == "completed" ? ClipDock.Core.Localization.Text("保存したファイル") : ClipDock.Core.Localization.Text("ライブラリ"))}  /  {view.Cast<object>().Count()} 件     ·     保存完了 {jobs.Count(j => j.IsCompleted)} 件");
+        QueueStatus.Text = ClipDock.Core.Localization.Format($"保存中 {jobs.Count(j => j.IsBusy)} 件  ·  待機 {jobs.Count(j => j.State == "queued")} 件");
         EmptyState.Visibility = view.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
     }
     private void ChooseOutput_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFolderDialog { Title = "動画の保存先", InitialDirectory = Directory.Exists(outputDirectory) ? outputDirectory : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) };
+        var dialog = new OpenFolderDialog { Title = ClipDock.Core.Localization.Text("動画の保存先"), InitialDirectory = Directory.Exists(outputDirectory) ? outputDirectory : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) };
         if (dialog.ShowDialog(this) != true) return;
         outputDirectory = dialog.FolderName; OutputLabel.Text = outputDirectory; SaveState();
-        Notice.Text = "次に保存する動画から、新しい保存先を使います。";
+        Notice.Text = ClipDock.Core.Localization.Text("次に保存する動画から、新しい保存先を使います。");
     }
     private void OpenFolder(string directory)
     {
@@ -245,7 +258,7 @@ public partial class MainWindow : Window
             Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true })?.Dispose();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or Win32Exception)
-        { Notice.Text = "フォルダーを開けませんでした: " + ex.Message; }
+        { Notice.Text = ClipDock.Core.Localization.Text("フォルダーを開けませんでした: ") + ex.Message; }
     }
     private void OpenOutput_Click(object sender, RoutedEventArgs e) => OpenFolder(outputDirectory);
     private void OpenPage_Click(object sender, RoutedEventArgs e)
@@ -254,15 +267,15 @@ public partial class MainWindow : Window
         var url = DownloadRequest.IsWebUrl(item.Request.PageUrl) ? item.Request.PageUrl : item.Request.Url;
         if (!DownloadRequest.IsWebUrl(url)) return;
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true })?.Dispose(); }
-        catch (Win32Exception ex) { Notice.Text = "ページを開けませんでした: " + ex.Message; }
+        catch (Win32Exception ex) { Notice.Text = ClipDock.Core.Localization.Text("ページを開けませんでした: ") + ex.Message; }
     }
     private void OpenFile_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not DownloadItem item) return;
-        if (!DownloadPlan.IsOutputFile(item.FilePath, item.OutputDirectory, item.Request.Format) || !File.Exists(item.FilePath)) { Notice.Text = "ファイルが見つかりません。移動または削除されていないか確認してください。"; return; }
+        if (!DownloadPlan.IsOutputFile(item.FilePath, item.OutputDirectory, item.Request.Format) || !File.Exists(item.FilePath)) { Notice.Text = ClipDock.Core.Localization.Text("ファイルが見つかりません。移動または削除されていないか確認してください。"); return; }
         try { Process.Start(new ProcessStartInfo(item.FilePath) { UseShellExecute = true })?.Dispose(); }
         catch (Exception ex) when (ex is Win32Exception or IOException or UnauthorizedAccessException)
-        { Notice.Text = "ファイルを開けませんでした: " + ex.Message; }
+        { Notice.Text = ClipDock.Core.Localization.Text("ファイルを開けませんでした: ") + ex.Message; }
     }
     private void ShowFile_Click(object sender, RoutedEventArgs e)
     {
@@ -289,7 +302,7 @@ public partial class MainWindow : Window
         var quiet = updatingQuietly = ToolInstaller.IsReady(ToolInstaller.FindTools());
         installing = true; EngineButton.IsEnabled = false;
         UpdateEngineStatus();
-        if (!quiet) Notice.Text = "初期セットアップ中です。保存エンジンを取得しています…";
+        if (!quiet) Notice.Text = ClipDock.Core.Localization.Text("初期セットアップ中です。保存エンジンを取得しています…");
         using var cancellation = installCancellation = new CancellationTokenSource();
         // Downloads wait for this task, so a quiet update gives up once the network stops answering.
         var patience = TimeSpan.FromSeconds(45);
@@ -300,21 +313,21 @@ public partial class MainWindow : Window
             {
                 if (installCancellation != cancellation) return;
                 if (quiet) { EngineStatus.Text = message; cancellation.CancelAfter(patience); }
-                else Notice.Text = "初期セットアップ中: " + message;
+                else Notice.Text = ClipDock.Core.Localization.Text("初期セットアップ中: ") + message;
             }), cancellation.Token);
         }
         catch (OperationCanceledException) when (quiet) { }
-        catch (OperationCanceledException) { Notice.Text = shuttingDown ? "エンジンの準備を中止しました。" : "エンジンの取得が時間内に終わりませんでした。通信環境を確認して「保存エンジンを準備」を押してください。"; }
+        catch (OperationCanceledException) { Notice.Text = shuttingDown ? ClipDock.Core.Localization.Text("エンジンの準備を中止しました。") : ClipDock.Core.Localization.Text("エンジンの取得が時間内に終わりませんでした。通信環境を確認して「保存エンジンを準備」を押してください。"); }
         // The installed engine keeps working when an update cannot be fetched.
         catch (Exception) when (quiet) { }
-        catch (Exception ex) { Notice.Text = "エンジンの取得に失敗しました: " + ex.Message; }
+        catch (Exception ex) { Notice.Text = ClipDock.Core.Localization.Text("エンジンの取得に失敗しました: ") + ex.Message; }
         finally { installCancellation = null; installing = false; updatingQuietly = false; EngineButton.IsEnabled = !shuttingDown; UpdateEngineStatus(); StartQueue(); }
-        if (!quiet && ToolInstaller.IsReady(ToolInstaller.FindTools())) Notice.Text = "初期セットアップが完了しました。URLを貼り付けて「保存」を押してください。";
+        if (!quiet && ToolInstaller.IsReady(ToolInstaller.FindTools())) Notice.Text = ClipDock.Core.Localization.Text("初期セットアップが完了しました。URLを貼り付けて「保存」を押してください。");
     }
     private void UpdateEngineStatus()
     {
         var ready = ToolInstaller.IsReady(ToolInstaller.FindTools());
-        EngineStatus.Text = ready ? "● エンジンの準備完了" : installing ? "○ 初期セットアップ中…" : "○ 保存エンジンを取得できていません";
+        EngineStatus.Text = ready ? ClipDock.Core.Localization.Text("● エンジンの準備完了") : installing ? ClipDock.Core.Localization.Text("○ 初期セットアップ中…") : ClipDock.Core.Localization.Text("○ 保存エンジンを取得できていません");
         // Only a failed download leaves something to press; updates run by themselves at launch.
         EngineButton.Visibility = ready || installing ? Visibility.Collapsed : Visibility.Visible;
     }
@@ -325,7 +338,7 @@ public partial class MainWindow : Window
             try { DownloadPlan.CleanWorkDirectory(job.OutputDirectory, job.Id); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
             jobs.Remove(job);
         }
-        SaveState(); RefreshSummary(); Notice.Text = "完了・失敗・キャンセルの履歴を消去しました。保存した動画ファイルはそのままです。";
+        SaveState(); RefreshSummary(); Notice.Text = ClipDock.Core.Localization.Text("完了・失敗・キャンセルの履歴を消去しました。保存した動画ファイルはそのままです。");
     }
     private void LoadState()
     {
@@ -344,7 +357,7 @@ public partial class MainWindow : Window
                 foreach (ComboBoxItem count in ConcurrencyBox.Items) if ((string)count.Tag == scheduler.MaxConcurrency.ToString()) ConcurrencyBox.SelectedItem = count;
             }
         }
-        catch (Exception) { Notice.Text = "以前の設定を読み込めませんでした。既定の設定で続行します。"; }
+        catch (Exception) { Notice.Text = ClipDock.Core.Localization.Text("以前の設定を読み込めませんでした。既定の設定で続行します。"); }
         try
         {
             if (!File.Exists(historyFile)) return;
@@ -360,22 +373,23 @@ public partial class MainWindow : Window
                 var terminal = item.State is "completed" or "failed" or "cancelled";
                 var job = new DownloadItem { Id = item.Id, Request = request, CreatedAt = item.CreatedAt,
                     OutputDirectory = item.OutputDirectory, Title = item.Title ?? "", State = terminal ? item.State : "interrupted", FilePath = item.FilePath ?? "",
-                    Detail = item.State == "failed" ? DownloadFailure.Describe(request.Url, item.Detail) : terminal ? item.Detail ?? "" : "前回の終了で中断しました。再試行するか、URLを入力し直してください。", Percent = item.State == "completed" ? 100 : 0 };
+                    Detail = item.State == "failed" ? DownloadFailure.Describe(request.Url, item.Detail) : terminal ? item.Detail ?? "" : ClipDock.Core.Localization.Text("前回の終了で中断しました。再試行するか、URLを入力し直してください。"), Percent = item.State == "completed" ? 100 : 0 };
                 Attach(job); jobs.Add(job);
             }
         }
-        catch (Exception) { Notice.Text = "以前の履歴を読み込めませんでした。新しい履歴で続行します。"; }
+        catch (Exception) { Notice.Text = ClipDock.Core.Localization.Text("以前の履歴を読み込めませんでした。新しい履歴で続行します。"); }
     }
-    private void SaveState()
+    private bool SaveState()
     {
         try
         {
-            File.WriteAllText(settingsFile + ".tmp", JsonSerializer.Serialize(new AppSettings(outputDirectory, Quality, scheduler.MaxConcurrency, Format, BrowserOverlayBox.IsChecked == true, UseLoginBox.IsChecked == true), Json.Options));
+            File.WriteAllText(settingsFile + ".tmp", JsonSerializer.Serialize(new AppSettings(outputDirectory, Quality, scheduler.MaxConcurrency, Format, BrowserOverlayBox.IsChecked == true, UseLoginBox.IsChecked == true, SelectedLanguage), Json.Options));
             File.Move(settingsFile + ".tmp", settingsFile, true);
             File.WriteAllBytes(historyFile + ".tmp", WindowsProtection.Protect(JsonSerializer.SerializeToUtf8Bytes(DownloadHistory.Snapshot(jobs, closingJobs), Json.Options)));
             File.Move(historyFile + ".tmp", historyFile, true);
+            return true;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception) { Notice.Text = "履歴を保存できませんでした: " + ex.Message; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception) { Notice.Text = ClipDock.Core.Localization.Text("履歴を保存できませんでした: ") + ex.Message; return false; }
     }
     private async void OnClosing(object? sender, CancelEventArgs e)
     {
@@ -385,8 +399,8 @@ public partial class MainWindow : Window
         e.Cancel = true;
         if (shuttingDown) return;
         // The engine download can take many minutes on a slow line; it is cancellable like any other work.
-        var question = installing ? "エンジンの準備を中止して終了しますか？\n続ける場合は、このウィンドウを最小化してください。"
-            : "ダウンロードを中断して終了しますか？\n続ける場合は、このウィンドウを最小化してください。";
+        var question = installing ? ClipDock.Core.Localization.Text("エンジンの準備を中止して終了しますか？\n続ける場合は、このウィンドウを最小化してください。")
+            : ClipDock.Core.Localization.Text("ダウンロードを中断して終了しますか？\n続ける場合は、このウィンドウを最小化してください。");
         if (hasWork && MessageBox.Show(this, question, "ClipDock", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         shuttingDown = true;
         browserOverlay.Enabled = false;

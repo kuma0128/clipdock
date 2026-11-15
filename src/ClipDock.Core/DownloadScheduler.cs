@@ -138,4 +138,4 @@ public sealed class DownloadOperation
 }
 
 public sealed record AppSettings(string OutputDirectory, string Quality, int MaxConcurrentDownloads = DownloadScheduler.DefaultConcurrency,
-    string Format = "mp4", bool BrowserOverlayEnabled = false, bool UseLogin = true);
+    string Format = "mp4", bool BrowserOverlayEnabled = false, bool UseLogin = true, string Language = "ja");

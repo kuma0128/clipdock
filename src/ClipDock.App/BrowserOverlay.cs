@@ -24,17 +24,17 @@ internal sealed class BrowserOverlay : IDisposable
         this.receive = receive;
         var button = new Button
         {
-            Content = "↓  ClipDockに取り込む", FontSize = 13, FontWeight = FontWeights.SemiBold,
+            Content = ClipDock.Core.Localization.Text("↓  ClipDockに取り込む"), FontSize = 13, FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(Color.FromRgb(0x13, 0x2B, 0x1D)),
             Background = new SolidColorBrush(Color.FromRgb(0xA5, 0xE7, 0xBA)),
             BorderThickness = new Thickness(0), Padding = new Thickness(12, 7, 12, 7), Focusable = false,
-            ToolTip = "このページのURLをClipDockで確認する"
+            ToolTip = ClipDock.Core.Localization.Text("このページのURLをClipDockで確認する")
         };
-        AutomationProperties.SetName(button, "ClipDockに取り込む");
+        AutomationProperties.SetName(button, ClipDock.Core.Localization.Text("ClipDockに取り込む"));
         button.Click += Capture_Click;
         pill = new Window
         {
-            Title = "ClipDock 保存タブ", Width = 220, Height = 38, WindowStyle = WindowStyle.None,
+            Title = ClipDock.Core.Localization.Text("ClipDock 保存タブ"), Width = 220, Height = 38, WindowStyle = WindowStyle.None,
             ResizeMode = ResizeMode.NoResize, ShowInTaskbar = false, ShowActivated = false,
             AllowsTransparency = true, Background = Brushes.Transparent, Topmost = true,
             Focusable = false,

@@ -1,4 +1,5 @@
 using Avalonia;
+using ClipDock.Core;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
@@ -11,7 +12,12 @@ public partial class App : Application
     internal static string? SmokeResultFile { get; set; }
     internal static string Version => typeof(App).Assembly.GetName().Version?.ToString(3) ?? "";
 
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        Localization.Initialize(Localization.ReadPreference(Path.Combine(AppPaths.Data, "settings.json")));
+        AvaloniaXamlLoader.Load(this);
+        foreach (var resource in Localization.Resources) Resources[resource.Key] = resource.Value;
+    }
 
     public override void OnFrameworkInitializationCompleted()
     {
@@ -24,7 +30,7 @@ public partial class App : Application
             Dispatcher.UIThread.UnhandledException += (_, args) =>
             {
                 args.Handled = true;
-                _ = ConfirmDialog.ShowAsync(window, "ClipDock", args.Exception.Message, "閉じる");
+                _ = ConfirmDialog.ShowAsync(window, "ClipDock", args.Exception.Message, ClipDock.Core.Localization.Text("閉じる"));
             };
         }
         base.OnFrameworkInitializationCompleted();
@@ -33,6 +39,6 @@ public partial class App : Application
     private void About_Click(object? sender, EventArgs e)
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: { } window })
-            _ = ConfirmDialog.ShowAsync(window, "ClipDock について", $"ClipDock {Version}\n動画をMP4、音声をMP3として保存します。", "閉じる");
+            _ = ConfirmDialog.ShowAsync(window, ClipDock.Core.Localization.Text("ClipDock について"), ClipDock.Core.Localization.Format($"ClipDock {Version}\n動画をMP4、音声をMP3として保存します。"), ClipDock.Core.Localization.Text("閉じる"));
     }
 }

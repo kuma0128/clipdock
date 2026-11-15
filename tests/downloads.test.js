@@ -40,6 +40,22 @@ test("only release filenames can read the bucket, and only GET/HEAD are allowed"
   assert.deepEqual(f.calls, []);
 });
 
+test("macOS disk images and their checksums are release files from 1.0.3 on", async () => {
+  const f = fixture();
+  for (const version of ["1.0.3", "1.0.4"]) for (const arch of ["arm64", "x64"]) {
+    const image = `ClipDock-${version}-mac-${arch}-unsigned.dmg`;
+    const response = await f.request({}, "GET", image);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("Content-Type"), "application/octet-stream");
+    assert.equal(response.headers.get("Content-Disposition"), `attachment; filename="${image}"`);
+    assert.equal((await f.request({}, "GET", `${image}.sha256`)).headers.get("Content-Type"), "text/plain; charset=utf-8");
+  }
+  const before = f.calls.length;
+  for (const path of ["ClipDock-1.0.2-mac-arm64-unsigned.dmg", "ClipDock-1.0.3-mac-universal-unsigned.dmg", "ClipDock-1.0.3-mac-arm64.dmg"])
+    assert.equal((await f.request({}, "GET", path)).status, 404);
+  assert.equal(f.calls.length, before);
+});
+
 test("streams the installer and checksum with download metadata", async () => {
   const f = fixture();
   const response = await f.request();

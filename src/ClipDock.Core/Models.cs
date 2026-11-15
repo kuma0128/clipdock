@@ -20,9 +20,9 @@ public sealed record DownloadRequest
     public bool UseLogin { get; init; } = true;
     public DownloadRequest Validated()
     {
-        if (!IsWebUrl(Url)) throw new ArgumentException("http または https の動画・ページURLを指定してください。");
-        if (Quality is not ("best" or "2160" or "1080" or "720" or "480")) throw new ArgumentException("画質の指定が正しくありません。");
-        if (Format is not ("mp4" or "mp3")) throw new ArgumentException("保存形式の指定が正しくありません。");
+        if (!IsWebUrl(Url)) throw new ArgumentException(ClipDock.Core.Localization.Text("http または https の動画・ページURLを指定してください。"));
+        if (Quality is not ("best" or "2160" or "1080" or "720" or "480")) throw new ArgumentException(ClipDock.Core.Localization.Text("画質の指定が正しくありません。"));
+        if (Format is not ("mp4" or "mp3")) throw new ArgumentException(ClipDock.Core.Localization.Text("保存形式の指定が正しくありません。"));
         return this with
         {
             PageUrl = IsWebUrl(PageUrl) ? PageUrl : Url,
@@ -42,10 +42,10 @@ public sealed record DownloadRequest
 
     public void ValidateVideoPage()
     {
-        if (!IsWebUrl(Url)) throw new ArgumentException("http または https の動画・ページURLを指定してください。");
+        if (!IsWebUrl(Url)) throw new ArgumentException(ClipDock.Core.Localization.Text("http または https の動画・ページURLを指定してください。"));
         var page = new Uri(Url);
         if (SiteSessionScope.IsYouTube(page.Host) && !IsYouTubeVideo(page))
-            throw new ArgumentException("YouTubeの動画ページを開いて、そのURLを入力してください。トップページや検索結果のURLでは保存できません。");
+            throw new ArgumentException(ClipDock.Core.Localization.Text("YouTubeの動画ページを開いて、そのURLを入力してください。トップページや検索結果のURLでは保存できません。"));
     }
 
     private static bool IsYouTubeVideo(Uri page)

@@ -13,7 +13,7 @@ public sealed class DownloadItem : INotifyPropertyChanged
     public string OutputDirectory { get; init; } = "";
     private string title = "";
     private string state = "queued";
-    private string detail = "順番を待っています";
+    private string detail = ClipDock.Core.Localization.Text("順番を待っています");
     private string filePath = "";
     private double percent;
     public string Title { get => title; set => Set(ref title, value); }
@@ -35,11 +35,11 @@ public sealed class DownloadItem : INotifyPropertyChanged
     public bool IsCompleted => State == "completed";
     public bool IsBusy => State is "downloading" or "converting";
     public string FormatLabel => Request.Format == "mp3" ? "MP3" : "MP4";
-    public string Meta => $"{(Uri.TryCreate(Request.PageUrl, UriKind.Absolute, out var page) ? page.Host : "")}   ·   {(Request.Format == "mp3" ? "音声のみ" : Request.Quality == "best" ? "最高画質" : Request.Quality + "p 以下")}   ·   {CreatedAt:MM/dd HH:mm}";
+    public string Meta => $"{(Uri.TryCreate(Request.PageUrl, UriKind.Absolute, out var page) ? page.Host : "")}   ·   {(Request.Format == "mp3" ? ClipDock.Core.Localization.Text("音声のみ") : Request.Quality == "best" ? ClipDock.Core.Localization.Text("最高画質") : Request.Quality + ClipDock.Core.Localization.Text("p 以下"))}   ·   {CreatedAt:MM/dd HH:mm}";
     public string StateLabel => State switch
     {
-        "queued" => "待機中", "downloading" => "ダウンロード中", "converting" => $"{FormatLabel}を仕上げています",
-        "completed" => "保存完了", "failed" => "保存できませんでした", "cancelled" => "キャンセル済み", _ => "中断されました"
+        "queued" => ClipDock.Core.Localization.Text("待機中"), "downloading" => ClipDock.Core.Localization.Text("ダウンロード中"), "converting" => ClipDock.Core.Localization.Format($"{FormatLabel}を仕上げています"),
+        "completed" => ClipDock.Core.Localization.Text("保存完了"), "failed" => ClipDock.Core.Localization.Text("保存できませんでした"), "cancelled" => ClipDock.Core.Localization.Text("キャンセル済み"), _ => ClipDock.Core.Localization.Text("中断されました")
     };
     private void Notify([CallerMemberName] string? property = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
     private bool Set<T>(ref T field, T value, [CallerMemberName] string? property = null)

@@ -4,7 +4,7 @@
 
 公式サイトはCloudflare Pagesの `clipdock` プロジェクトへ配置します。R2の `clipdock-releases` バケットは非公開のまま使用し、Pages Functionsの `CLIPDOCK_RELEASES` バインディングから配布ファイルだけを読み出します。
 
-公開するEXEと `.exe.sha256` をバケット直下にアップロードします。公開可能なファイル名は `functions/downloads/[[file]].js` で指定し、新しいバージョンではこの一覧も更新してください。
+公開するWindows用EXE、Mac用DMG（Appleシリコン / Intel）とそれぞれの `.sha256` をバケット直下にアップロードします。公開可能なファイル名は `functions/downloads/[[file]].js` で指定し、新しいバージョンではこの一覧も更新してください。
 
 ```powershell
 npm ci
@@ -12,7 +12,7 @@ $env:CLOUDFLARE_ACCOUNT_ID = '<公開先のアカウントID>'
 npm run deploy:site
 ```
 
-Cloudflareへログイン済みの環境で実行します。サイトは `website/`、配布ルートは `/downloads/<ファイル名>` です。公開URLから取得したEXEのSHA-256と、公開用ファイルのSHA-256が一致することを確認してください。R2やPages Functionsの利用量はCloudflareダッシュボードで確認できます。
+Cloudflareへログイン済みの環境で実行します。サイトは `website/`、配布ルートは `/downloads/<ファイル名>` です。公開URLから取得したEXE・DMGのSHA-256と、公開用ファイルのSHA-256が一致することを確認してください。R2やPages Functionsの利用量はCloudflareダッシュボードで確認できます。
 
 既定のビルドは公開CAのコード署名証明書を要求します。未署名で正式配布する場合は `-AllowUnsignedRelease` を明示します。署名に失敗しても未署名へ自動切り替えはしません。
 
@@ -160,4 +160,6 @@ Developer IDで配布する場合は、Apple Developer Programの証明書でバ
 
 ### 公開
 
-公開する場合は、Windows版と同じ手順でR2バケットへディスクイメージと `.sha256` をアップロードし、`functions/downloads/[[file]].js` の公開ファイル名一覧へ追加してからサイトを更新します。公開先から取得したファイルのSHA-256が配布用ファイルと一致することを確認してください。実機のMacで、新規インストール、URLからのMP4・MP3保存、ログイン保存を確認してから公開します。
+言語切り替えを追加した1.0.4以降は、各言語でメイン画面・ログイン画面・進捗・エラーが表示され、再起動後も選択が保持されることを確認します。
+
+公開する場合は、Windows版と同じ手順でR2バケットへディスクイメージと `.sha256` をアップロードしてからサイトを更新します。1.0.3・1.0.4のディスクイメージは `functions/downloads/[[file]].js` の公開ファイル名一覧に登録済みです。新しいバージョンではこの一覧も更新してください。公開前に、両アーキテクチャのDMGとチェックサムがR2にあることを確認します。GitHub Actionsの対象コミットと配布ファイルの版数を揃えてください。公開先から取得したファイルのSHA-256が配布用ファイルと一致することを確認してください。実機のMacで、新規インストール、URLからのMP4・MP3保存、ログイン保存を確認してから公開します。

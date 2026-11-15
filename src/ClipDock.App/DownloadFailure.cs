@@ -15,9 +15,14 @@ public static class DownloadFailure
         if (host.Equals("x.com", StringComparison.OrdinalIgnoreCase) || host.EndsWith(".x.com", StringComparison.OrdinalIgnoreCase) ||
             host.Equals("twitter.com", StringComparison.OrdinalIgnoreCase) || host.EndsWith(".twitter.com", StringComparison.OrdinalIgnoreCase))
         {
+            foreach (var language in ClipDock.Core.Localization.Languages)
+            {
+                var hint = ClipDock.Core.Localization.Text(TwitterHint, language) + "\n";
+                while (detail.StartsWith(hint, StringComparison.Ordinal)) detail = detail[hint.Length..];
+            }
             while (detail.StartsWith("Xの動画情報を取得できませんでした。", StringComparison.Ordinal) && detail.IndexOf('\n') is var newline && newline >= 0)
                 detail = detail[(newline + 1)..];
-            return TwitterHint + "\n" + detail;
+            return ClipDock.Core.Localization.Text(TwitterHint) + "\n" + detail;
         }
 
         return detail;

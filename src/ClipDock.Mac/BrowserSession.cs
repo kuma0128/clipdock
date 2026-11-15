@@ -38,8 +38,8 @@ internal sealed class BrowserSession
     private async Task<List<SessionCookie>> CookiesAsync(string url)
     {
         try { await ready.Task.WaitAsync(TimeSpan.FromSeconds(15)); }
-        catch (TimeoutException) { throw new InvalidOperationException("ログイン情報を読み込めませんでした。アプリを開き直して再試行してください。"); }
-        var manager = store.TryGetCookieManager() ?? throw new InvalidOperationException("ログイン情報を読み込めませんでした。アプリを開き直して再試行してください。");
+        catch (TimeoutException) { throw new InvalidOperationException(ClipDock.Core.Localization.Text("ログイン情報を読み込めませんでした。アプリを開き直して再試行してください。")); }
+        var manager = store.TryGetCookieManager() ?? throw new InvalidOperationException(ClipDock.Core.Localization.Text("ログイン情報を読み込めませんでした。アプリを開き直して再試行してください。"));
         return (await manager.GetCookiesAsync()).Where(c => SiteSessionScope.AllowsCookie(url, c.Domain)).Select(Convert).ToList();
     }
 
@@ -62,8 +62,8 @@ internal sealed class BrowserSession
     internal async Task<string> RefreshStatusAsync(string? url = null)
     {
         if (url is not null && SiteSessionScope.AllowsNavigation(url)) currentUrl = url;
-        var status = currentUrl is null ? "ログインが必要なサイトは「ログイン」から接続できます。" :
-            $"{new Uri(currentUrl).Host}: {(HasLogin(currentUrl, await CookiesAsync(currentUrl)) ? SiteSessionScope.Site(currentUrl) is null ? "サイト情報を利用できます" : "ログイン情報あり" : "未接続")}";
+        var status = currentUrl is null ? ClipDock.Core.Localization.Text("ログインが必要なサイトは「ログイン」から接続できます。") :
+            $"{new Uri(currentUrl).Host}: {(HasLogin(currentUrl, await CookiesAsync(currentUrl)) ? SiteSessionScope.Site(currentUrl) is null ? ClipDock.Core.Localization.Text("サイト情報を利用できます") : ClipDock.Core.Localization.Text("ログイン情報あり") : ClipDock.Core.Localization.Text("未接続"))}";
         StatusChanged?.Invoke(status);
         return status;
     }

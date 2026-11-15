@@ -1,6 +1,6 @@
 {
   "name": "clipdock",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "type": "module",
   "scripts": { "test": "node --test tests/*.test.js", "check": "node --check scripts/check-package.mjs && node --check scripts/smoke-downloads.mjs && node --check functions/downloads/[[file]].js", "deploy:site": "wrangler pages deploy --branch main" },

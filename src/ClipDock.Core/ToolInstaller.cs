@@ -72,7 +72,7 @@ public static class ToolInstaller
         var plans = new List<(Component Component, InstalledComponent Release, bool Reuse)>();
         foreach (var component in Components)
         {
-            progress?.Report($"{component.Repository} の配布情報を取得しています…");
+            progress?.Report(ClipDock.Core.Localization.Format($"{component.Repository} の配布情報を取得しています…"));
             var release = await ReadReleaseAsync(component, client, ct);
             var previous = installed.Where(v => v.Repository == component.Repository && v.Asset == component.Asset).ToArray();
             var reusable = previous.Length == 1 && previous[0].Tag == release.Tag &&
@@ -81,14 +81,14 @@ public static class ToolInstaller
             if (reusable)
             {
                 release = release with { Files = previous[0].Files };
-                progress?.Report($"{component.Asset} は最新版です。");
+                progress?.Report(ClipDock.Core.Localization.Format($"{component.Asset} は最新版です。"));
             }
             plans.Add((component, release, reusable));
         }
         ct.ThrowIfCancellationRequested();
         if (plans.All(plan => plan.Reuse))
         {
-            progress?.Report("ダウンロードエンジンは最新版です。再ダウンロードは不要です。");
+            progress?.Report(ClipDock.Core.Localization.Text("ダウンロードエンジンは最新版です。再ダウンロードは不要です。"));
             return;
         }
 
@@ -104,7 +104,7 @@ public static class ToolInstaller
             await File.WriteAllTextAsync(Path.Combine(staging, "versions.json"), JsonSerializer.Serialize(versions, Json.Options), ct);
             ct.ThrowIfCancellationRequested();
             PromoteStagedPackage(staging, destination);
-            progress?.Report("ダウンロードエンジンの準備ができました。");
+            progress?.Report(ClipDock.Core.Localization.Text("ダウンロードエンジンの準備ができました。"));
         }
         finally { try { Directory.Delete(staging, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
     }
@@ -122,16 +122,16 @@ public static class ToolInstaller
             ? assets.EnumerateArray().FirstOrDefault(a => a.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String && n.GetString() == component.Asset)
             : default;
         if (asset.ValueKind != JsonValueKind.Object)
-            throw new IOException($"{component.Repository} の最新リリースに {component.Asset} が見つかりません。時間をおいて再実行してください。");
+            throw new IOException(ClipDock.Core.Localization.Format($"{component.Repository} の最新リリースに {component.Asset} が見つかりません。時間をおいて再実行してください。"));
         string? Text(string key) => asset.TryGetProperty(key, out var p) && p.ValueKind == JsonValueKind.String ? p.GetString() : null;
         var url = Text("browser_download_url");
         if (url is null || !Uri.TryCreate(url, UriKind.Absolute, out var location) || location.Scheme != Uri.UriSchemeHttps)
-            throw new IOException($"{component.Asset} の取得先が正しくありません。");
+            throw new IOException(ClipDock.Core.Localization.Format($"{component.Asset} の取得先が正しくありません。"));
         var digest = Text("digest");
         if (digest is null || !digest.StartsWith("sha256:", StringComparison.Ordinal) || !IsSha256(digest[7..]))
-            throw new IOException($"{component.Asset} のSHA-256情報がありません。未検証のファイルはインストールしません。");
+            throw new IOException(ClipDock.Core.Localization.Format($"{component.Asset} のSHA-256情報がありません。未検証のファイルはインストールしません。"));
         if (!release.RootElement.TryGetProperty("tag_name", out var tag) || tag.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(tag.GetString()))
-            throw new IOException($"{component.Repository} のリリース識別情報がありません。");
+            throw new IOException(ClipDock.Core.Localization.Format($"{component.Repository} のリリース識別情報がありません。"));
         return new(component.Repository, tag.GetString()!, component.Asset, url, digest[7..]);
     }
 
@@ -180,7 +180,7 @@ public static class ToolInstaller
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
             File.Copy(Path.Combine(destination, path), target);
             if (!hash.Equals(await HashFileAsync(target, ct), StringComparison.OrdinalIgnoreCase))
-                throw new IOException("更新中にエンジンが変更されました。再実行してください。");
+                throw new IOException(ClipDock.Core.Localization.Text("更新中にエンジンが変更されました。再実行してください。"));
         }
         return release;
     }
@@ -204,11 +204,11 @@ public static class ToolInstaller
                 await output.WriteAsync(buffer.AsMemory(0, count), ct);
                 received += count;
                 var mb = received / 1024 / 1024;
-                if (mb != reported) { progress?.Report($"{component.Asset} を取得中 · {mb} MB"); reported = mb; }
+                if (mb != reported) { progress?.Report(ClipDock.Core.Localization.Format($"{component.Asset} を取得中 · {mb} MB")); reported = mb; }
             }
         }
         if (!release.Sha256.Equals(await HashFileAsync(archive, ct), StringComparison.OrdinalIgnoreCase))
-            throw new IOException($"{component.Asset} の整合性確認に失敗しました。再実行してください。");
+            throw new IOException(ClipDock.Core.Localization.Format($"{component.Asset} の整合性確認に失敗しました。再実行してください。"));
         var folder = Path.Combine(staging, component.LicenseFolder);
         Directory.CreateDirectory(folder);
         if (component.Asset.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
@@ -237,21 +237,21 @@ public static class ToolInstaller
         var files = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var path in component.Names.Concat(Directory.EnumerateFiles(folder).Select(path => component.LicenseFolder + "/" + Path.GetFileName(path))))
             files.Add(path, await HashFileAsync(Path.Combine(staging, path), ct));
-        if (!HasExpectedFiles(component, files)) throw new IOException($"{component.Asset} のライセンス情報が不足しています。");
+        if (!HasExpectedFiles(component, files)) throw new IOException(ClipDock.Core.Localization.Format($"{component.Asset} のライセンス情報が不足しています。"));
         return release with { Files = files };
     }
 
     internal static FileStream AcquireInstallLock(string destination)
     {
         try { return new FileStream(Path.Combine(destination, ".install.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 1, FileOptions.DeleteOnClose); }
-        catch (IOException ex) { throw new IOException("別のエンジン更新が実行中です。完了してから再実行してください。", ex); }
+        catch (IOException ex) { throw new IOException(ClipDock.Core.Localization.Text("別のエンジン更新が実行中です。完了してから再実行してください。"), ex); }
     }
 
     internal static void PromoteStagedPackage(string staging, string destination)
     {
         string[] entries = [.. Executables, "licenses", "versions.json"];
         foreach (var name in entries)
-            if (!Exists(Path.Combine(staging, name))) throw new IOException($"エンジンの配布ファイルが不足しています: {name}");
+            if (!Exists(Path.Combine(staging, name))) throw new IOException(ClipDock.Core.Localization.Format($"エンジンの配布ファイルが不足しています: {name}"));
 
         var backup = Path.Combine(destination, ".backup-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(backup);
@@ -285,7 +285,7 @@ public static class ToolInstaller
             }
             catch (Exception restoreError) when (restoreError is IOException or UnauthorizedAccessException)
             {
-                throw new IOException($"更新と復元に失敗しました。以前のエンジンは {backup} に保持されています。", new AggregateException(installError, restoreError));
+                throw new IOException(ClipDock.Core.Localization.Format($"更新と復元に失敗しました。以前のエンジンは {backup} に保持されています。"), new AggregateException(installError, restoreError));
             }
             throw;
         }
@@ -310,13 +310,13 @@ public static class ToolInstaller
         try
         {
             return await client.GetFromJsonAsync<JsonDocument>($"https://api.github.com/repos/{repo}/releases/latest", ct)
-                ?? throw new IOException("配布情報を取得できませんでした。");
+                ?? throw new IOException(ClipDock.Core.Localization.Text("配布情報を取得できませんでした。"));
         }
         // Unauthenticated GitHub API calls are limited per IP address (shared offices, VPNs).
         catch (HttpRequestException ex) when (ex.StatusCode is System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.TooManyRequests)
         {
-            throw new IOException("GitHubの利用制限に達しました。1時間ほど待ってから再実行してください。", ex);
+            throw new IOException(ClipDock.Core.Localization.Text("GitHubの利用制限に達しました。1時間ほど待ってから再実行してください。"), ex);
         }
-        catch (JsonException ex) { throw new IOException($"{repo} の配布情報を読み取れませんでした。", ex); }
+        catch (JsonException ex) { throw new IOException(ClipDock.Core.Localization.Format($"{repo} の配布情報を読み取れませんでした。"), ex); }
     }
 }

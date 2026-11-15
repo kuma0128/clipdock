@@ -21,7 +21,7 @@ public sealed class SessionCookieFile : IDisposable
             .DistinctBy(c => (c.Domain, c.Path, c.Name)).Take(500).ToArray();
         if (cookies.Length == 0) return null;
         var dir = new DirectoryInfo(directory);
-        if (dir.Exists && dir.Attributes.HasFlag(FileAttributes.ReparsePoint)) throw new IOException("ログイン情報の一時保存先を使用できません。");
+        if (dir.Exists && dir.Attributes.HasFlag(FileAttributes.ReparsePoint)) throw new IOException(ClipDock.Core.Localization.Text("ログイン情報の一時保存先を使用できません。"));
         // Only the current user may read the folder that briefly holds session cookies.
         if (OperatingSystem.IsWindows())
         {

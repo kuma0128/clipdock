@@ -28,7 +28,7 @@ public partial class LoginWindow : Window
         {
             var url = e.Request?.ToString() ?? "";
             if (url.Length == 0 || url.StartsWith("about:", StringComparison.OrdinalIgnoreCase)) return;
-            if (!SiteSessionScope.AllowsNavigation(url)) { e.Cancel = true; Status.Text = "ログインにはhttpsのページを開いてください。"; }
+            if (!SiteSessionScope.AllowsNavigation(url)) { e.Cancel = true; Status.Text = ClipDock.Core.Localization.Text("ログインにはhttpsのページを開いてください。"); }
             else Address.Text = url;
         };
         // Pop-ups and target=_blank links stay in this window; nothing opens outside the app's session.
@@ -45,9 +45,9 @@ public partial class LoginWindow : Window
             try
             {
                 if (SiteSessionScope.AllowsNavigation(url)) { pageUrl = url; Address.Text = url; }
-                Status.Text = e.IsSuccess ? await session.RefreshStatusAsync(pageUrl.Length > 0 ? pageUrl : null) : "ページを開けませんでした。URLを確認して、もう一度開いてください。";
+                Status.Text = e.IsSuccess ? await session.RefreshStatusAsync(pageUrl.Length > 0 ? pageUrl : null) : ClipDock.Core.Localization.Text("ページを開けませんでした。URLを確認して、もう一度開いてください。");
             }
-            catch (Exception) { if (!closed) Status.Text = "ログイン状態を確認できませんでした。サイトを開き直してください。"; }
+            catch (Exception) { if (!closed) Status.Text = ClipDock.Core.Localization.Text("ログイン状態を確認できませんでした。サイトを開き直してください。"); }
             PageLoaded?.Invoke(url, e.IsSuccess);
         };
         Closed += (_, _) => closed = true;
@@ -61,7 +61,7 @@ public partial class LoginWindow : Window
             await adapter.Task.WaitAsync(TimeSpan.FromSeconds(20));
             if (!closed) Web.Navigate(new Uri(url));
         }
-        catch (Exception) { if (!closed) Status.Text = "ログイン画面を準備できませんでした。画面を開き直してください。"; }
+        catch (Exception) { if (!closed) Status.Text = ClipDock.Core.Localization.Text("ログイン画面を準備できませんでした。画面を開き直してください。"); }
     }
 
     // Single-page sites change the address without a navigation, so ask the page itself first.
@@ -83,16 +83,16 @@ public partial class LoginWindow : Window
     {
         var url = (Address.Text ?? "").Trim();
         if (!url.Contains("://", StringComparison.Ordinal)) url = "https://" + url;
-        if (!SiteSessionScope.AllowsNavigation(url)) { Status.Text = "httpsのページURLを入力してください。"; return; }
+        if (!SiteSessionScope.AllowsNavigation(url)) { Status.Text = ClipDock.Core.Localization.Text("httpsのページURLを入力してください。"); return; }
         Open(url);
     }
     private void Back_Click(object? sender, RoutedEventArgs e) { if (Web.CanGoBack) Web.GoBack(); }
     private async void Clear_Click(object? sender, RoutedEventArgs e)
     {
-        if (hasActiveDownloads()) { Status.Text = "保存が終わるか、キャンセルしてからログイン情報を削除してください。"; return; }
-        if (!await ConfirmDialog.ShowAsync(this, "ログイン情報を削除", "ClipDock内のすべてのサイトのログイン情報（Cookie）を削除しますか？", "削除する", "キャンセル")) return;
-        try { await session.ClearAsync(); if (!closed) { Status.Text = "ログイン情報を削除しました。"; Web.Refresh(); } }
-        catch (Exception) { if (!closed) Status.Text = "削除できませんでした。画面を開き直して再実行してください。"; }
+        if (hasActiveDownloads()) { Status.Text = ClipDock.Core.Localization.Text("保存が終わるか、キャンセルしてからログイン情報を削除してください。"); return; }
+        if (!await ConfirmDialog.ShowAsync(this, ClipDock.Core.Localization.Text("ログイン情報を削除"), ClipDock.Core.Localization.Text("ClipDock内のすべてのサイトのログイン情報（Cookie）を削除しますか？"), ClipDock.Core.Localization.Text("削除する"), ClipDock.Core.Localization.Text("キャンセル"))) return;
+        try { await session.ClearAsync(); if (!closed) { Status.Text = ClipDock.Core.Localization.Text("ログイン情報を削除しました。"); Web.Refresh(); } }
+        catch (Exception) { if (!closed) Status.Text = ClipDock.Core.Localization.Text("削除できませんでした。画面を開き直して再実行してください。"); }
     }
     private async void UsePage_Click(object? sender, RoutedEventArgs e)
     {

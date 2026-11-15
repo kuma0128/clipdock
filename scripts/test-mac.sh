@@ -43,9 +43,12 @@ fi
 
 "$binary" --engine-check "$work/engine"
 
-result="$logs/window-check.json"
+for language in ja en zh-CN es; do
+result="$logs/window-check-$language.json"
+mkdir -p "$work/data-$language"
+printf '{"language":"%s"}\n' "$language" > "$work/data-$language/settings.json"
 rm -f "$result"
-"$binary" --data-dir "$work/data" --smoke "$result" > "$logs/window.log" 2>&1 &
+"$binary" --data-dir "$work/data-$language" --smoke "$result" > "$logs/window-$language.log" 2>&1 &
 pid=$!
 for _ in $(seq 1 240); do
   [ -f "$result" ] && break
@@ -53,15 +56,16 @@ for _ in $(seq 1 240); do
   sleep 0.5
 done
 sleep 3
-screencapture -x "$logs/window-check.png" 2>/dev/null || echo "No screenshot: screen capture is unavailable in this session."
+screencapture -x "$logs/window-check-$language.png" 2>/dev/null || echo "No screenshot: screen capture is unavailable in this session."
 wait "$pid" || true
-[ -f "$result" ] || { echo "FAIL the app did not report a window check result" >&2; cat "$logs/window.log" >&2; exit 1; }
+[ -f "$result" ] || { echo "FAIL the app did not report a window check result" >&2; cat "$logs/window-$language.log" >&2; exit 1; }
 cat "$result"; echo
-grep -q '"passed": true' "$result" || { echo "FAIL window check" >&2; cat "$logs/window.log" >&2; exit 1; }
+grep -q '"passed": true' "$result" || { echo "FAIL window check" >&2; cat "$logs/window-$language.log" >&2; exit 1; }
 pass "main window, sign-in session and sign-in window"
 
-[ "$(stat -f %Lp "$work/data")" = "700" ] && [ "$(stat -f %Lp "$work/data/history.dat")" = "600" ] && [ "$(stat -f %Lp "$work/data/settings.json")" = "600" ]
-pass "settings and history are readable by the current user only"
+[ "$(stat -f %Lp "$work/data-$language")" = "700" ] && [ "$(stat -f %Lp "$work/data-$language/history.dat")" = "600" ] && [ "$(stat -f %Lp "$work/data-$language/settings.json")" = "600" ]
+pass "settings and history are readable by the current user only ($language)"
+done
 # Where WebKit keeps the app's sign-in session (recorded for the privacy documentation).
 ls -d "$HOME/Library/WebKit/app.clipdock.ClipDock" "$HOME/Library/HTTPStorages/app.clipdock.ClipDock"* "$HOME/Library/Caches/app.clipdock.ClipDock" 2>/dev/null | sed 's/^/session data: /' || true
 echo "macOS checks passed."

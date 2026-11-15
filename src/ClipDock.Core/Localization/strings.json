@@ -1,0 +1,902 @@
+{
+  "言語（次回起動から適用）": [
+    "Language (after restart)",
+    "语言（重启后生效）",
+    "Idioma (al reiniciar)"
+  ],
+  "言語設定を保存しました。アプリを開き直すと適用されます。": [
+    "Language saved. Reopen ClipDock to apply it.",
+    "语言设置已保存，重新打开 ClipDock 后生效。",
+    "Idioma guardado. Vuelve a abrir ClipDock para aplicarlo."
+  ],
+  "\n一時ログイン情報を削除できませんでした。アプリを再起動して削除を再試行してください。": [
+    "\nCould not delete temporary login data. Restart ClipDock to try again.",
+    "\n无法删除临时登录数据。请重启 ClipDock 后重试。",
+    "\nNo se pudieron borrar los datos temporales de acceso. Reinicia ClipDock para reintentarlo."
+  ],
+  "{0}  /  {1} 件     ·     保存完了 {2} 件": [
+    "{0}  /  {1} items     ·     {2} saved",
+    "{0}  /  {1} 项     ·     已保存 {2} 项",
+    "{0}  /  {1} elementos     ·     {2} guardados"
+  ],
+  "{0} のSHA-256情報がありません。未検証のファイルはインストールしません。": [
+    "No SHA-256 is available for {0}. Unverified files will not be installed.",
+    "{0} 缺少 SHA-256 信息，不会安装未经验证的文件。",
+    "No hay SHA-256 para {0}. No se instalarán archivos sin verificar."
+  ],
+  "{0} のライセンス情報が不足しています。": [
+    "License information is missing for {0}.",
+    "{0} 缺少许可证信息。",
+    "Falta información de licencia para {0}."
+  ],
+  "{0} のリリース識別情報がありません。": [
+    "Release identity is missing for {0}.",
+    "{0} 缺少版本标识信息。",
+    "Falta la identificación de versión de {0}."
+  ],
+  "{0} の最新リリースに {1} が見つかりません。時間をおいて再実行してください。": [
+    "The latest release of {0} does not contain {1}. Try again later.",
+    "{0} 的最新版本中没有 {1}，请稍后重试。",
+    "La última versión de {0} no contiene {1}. Inténtalo más tarde."
+  ],
+  "{0} の取得先が正しくありません。": [
+    "The download source for {0} is invalid.",
+    "{0} 的下载来源无效。",
+    "El origen de descarga de {0} no es válido."
+  ],
+  "{0} の整合性確認に失敗しました。再実行してください。": [
+    "Integrity verification failed for {0}. Try again.",
+    "{0} 完整性验证失败，请重试。",
+    "Falló la verificación de integridad de {0}. Reinténtalo."
+  ],
+  "{0} の配布情報を取得しています…": [
+    "Fetching release information for {0}…",
+    "正在获取 {0} 的版本信息…",
+    "Obteniendo información de versión de {0}…"
+  ],
+  "{0} の配布情報を読み取れませんでした。": [
+    "Could not read release information for {0}.",
+    "无法读取 {0} 的版本信息。",
+    "No se pudo leer la información de versión de {0}."
+  ],
+  "{0} は最新版です。": [
+    "{0} is up to date.",
+    "{0} 已是最新版本。",
+    "{0} está actualizado."
+  ],
+  "{0} を取得中 · {1} MB": [
+    "Downloading {0} · {1} MB",
+    "正在下载 {0} · {1} MB",
+    "Descargando {0} · {1} MB"
+  ],
+  "{0}を仕上げています": [
+    "Finalizing {0}",
+    "正在完成 {0}",
+    "Finalizando {0}"
+  ],
+  "↓    すべてのダウンロード": [
+    "↓    All downloads",
+    "↓    全部下载",
+    "↓    Todas las descargas"
+  ],
+  "↓  ClipDockに取り込む": [
+    "↓  Send to ClipDock",
+    "↓  导入 ClipDock",
+    "↓  Enviar a ClipDock"
+  ],
+  "↓  保存": [
+    "↓  Save",
+    "↓  保存",
+    "↓  Guardar"
+  ],
+  "○ 初期セットアップ中…": [
+    "○ Setting up…",
+    "○ 正在初始化…",
+    "○ Configurando…"
+  ],
+  "○ 保存エンジンを取得できていません": [
+    "○ Download engine unavailable",
+    "○ 下载引擎不可用",
+    "○ Motor no disponible"
+  ],
+  "● エンジンの準備完了": [
+    "● Engine ready",
+    "● 引擎已就绪",
+    "● Motor listo"
+  ],
+  "◷    ダウンロード中": [
+    "◷    Downloading",
+    "◷    正在下载",
+    "◷    Descargando"
+  ],
+  "✓    保存したファイル": [
+    "✓    Saved files",
+    "✓    已保存的文件",
+    "✓    Archivos guardados"
+  ],
+  "1件": [
+    "1",
+    "1",
+    "1"
+  ],
+  "2件": [
+    "2",
+    "2",
+    "2"
+  ],
+  "3件": [
+    "3",
+    "3",
+    "3"
+  ],
+  "4件": [
+    "4",
+    "4",
+    "4"
+  ],
+  "Chrome / Edgeの上中央にマウスを置くと、保存タブが表示されます。クリックしてURLを取り込んでください。": [
+    "Hover over the top center of Chrome or Edge, then click the tab to import the URL.",
+    "将鼠标移到 Chrome 或 Edge 顶部中央，点击出现的标签导入网址。",
+    "Sitúa el cursor en el centro superior de Chrome o Edge y pulsa la pestaña para importar la URL."
+  ],
+  "ClipDock — サイトにログイン": [
+    "ClipDock — Sign in to a site",
+    "ClipDock — 登录网站",
+    "ClipDock — Acceder a un sitio"
+  ],
+  "ClipDock {0}\n動画をMP4、音声をMP3として保存します。": [
+    "ClipDock {0}\nSave videos as MP4 and audio as MP3.",
+    "ClipDock {0}\n将视频保存为 MP4，音频保存为 MP3。",
+    "ClipDock {0}\nGuarda vídeos como MP4 y audio como MP3."
+  ],
+  "ClipDock について": [
+    "About ClipDock",
+    "关于 ClipDock",
+    "Acerca de ClipDock"
+  ],
+  "ClipDock 保存タブ": [
+    "ClipDock save tab",
+    "ClipDock 保存标签",
+    "Pestaña de ClipDock"
+  ],
+  "ClipDockに取り込む": [
+    "Send to ClipDock",
+    "导入 ClipDock",
+    "Enviar a ClipDock"
+  ],
+  "ClipDock内で保存するサイトにログインします。": [
+    "Sign in to the source site inside ClipDock.",
+    "在 ClipDock 内登录来源网站。",
+    "Inicia sesión en el sitio de origen dentro de ClipDock."
+  ],
+  "ClipDock内のすべてのサイトのログイン情報（Cookie）を削除しますか？": [
+    "Delete cookies for every site in ClipDock?",
+    "删除 ClipDock 内所有网站的 Cookie？",
+    "¿Borrar las cookies de todos los sitios en ClipDock?"
+  ],
+  "ClipDock内のすべてのログイン情報と閲覧データを削除しますか？": [
+    "Delete all login information and browsing data in ClipDock?",
+    "删除 ClipDock 内的全部登录信息和浏览数据？",
+    "¿Borrar todos los datos de acceso y navegación en ClipDock?"
+  ],
+  "ClipDock用に一度ログインすると、次回から保存に使います。Chromeとは別のログインです。": [
+    "Sign in once for future downloads. This session is separate from Chrome.",
+    "登录一次后即可用于后续下载，此会话与 Chrome 分开。",
+    "Inicia sesión una vez para futuras descargas. Esta sesión es independiente de Chrome."
+  ],
+  "ClipDock用に一度ログインすると、次回から保存に使います。SafariやChromeとは別のログインです。": [
+    "Sign in once for future downloads. This session is separate from Safari and Chrome.",
+    "登录一次后即可用于后续下载，此会话与 Safari 和 Chrome 分开。",
+    "Inicia sesión una vez para futuras descargas. Esta sesión es independiente de Safari y Chrome."
+  ],
+  "Finderでファイルの場所を表示します。": [
+    "Show the file in Finder.",
+    "在 Finder 中显示文件。",
+    "Mostrar el archivo en Finder."
+  ],
+  "GitHubの利用制限に達しました。1時間ほど待ってから再実行してください。": [
+    "GitHub's rate limit was reached. Wait about an hour and try again.",
+    "已达到 GitHub 请求限制，请等待约一小时后重试。",
+    "Se alcanzó el límite de GitHub. Espera una hora y reinténtalo."
+  ],
+  "http または https の動画・ページURLを指定してください。": [
+    "Enter an HTTP or HTTPS video or page URL.",
+    "请输入 HTTP 或 HTTPS 视频或页面网址。",
+    "Introduce una URL HTTP o HTTPS de un vídeo o una página."
+  ],
+  "httpsのページURLを入力してください。": [
+    "Enter an HTTPS page URL.",
+    "请输入 HTTPS 页面网址。",
+    "Introduce una URL de página HTTPS."
+  ],
+  "Microsoft公式のWebView2ダウンロードページをブラウザーで開いてください。": [
+    "Open Microsoft's official WebView2 download page in your browser.",
+    "请在浏览器中打开 Microsoft 官方 WebView2 下载页面。",
+    "Abre la página oficial de descarga de WebView2 de Microsoft en el navegador."
+  ],
+  "MP4は動画、MP3は音声を保存します。画質は元の動画が上限です。": [
+    "MP4 saves video; MP3 saves audio. Quality cannot exceed the source.",
+    "MP4 保存视频，MP3 保存音频，画质不超过源视频。",
+    "MP4 guarda vídeo; MP3 guarda audio. La calidad no supera la del original."
+  ],
+  "p 以下": [
+    "p or lower",
+    "p 或更低",
+    "p o inferior"
+  ],
+  "URLから保存": [
+    "Save from a URL",
+    "从网址保存",
+    "Guardar desde una URL"
+  ],
+  "URLと保存先を確認して「保存」を押してください。": [
+    "Check the URL and destination, then click Save.",
+    "确认网址和保存位置后，点击“保存”。",
+    "Comprueba la URL y el destino y pulsa Guardar."
+  ],
+  "URLを確認して「保存」を押してください。": [
+    "Check the URL, then click Save.",
+    "确认网址后，点击“保存”。",
+    "Comprueba la URL y pulsa Guardar."
+  ],
+  "URLを貼り付け、保存形式と保存先を選んで「保存」を押してください。": [
+    "Paste a URL, choose a format and destination, then click Save.",
+    "粘贴网址，选择格式和保存位置，然后点击“保存”。",
+    "Pega una URL, elige formato y destino y pulsa Guardar."
+  ],
+  "WebView2の公式ページ": [
+    "Official WebView2 page",
+    "WebView2 官方页面",
+    "Página oficial de WebView2"
+  ],
+  "Xの動画情報を取得できませんでした。ログインや投稿の公開条件が影響する場合があります。「ログイン」からClipDock内でXにログインし、「この保存にログイン情報を使う」をONにして再試行してください。接続済みならログインし直すか、ClipDockを開き直して保存エンジンを更新してください。": [
+    "Could not retrieve the X video. Login or post visibility may affect access. Sign in to X inside ClipDock, enable Use login for this download and retry. If already signed in, sign in again or reopen ClipDock to update the engine.",
+    "无法获取 X 视频，可能受登录状态或帖子的公开条件影响。请在 ClipDock 内登录 X，开启“使用登录信息保存”后重试。若已登录，请重新登录或重新打开 ClipDock 更新引擎。",
+    "No se pudo obtener el vídeo de X. Puede depender de la sesión o visibilidad de la publicación. Accede a X en ClipDock, activa Usar sesión para esta descarga y reinténtalo. Si ya accediste, vuelve a iniciar sesión o abre de nuevo ClipDock para actualizar el motor."
+  ],
+  "YouTubeの動画ページを開いて、そのURLを入力してください。トップページや検索結果のURLでは保存できません。": [
+    "Enter the URL of a YouTube video page. Home and search result pages are not supported.",
+    "请输入 YouTube 视频页面的网址，不支持首页或搜索结果页面。",
+    "Introduce la URL de un vídeo de YouTube. No se admiten la página de inicio ni los resultados de búsqueda."
+  ],
+  "アドレスバーが編集中です。ページを開いてから取り込むか、URLをここに貼り付けてください。": [
+    "The address bar is being edited. Open the page before importing, or paste its URL here.",
+    "地址栏正在编辑中，请打开页面后导入，或在此粘贴网址。",
+    "Se está editando la barra de direcciones. Abre la página antes de importar o pega aquí la URL."
+  ],
+  "エンジンの取得が時間内に終わりませんでした。通信環境を確認して「保存エンジンを準備」を押してください。": [
+    "Engine download timed out. Check your connection and click Prepare engine.",
+    "引擎下载超时。请检查网络连接，点击“准备下载引擎”。",
+    "La descarga del motor agotó el tiempo. Comprueba la conexión y pulsa Preparar motor."
+  ],
+  "エンジンの取得に失敗しました: ": [
+    "Engine download failed: ",
+    "引擎下载失败：",
+    "Falló la descarga del motor: "
+  ],
+  "エンジンの準備を中止して終了しますか？\n続ける場合は、このウィンドウをしまってください。": [
+    "Cancel engine setup and quit?\nMinimize this window to continue.",
+    "取消引擎准备并退出？\n如需继续，请最小化此窗口。",
+    "¿Cancelar la preparación del motor y salir?\nMinimiza esta ventana para continuar."
+  ],
+  "エンジンの準備を中止して終了しますか？\n続ける場合は、このウィンドウを最小化してください。": [
+    "Cancel engine setup and quit?\nMinimize this window to continue.",
+    "取消引擎准备并退出？\n如需继续，请最小化此窗口。",
+    "¿Cancelar la preparación del motor y salir?\nMinimiza esta ventana para continuar."
+  ],
+  "エンジンの準備を中止しました。": [
+    "Engine setup cancelled.",
+    "已取消引擎准备。",
+    "Se canceló la preparación del motor."
+  ],
+  "エンジンの配布ファイルが不足しています: {0}": [
+    "Missing engine files: {0}",
+    "缺少引擎文件：{0}",
+    "Faltan archivos del motor: {0}"
+  ],
+  "キャンセル": [
+    "Cancel",
+    "取消",
+    "Cancelar"
+  ],
+  "キャンセルしています…": [
+    "Cancelling…",
+    "正在取消…",
+    "Cancelando…"
+  ],
+  "キャンセル済み": [
+    "Cancelled",
+    "已取消",
+    "Cancelado"
+  ],
+  "このURLから保存できる動画が見つかりませんでした。動画そのもののページのURLを入力してください。": [
+    "No downloadable video was found at this URL. Enter the video's own page URL.",
+    "此网址没有可下载的视频，请输入视频本身的页面网址。",
+    "No se encontró un vídeo descargable en esta URL. Introduce la URL de la página del vídeo."
+  ],
+  "このページのURLをClipDockで確認する": [
+    "Review this page URL in ClipDock",
+    "在 ClipDock 中确认此页面网址",
+    "Revisar la URL de esta página en ClipDock"
+  ],
+  "このページを取り込む": [
+    "Use this page",
+    "导入此页面",
+    "Usar esta página"
+  ],
+  "この動画はすでにダウンロード一覧にあります。": [
+    "This video is already in the download list.",
+    "此视频已在下载列表中。",
+    "Este vídeo ya está en la lista de descargas."
+  ],
+  "この保存にログイン情報を使う": [
+    "Use login for this download",
+    "使用登录信息保存",
+    "Usar sesión para esta descarga"
+  ],
+  "サイトにログイン": [
+    "Sign in to a site",
+    "登录网站",
+    "Acceder a un sitio"
+  ],
+  "サイト情報を利用できます": [
+    "Site data available",
+    "网站数据可用",
+    "Datos del sitio disponibles"
+  ],
+  "ダウンロード": [
+    "Downloads",
+    "下载",
+    "Descargas"
+  ],
+  "ダウンロードエンジンの準備ができました。": [
+    "The download engine is ready.",
+    "下载引擎已就绪。",
+    "El motor de descarga está listo."
+  ],
+  "ダウンロードエンジンは最新版です。再ダウンロードは不要です。": [
+    "The engine is up to date. No download is needed.",
+    "引擎已是最新版本，无需重新下载。",
+    "El motor está actualizado. No es necesario descargarlo de nuevo."
+  ],
+  "ダウンロードを中断して終了しますか？\n続ける場合は、このウィンドウをしまってください。": [
+    "Stop downloads and quit?\nMinimize this window to continue.",
+    "中断下载并退出？\n如需继续，请最小化此窗口。",
+    "¿Detener las descargas y salir?\nMinimiza esta ventana para continuar."
+  ],
+  "ダウンロードを中断して終了しますか？\n続ける場合は、このウィンドウを最小化してください。": [
+    "Stop downloads and quit?\nMinimize this window to continue.",
+    "中断下载并退出？\n如需继续，请最小化此窗口。",
+    "¿Detener las descargas y salir?\nMinimiza esta ventana para continuar."
+  ],
+  "ダウンロード一覧に追加しました。": [
+    "Added to downloads.",
+    "已添加到下载列表。",
+    "Añadido a las descargas."
+  ],
+  "ダウンロード中": [
+    "Downloading",
+    "正在下载",
+    "Descargando"
+  ],
+  "ファイルが見つかりません。移動または削除されていないか確認してください。": [
+    "File not found. Check whether it was moved or deleted.",
+    "找不到文件，请确认是否已移动或删除。",
+    "No se encontró el archivo. Comprueba si se movió o borró."
+  ],
+  "ファイルを開けませんでした: ": [
+    "Could not open the file: ",
+    "无法打开文件：",
+    "No se pudo abrir el archivo: "
+  ],
+  "フォルダーを開けませんでした: ": [
+    "Could not open the folder: ",
+    "无法打开文件夹：",
+    "No se pudo abrir la carpeta: "
+  ],
+  "ブラウザーからURLを取得できませんでした。アドレスバーのURLをコピーし、ここに貼り付けてください。": [
+    "Could not read the browser URL. Copy it from the address bar and paste it here.",
+    "无法读取浏览器网址，请从地址栏复制并粘贴到此处。",
+    "No se pudo leer la URL del navegador. Cópiala de la barra de direcciones y pégala aquí."
+  ],
+  "ブラウザーから取り込む。": [
+    "Import from your browser.",
+    "从浏览器导入。",
+    "Importa desde el navegador."
+  ],
+  "ブラウザーで元のページを開きます。": [
+    "Open the original page in your browser.",
+    "在浏览器中打开原页面。",
+    "Abrir la página original en el navegador."
+  ],
+  "ブラウザーの表示に https:// を補いました。URLを確認して「保存」を押してください。": [
+    "Added https:// to the browser address. Check the URL and click Save.",
+    "已为浏览器地址补全 https://。确认网址后点击“保存”。",
+    "Se añadió https:// a la dirección. Comprueba la URL y pulsa Guardar."
+  ],
+  "ブラウザー上部に保存タブ": [
+    "Show tab above browser",
+    "显示浏览器顶部保存标签",
+    "Pestaña sobre el navegador"
+  ],
+  "ブラウザー上部の保存タブからも取り込めます。": [
+    "You can also import from the tab above your browser.",
+    "也可以通过浏览器顶部的保存标签导入。",
+    "También puedes importar desde la pestaña sobre el navegador."
+  ],
+  "ブラウザー上部の保存タブを非表示にしました。": [
+    "The browser tab is now hidden.",
+    "已隐藏浏览器保存标签。",
+    "Se ha ocultado la pestaña del navegador."
+  ],
+  "ページを開けませんでした: ": [
+    "Could not open the page: ",
+    "无法打开页面：",
+    "No se pudo abrir la página: "
+  ],
+  "ページを開けませんでした。URLを確認して、もう一度開いてください。": [
+    "Could not open the page. Check the URL and try again.",
+    "无法打开页面，请确认网址后重试。",
+    "No se pudo abrir la página. Comprueba la URL y reinténtalo."
+  ],
+  "ライブラリ": [
+    "Library",
+    "媒体库",
+    "Biblioteca"
+  ],
+  "ライブラリ  /  0 件": [
+    "Library  /  0 items",
+    "媒体库  /  0 项",
+    "Biblioteca  /  0 elementos"
+  ],
+  "ログイン": [
+    "Sign in",
+    "登录",
+    "Acceder"
+  ],
+  "ログインが必要なサイトは「ログイン」から接続できます。": [
+    "Use Sign in for sites that require an account.",
+    "需要账号的网站可通过“登录”连接。",
+    "Usa Acceder para sitios que requieren una cuenta."
+  ],
+  "ログインにはhttpsのページを開いてください。": [
+    "Open an HTTPS page to sign in.",
+    "请打开 HTTPS 页面进行登录。",
+    "Abre una página HTTPS para iniciar sesión."
+  ],
+  "ログイン画面にはMicrosoft Edge WebView2 Runtimeが必要です。Microsoft公式サイトからインストールしてください。": [
+    "The login window requires Microsoft Edge WebView2 Runtime. Install it from Microsoft's official site.",
+    "登录窗口需要 Microsoft Edge WebView2 Runtime，请从 Microsoft 官方网站安装。",
+    "La ventana de acceso requiere Microsoft Edge WebView2 Runtime. Instálalo desde el sitio oficial de Microsoft."
+  ],
+  "ログイン画面を準備できませんでした。画面を開き直してください。": [
+    "Could not prepare the login window. Reopen it.",
+    "无法准备登录窗口，请重新打开。",
+    "No se pudo preparar la ventana de acceso. Vuelve a abrirla."
+  ],
+  "ログイン情報あり": [
+    "Signed in",
+    "已登录",
+    "Sesión iniciada"
+  ],
+  "ログイン情報の一時保存先を使用できません。": [
+    "The temporary login data folder is unavailable.",
+    "临时登录数据文件夹不可用。",
+    "La carpeta temporal de datos de acceso no está disponible."
+  ],
+  "ログイン情報を削除": [
+    "Delete login data",
+    "删除登录信息",
+    "Borrar datos de acceso"
+  ],
+  "ログイン情報を削除しました。": [
+    "Login data deleted.",
+    "已删除登录信息。",
+    "Datos de acceso borrados."
+  ],
+  "ログイン情報を使って動画情報を解析しています…": [
+    "Analyzing video using your login…",
+    "正在使用登录信息解析视频…",
+    "Analizando el vídeo con tu sesión…"
+  ],
+  "ログイン情報を使わずに、もう一度取得します。": [
+    "Retrying without login data.",
+    "正在不使用登录信息的情况下重试。",
+    "Reintentando sin datos de acceso."
+  ],
+  "ログイン情報を読み込めませんでした。アプリを開き直して再試行してください。": [
+    "Could not read login data. Reopen ClipDock and try again.",
+    "无法读取登录信息，请重新打开 ClipDock 后重试。",
+    "No se pudieron leer los datos de acceso. Vuelve a abrir ClipDock y reinténtalo."
+  ],
+  "ログイン状態を確認できませんでした。サイトを開き直してください。": [
+    "Could not check login status. Reopen the site.",
+    "无法检查登录状态，请重新打开网站。",
+    "No se pudo comprobar la sesión. Vuelve a abrir el sitio."
+  ],
+  "ログイン先のURL": [
+    "Site URL",
+    "登录网站网址",
+    "URL del sitio"
+  ],
+  "以前の設定を読み込めませんでした。既定の設定で続行します。": [
+    "Could not read previous settings. Using defaults.",
+    "无法读取之前的设置，将使用默认设置。",
+    "No se pudieron leer los ajustes anteriores. Se usarán los predeterminados."
+  ],
+  "以前の履歴を読み込めませんでした。新しい履歴で続行します。": [
+    "Could not read previous history. Starting a new history.",
+    "无法读取之前的历史记录，将创建新记录。",
+    "No se pudo leer el historial anterior. Se iniciará uno nuevo."
+  ],
+  "一時保存先を削除できません。": [
+    "Cannot delete the temporary folder.",
+    "无法删除临时文件夹。",
+    "No se puede borrar la carpeta temporal."
+  ],
+  "一時保存先を使用できません。": [
+    "The temporary folder is unavailable.",
+    "临时文件夹不可用。",
+    "La carpeta temporal no está disponible."
+  ],
+  "音声のみ": [
+    "Audio only",
+    "仅音频",
+    "Solo audio"
+  ],
+  "画質の指定が正しくありません。": [
+    "The quality setting is invalid.",
+    "画质设置无效。",
+    "La opción de calidad no es válida."
+  ],
+  "開く": [
+    "Open",
+    "打开",
+    "Abrir"
+  ],
+  "完了・失敗・キャンセルの履歴を消去しました。保存した動画ファイルはそのままです。": [
+    "Cleared finished, failed and cancelled history. Saved files were kept.",
+    "已清除完成、失败和取消的历史记录，已保存的文件保留不变。",
+    "Se borró el historial finalizado, fallido y cancelado. Se conservaron los archivos guardados."
+  ],
+  "結合・変換を処理中です。完了までお待ちください…": [
+    "Merging or converting. Please wait…",
+    "正在合并或转换，请稍候…",
+    "Uniendo o convirtiendo. Espera…"
+  ],
+  "元ページ": [
+    "Source page",
+    "原页面",
+    "Página original"
+  ],
+  "更新と復元に失敗しました。以前のエンジンは {0} に保持されています。": [
+    "Update and recovery failed. The previous engine is kept at {0}.",
+    "更新和恢复失败，之前的引擎保存在 {0}。",
+    "Fallaron la actualización y la recuperación. El motor anterior se conserva en {0}."
+  ],
+  "更新中にエンジンが変更されました。再実行してください。": [
+    "The engine changed during the update. Try again.",
+    "更新期间引擎发生变化，请重试。",
+    "El motor cambió durante la actualización. Reinténtalo."
+  ],
+  "左下の「保存エンジンを準備」を押してください。": [
+    "Click Prepare engine at the bottom left.",
+    "请点击左下角的“准备下载引擎”。",
+    "Pulsa Preparar motor en la parte inferior izquierda."
+  ],
+  "再ダウンロードは不要": [
+    "No download needed",
+    "无需重新下载",
+    "No hace falta descargar"
+  ],
+  "再試行": [
+    "Retry",
+    "重试",
+    "Reintentar"
+  ],
+  "再試行を待っています": [
+    "Waiting to retry",
+    "等待重试",
+    "Esperando reintento"
+  ],
+  "最高画質": [
+    "Best",
+    "最佳画质",
+    "Máxima"
+  ],
+  "最新のログイン情報を確認して、もう一度取得します。": [
+    "Checking your current login and retrying.",
+    "正在检查最新登录信息并重试。",
+    "Comprobando la sesión actual y reintentando."
+  ],
+  "最大画質": [
+    "Maximum quality",
+    "最高画质",
+    "Calidad máxima"
+  ],
+  "削除する": [
+    "Delete",
+    "删除",
+    "Borrar"
+  ],
+  "削除できませんでした。画面を開き直して再実行してください。": [
+    "Could not delete data. Reopen the window and try again.",
+    "无法删除数据，请重新打开窗口后重试。",
+    "No se pudieron borrar los datos. Vuelve a abrir la ventana y reinténtalo."
+  ],
+  "次に保存する動画から、新しい保存先を使います。": [
+    "New downloads will use this destination.",
+    "之后的下载将使用新位置。",
+    "Las nuevas descargas usarán este destino."
+  ],
+  "次の保存・再試行ではログイン情報を使いません。": [
+    "New downloads and retries will not use login data.",
+    "之后的下载和重试将不使用登录信息。",
+    "Las nuevas descargas y reintentos no usarán datos de acceso."
+  ],
+  "終了する": [
+    "Quit",
+    "退出",
+    "Salir"
+  ],
+  "終了に伴い待機を中断しました。": [
+    "Queue interrupted when quitting.",
+    "退出时已中断等待任务。",
+    "La cola se interrumpió al salir."
+  ],
+  "終了処理中です。アプリを開き直してから保存してください。": [
+    "ClipDock is closing. Reopen it before downloading.",
+    "ClipDock 正在关闭，请重新打开后下载。",
+    "ClipDock se está cerrando. Vuelve a abrirlo antes de descargar."
+  ],
+  "順番を待っています": [
+    "Waiting in queue",
+    "正在排队",
+    "Esperando turno"
+  ],
+  "初期セットアップが完了しました。URLを貼り付けて「保存」を押してください。": [
+    "Setup complete. Paste a URL and click Save.",
+    "初始化完成，请粘贴网址并点击“保存”。",
+    "Configuración completada. Pega una URL y pulsa Guardar."
+  ],
+  "初期セットアップ中: ": [
+    "Setting up: ",
+    "正在初始化：",
+    "Configurando: "
+  ],
+  "初期セットアップ中です。保存エンジンを取得しています…": [
+    "Setting up. Downloading the engine…",
+    "正在初始化并下载引擎…",
+    "Configurando. Descargando el motor…"
+  ],
+  "上の入力欄に、保存するページのURLを入力してください。": [
+    "Enter the page URL in the field above.",
+    "请在上方输入要保存的页面网址。",
+    "Introduce la URL de la página en el campo superior."
+  ],
+  "上の入力欄にURLを貼り付けて「保存」を押してください。": [
+    "Paste a URL above and click Save.",
+    "在上方粘贴网址并点击“保存”。",
+    "Pega una URL arriba y pulsa Guardar."
+  ],
+  "場所": [
+    "Show file",
+    "位置",
+    "Ubicación"
+  ],
+  "接続済みサイトのログイン情報を保存に使います。初回は「ログイン」から接続してください。": [
+    "Downloads will use your site login. Use Sign in to connect first.",
+    "下载将使用网站登录信息，请先通过“登录”连接。",
+    "Las descargas usarán tu sesión. Conéctate primero mediante Acceder."
+  ],
+  "選んだ画質は上限です。4Kを選んでも元の動画より高画質にはなりません。": [
+    "Quality is an upper limit. Choosing 4K does not upscale the source.",
+    "所选画质是上限，选择 4K 不会提升源视频的画质。",
+    "La calidad es un límite. Elegir 4K no mejora el original."
+  ],
+  "前回の終了で中断しました。再試行するか、URLを入力し直してください。": [
+    "Interrupted at the last exit. Retry or enter the URL again.",
+    "上次退出时已中断，请重试或重新输入网址。",
+    "Se interrumpió al salir. Reintenta o vuelve a introducir la URL."
+  ],
+  "続ける": [
+    "Continue",
+    "继续",
+    "Continuar"
+  ],
+  "待機リストに追加しました。初期セットアップが終わると開始します。": [
+    "Queued. Downloads will start after setup finishes.",
+    "已加入队列，初始化完成后开始下载。",
+    "En cola. La descarga comenzará al terminar la configuración."
+  ],
+  "待機を取り消しました。": [
+    "Removed from queue.",
+    "已取消等待任务。",
+    "Retirado de la cola."
+  ],
+  "待機中": [
+    "Queued",
+    "等待中",
+    "En cola"
+  ],
+  "待機中の動画は100件までです。": [
+    "You can queue up to 100 videos.",
+    "最多可排队 100 个视频。",
+    "Puedes poner hasta 100 vídeos en cola."
+  ],
+  "中断されました": [
+    "Interrupted",
+    "已中断",
+    "Interrumpido"
+  ],
+  "中断しました。再試行すると取得済みの断片から再開を試みます。": [
+    "Stopped. Retry will try to resume from downloaded fragments.",
+    "已中断，重试时将尝试从已下载的片段继续。",
+    "Detenido. El reintento intentará continuar desde los fragmentos descargados."
+  ],
+  "動画・音声の取得と変換に使う補助プログラムをもう一度取得します。": [
+    "Download the tools used to retrieve and convert media again.",
+    "重新下载用于获取和转换媒体的工具。",
+    "Descarga de nuevo las herramientas para obtener y convertir contenido."
+  ],
+  "動画の取得から変換までを同時に処理する件数。変更しても進行中の保存は中断しません。": [
+    "Number of concurrent downloads, including conversion. Changing this does not stop active jobs.",
+    "同时处理的下载数量，包含转换。更改不会中断进行中的任务。",
+    "Número de descargas simultáneas, incluida la conversión. Cambiarlo no detiene las tareas activas."
+  ],
+  "動画の保存先": [
+    "Download destination",
+    "视频保存位置",
+    "Destino de descarga"
+  ],
+  "動画は「このページを取り込む」から保存してください。": [
+    "Use Use this page to save the video.",
+    "请通过“导入此页面”保存视频。",
+    "Usa Usar esta página para guardar el vídeo."
+  ],
+  "動画ページのURL": [
+    "Video page URL",
+    "视频页面网址",
+    "URL de la página del vídeo"
+  ],
+  "動画ページまたは動画ファイルのURL": [
+    "Video page or media file URL",
+    "视频页面或视频文件网址",
+    "URL de la página o del archivo de vídeo"
+  ],
+  "動画を取得できませんでした。ページを再読み込みして、もう一度送信してください。": [
+    "Could not retrieve the video. Reload the page and try again.",
+    "无法获取视频，请重新加载页面后重试。",
+    "No se pudo obtener el vídeo. Recarga la página y reinténtalo."
+  ],
+  "動画情報を解析しています…": [
+    "Analyzing video…",
+    "正在解析视频…",
+    "Analizando el vídeo…"
+  ],
+  "同じURLと保存形式でもう一度取得します。": [
+    "Retry the same URL and format.",
+    "以相同网址和格式重试。",
+    "Reintentar con la misma URL y formato."
+  ],
+  "同時に保存する動画を{0}件に設定しました。進行中の保存は中断しません。": [
+    "Set to {0} simultaneous downloads. Active jobs will continue.",
+    "已设为同时下载 {0} 个视频，不会中断进行中的任务。",
+    "Se configuraron {0} descargas simultáneas. Las tareas activas continuarán."
+  ],
+  "同時保存": [
+    "Parallel",
+    "同时下载",
+    "Simultáneas"
+  ],
+  "同時保存数": [
+    "Concurrent downloads",
+    "同时下载数量",
+    "Descargas simultáneas"
+  ],
+  "配布情報を取得できませんでした。": [
+    "Could not fetch release information.",
+    "无法获取版本信息。",
+    "No se pudo obtener la información de versión."
+  ],
+  "閉じる": [
+    "Close",
+    "关闭",
+    "Cerrar"
+  ],
+  "別のエンジン更新が実行中です。完了してから再実行してください。": [
+    "Another engine update is running. Wait for it to finish.",
+    "另一个引擎更新正在进行，请等待其完成。",
+    "Hay otra actualización del motor en curso. Espera a que termine."
+  ],
+  "保存エンジンを準備": [
+    "Prepare engine",
+    "准备下载引擎",
+    "Preparar motor"
+  ],
+  "保存が終わるか、キャンセルしてからログイン情報を削除してください。": [
+    "Finish or cancel downloads before deleting login data.",
+    "请等待下载完成或取消下载后，再删除登录信息。",
+    "Termina o cancela las descargas antes de borrar los datos de acceso."
+  ],
+  "保存したファイル": [
+    "Saved files",
+    "已保存的文件",
+    "Archivos guardados"
+  ],
+  "保存する動画ページのURLを入力してください。": [
+    "Enter the video page URL to save.",
+    "请输入要保存的视频页面网址。",
+    "Introduce la URL de la página del vídeo que quieres guardar."
+  ],
+  "保存タブをONにして、Chrome / Edgeの上中央にマウスを置いてください。": [
+    "Enable the tab, then hover over the top center of Chrome or Edge.",
+    "启用保存标签，将鼠标移到 Chrome 或 Edge 顶部中央。",
+    "Activa la pestaña y sitúa el cursor en el centro superior de Chrome o Edge."
+  ],
+  "保存できませんでした": [
+    "Download failed",
+    "保存失败",
+    "Falló la descarga"
+  ],
+  "保存完了": [
+    "Saved",
+    "已保存",
+    "Guardado"
+  ],
+  "保存形式": [
+    "Format",
+    "保存格式",
+    "Formato"
+  ],
+  "保存形式の指定が正しくありません。": [
+    "The format setting is invalid.",
+    "保存格式设置无效。",
+    "El formato elegido no es válido."
+  ],
+  "保存先": [
+    "Destination",
+    "保存位置",
+    "Destino"
+  ],
+  "保存先を選択できませんでした: ": [
+    "Could not choose a destination: ",
+    "无法选择保存位置：",
+    "No se pudo elegir el destino: "
+  ],
+  "保存先を変更": [
+    "Change folder",
+    "更改位置",
+    "Cambiar carpeta"
+  ],
+  "保存中 {0} 件  ·  待機 {1} 件": [
+    "{0} active  ·  {1} queued",
+    "正在保存 {0} 项  ·  等待 {1} 项",
+    "{0} activas  ·  {1} en cola"
+  ],
+  "未接続": [
+    "Not signed in",
+    "未登录",
+    "Sin sesión"
+  ],
+  "戻る": [
+    "Back",
+    "返回",
+    "Atrás"
+  ],
+  "履歴を消去": [
+    "Clear history",
+    "清除历史",
+    "Borrar historial"
+  ],
+  "履歴を保存できませんでした: ": [
+    "Could not save history: ",
+    "无法保存历史记录：",
+    "No se pudo guardar el historial: "
+  ],
+  "  ·  残り約 {0:hh\\:mm\\:ss}": [
+    "  ·  About {0:hh\\:mm\\:ss} left",
+    "  ·  约剩余 {0:hh\\:mm\\:ss}",
+    "  ·  Quedan aprox. {0:hh\\:mm\\:ss}"
+  ]
+}

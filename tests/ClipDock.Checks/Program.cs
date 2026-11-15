@@ -21,6 +21,64 @@ void Throws<T>(Action action) where T : Exception
     throw new Exception("Expected " + typeof(T).Name);
 }
 
+Check("language settings survive restart and legacy or invalid preferences fall back to Japanese", () =>
+{
+    var directory = Path.Combine(Path.GetTempPath(), "clipdock-language-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(directory);
+    var file = Path.Combine(directory, "settings.json");
+    try
+    {
+        Assert(Localization.ReadPreference(file) == "ja");
+        foreach (var language in Localization.Languages)
+        {
+            File.WriteAllText(file, JsonSerializer.Serialize(new AppSettings("videos", "1080", Language: language), Json.Options));
+            Assert(Localization.ReadPreference(file) == language);
+            Assert(JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(file), Json.Options)!.Language == language);
+        }
+        foreach (var json in new[] { "{}", "{\"language\":\"unknown\"}", "{\"language\":null}", "{\"language\":42}", "null", "broken" })
+        { File.WriteAllText(file, json); Assert(Localization.ReadPreference(file) == "ja"); }
+        Assert(JsonSerializer.Deserialize<AppSettings>("{\"outputDirectory\":\"videos\",\"quality\":\"720\"}", Json.Options)!.Language == "ja");
+        Assert(Localization.Normalize("zh-cn") == "zh-CN");
+    }
+    finally { Directory.Delete(directory, true); }
+});
+Check("translations retain all format arguments and every XAML resource has a value", () =>
+{
+    using var stream = typeof(Localization).Assembly.GetManifestResourceStream("ClipDock.Core.Localization.strings.json")!;
+    var catalog = JsonSerializer.Deserialize<Dictionary<string, string[]>>(stream)!;
+    string[] Arguments(string text) => System.Text.RegularExpressions.Regex.Matches(text, @"\{[0-9]+[^}]*\}")
+        .Select(m => m.Value).Order().ToArray();
+    foreach (var (source, translations) in catalog)
+    {
+        Assert(translations.Length == 3);
+        foreach (var text in translations)
+        {
+            Assert(!string.IsNullOrWhiteSpace(text));
+            Assert(CompositeFormat.Parse(source).MinimumArgumentCount == CompositeFormat.Parse(text).MinimumArgumentCount);
+            Assert(Arguments(source).SequenceEqual(Arguments(text)));
+        }
+    }
+    try
+    {
+        foreach (var language in Localization.Languages)
+        {
+            Localization.Initialize(language);
+            var resources = Localization.Resources.ToDictionary();
+            Assert(resources.Count == catalog.Count && resources.Values.All(v => v.Length > 0));
+            var item = new DownloadItem { Request = new DownloadRequest { Format = "mp3" }, State = "converting", Title = "日本語の動画" };
+            Assert(item.StateLabel.Contains("MP3") && item.Title == "日本語の動画" && item.State == "converting");
+            Assert(Localization.Format($"  ·  残り約 {TimeSpan.FromSeconds(90):hh\\:mm\\:ss}").Contains("00:01:30"));
+            if (language != "ja") Assert(!item.StateLabel.Contains("仕上げ"));
+        }
+        Localization.Initialize("en");
+        Assert(Localization.Text("保存先") == "Destination");
+        Assert(Localization.Text("external error") == "external error");
+        Assert(Localization.Format($"保存中 {2} 件  ·  待機 {3} 件") == "2 active  ·  3 queued");
+        Assert(Localization.Text("保存先", "es") == "Destino" && Localization.Language == "en");
+    }
+    finally { Localization.Initialize("ja"); }
+});
+
 Check("only absolute HTTP(S) URLs are accepted", () =>
 {
     foreach (var url in new[] { "file:///C:/secret", "javascript:alert(1)", "ftp://a.com/file", "--exec=calc", "https://u:p@example.com/v", "https://example.com/\n--exec", "", "https://" })

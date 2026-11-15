@@ -20,7 +20,7 @@ internal sealed class BrowserSession(Window owner) : IDisposable
     private async Task<CoreWebView2Environment> CreateEnvironmentAsync()
     {
         try { return await CoreWebView2Environment.CreateAsync(null, profileDirectory); }
-        catch { environment = null; throw new InvalidOperationException("ログイン画面にはMicrosoft Edge WebView2 Runtimeが必要です。Microsoft公式サイトからインストールしてください。"); }
+        catch { environment = null; throw new InvalidOperationException(ClipDock.Core.Localization.Text("ログイン画面にはMicrosoft Edge WebView2 Runtimeが必要です。Microsoft公式サイトからインストールしてください。")); }
     }
     private async Task<CoreWebView2Controller> CreateControllerAsync()
     {
@@ -62,8 +62,8 @@ internal sealed class BrowserSession(Window owner) : IDisposable
     internal async Task<string> RefreshStatusAsync(string? url = null)
     {
         if (url is not null && SiteSessionScope.AllowsNavigation(url)) currentUrl = url;
-        var status = currentUrl is null || !Directory.Exists(profileDirectory) ? "ログインが必要なサイトは「ログイン」から接続できます。" :
-            $"{new Uri(currentUrl).Host}: {(HasLogin(currentUrl, await CookiesAsync(currentUrl)) ? SiteSessionScope.Site(currentUrl) is null ? "サイト情報を利用できます" : "ログイン情報あり" : "未接続")}";
+        var status = currentUrl is null || !Directory.Exists(profileDirectory) ? ClipDock.Core.Localization.Text("ログインが必要なサイトは「ログイン」から接続できます。") :
+            $"{new Uri(currentUrl).Host}: {(HasLogin(currentUrl, await CookiesAsync(currentUrl)) ? SiteSessionScope.Site(currentUrl) is null ? ClipDock.Core.Localization.Text("サイト情報を利用できます") : ClipDock.Core.Localization.Text("ログイン情報あり") : ClipDock.Core.Localization.Text("未接続"))}";
         StatusChanged?.Invoke(status);
         return status;
     }
