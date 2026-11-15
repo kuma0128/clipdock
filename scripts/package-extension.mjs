@@ -34,7 +34,7 @@ export async function prepareExtensionPackage(output = resolve(artifacts, "webst
   const manifest = JSON.parse(await readFile(resolve(root, "extension/manifest.json"), "utf8"));
   manifest.key = identity.key;
   manifest.permissions = manifest.permissions.filter(permission => permission !== "activeTab");
-  manifest.homepage_url = "https://clipdock.japan-digita-2504.chatgpt.site";
+  manifest.homepage_url = "https://github.com/kuma0128/clipdock";
   manifest.description = "Chromeの動画をWindows用ClipDockアプリでMP4として保存します。別途Windowsアプリが必要です。YouTubeには対応していません。";
   await import("../extension/distribution.js");
   await import("../extension/site-policy.js");

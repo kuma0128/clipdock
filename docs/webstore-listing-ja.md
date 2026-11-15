@@ -8,7 +8,7 @@
 | 言語 | 日本語 |
 | 価格 | 無料 |
 | 公開範囲 | 公開 |
-| ホームページ | https://clipdock.japan-digita-2504.chatgpt.site |
+| ホームページ | https://github.com/kuma0128/clipdock |
 | サポート | https://github.com/kuma0128/clipdock/issues |
 | プライバシーポリシー | https://github.com/kuma0128/clipdock/blob/main/PRIVACY.md |
 

@@ -2,7 +2,7 @@
 
 Chromeで開いている動画をMP4として保存するWindowsアプリです。
 
-[導入案内](https://clipdock.japan-digita-2504.chatgpt.site) · [ダウンロード](https://github.com/kuma0128/clipdock/releases/latest)
+[ダウンロード](https://github.com/kuma0128/clipdock/releases/latest)
 
 ## はじめに
 
