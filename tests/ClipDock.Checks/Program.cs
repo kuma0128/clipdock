@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using ClipDock.App;
 using ClipDock.Core;
 
 if (args is ["--download-smoke", var tools, var server, var output])
@@ -43,6 +44,27 @@ Check("unknown actions and formats cannot become downloader arguments", () =>
 {
     Throws<ArgumentException>(() => new DownloadRequest { Action = "exec" }.Validated());
     Throws<ArgumentException>(() => new DownloadRequest { Url = "https://example.com", Quality = "1080 --exec calc" }.Validated());
+});
+Check("X missing-video errors explain how to resend with login information and preserve diagnostics", () =>
+{
+    const string error = "[twitter] Downloading GraphQL JSON\nERROR: [twitter] 123: No video could be found in this tweet\nURL: https://x.com/example/status/123 [Cookie]";
+    foreach (var url in new[] { "https://x.com/example/status/123", "https://twitter.com/example/status/123", "https://mobile.twitter.com/example/status/123", "https://WWW.X.COM/example/status/123" })
+    {
+        var detail = DownloadFailure.Describe(url, error);
+        Assert(detail.StartsWith("Xの動画情報を取得できませんでした。", StringComparison.Ordinal));
+        Assert(detail.Contains("場合があります。") && detail.Contains("この保存にページのログイン情報を使う"));
+        Assert(detail.EndsWith("\n" + error, StringComparison.Ordinal));
+        Assert(DownloadFailure.Describe(url, detail) == detail);
+    }
+});
+Check("X failure guidance leaves other errors and unrelated or malformed URLs unchanged", () =>
+{
+    const string error = "ERROR: No video could be found in this tweet";
+    foreach (var url in new string?[] { "https://example.com/video", "https://x.com.example.com/video", "https://nottwitter.com/video", "file://x.com/video", "not a URL", "", null })
+        Assert(DownloadFailure.Describe(url, error) == error);
+    foreach (var detail in new[] { "HTTP Error 403: Forbidden", "一時ログイン情報を削除できませんでした。", "", "ERROR: Requested tweet is unavailable" })
+        Assert(DownloadFailure.Describe("https://x.com/example/status/123", detail) == detail);
+    Assert(DownloadFailure.Describe("https://x.com/example/status/123", null) == "");
 });
 Check("invalid referer and header controls are removed", () =>
 {

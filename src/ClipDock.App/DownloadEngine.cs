@@ -92,7 +92,7 @@ public static partial class DownloadEngine
             finish = () => { item.FilePath = resultPath; item.Percent = 100; item.State = "completed"; item.Detail = Path.GetFileName(resultPath); };
         }
         catch (OperationCanceledException) { finish = () => { item.State = "cancelled"; item.Detail = "中断しました。再試行すると取得済みの断片から再開を試みます。"; }; }
-        catch (Exception ex) { finish = () => { item.State = "failed"; item.Detail = ex.Message; }; }
+        catch (Exception ex) { finish = () => { item.State = "failed"; item.Detail = DownloadFailure.Describe(item.Request.Url, ex.Message); }; }
         finally
         {
             var cleaned = cookieFile is null || await DeleteSecretAsync(cookieFile);

@@ -2,6 +2,8 @@
 
 ClipDock source is MIT licensed. Download engines and the self-contained .NET runtime retain their own licenses. Executables are not stored in the source repository.
 
+The .NET runtime licenses and third-party notices are included under `licenses/dotnet`, grouped by framework and version. These files are copied from the runtime packages used to build the distribution.
+
 | Component | Official distribution / license information |
 | --- | --- |
 | .NET / WPF | https://github.com/dotnet/runtime/blob/main/LICENSE.TXT / https://github.com/dotnet/wpf/blob/main/LICENSE.TXT (MIT and bundled third-party notices) |
@@ -11,4 +13,4 @@ ClipDock source is MIT licensed. Download engines and the self-contained .NET ru
 
 The installer downloads release assets directly from the above official GitHub repositories and checks SHA-256 against GitHub's release asset digest before installation. The selected release, download URL and digest are recorded in `tools/versions.json`. License files included in upstream ZIP archives are retained under `tools/licenses`; yt-dlp's license and third-party notices and Deno's license are also fetched from the matching release tags. Consult the exact upstream release and its source/build instructions before redistributing these binaries.
 
-No RealPlayer code, branding or assets are included. Chrome and GitHub are trademarks of their respective owners.
+Chrome and GitHub are trademarks of their respective owners.

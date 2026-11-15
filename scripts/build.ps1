@@ -16,14 +16,32 @@ try {
         npm.cmd run check
         if ($LASTEXITCODE -ne 0) { throw 'JavaScript syntax check failed.' }
     }
-    # Start from an empty folder: leftovers of an earlier build (a bundled tools folder, files that
-    # no longer exist in the source) would otherwise be shipped in this package.
+    # Discard files left by previous packages.
     if (Test-Path -LiteralPath $output) { Remove-Item -LiteralPath $output -Recurse -Force }
     New-Item -ItemType Directory -Path $output -Force | Out-Null
     dotnet publish src/ClipDock.App -c Release -r win-x64 --self-contained true -o $output --nologo
     if ($LASTEXITCODE -ne 0) { throw 'App publish failed.' }
     dotnet publish src/ClipDock.NativeHost -c Release -r win-x64 --self-contained true -o $output --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Native host publish failed.' }
+    $runtime = Get-Content -LiteralPath (Join-Path $output 'ClipDock.runtimeconfig.json') -Raw | ConvertFrom-Json
+    $assets = Get-Content -LiteralPath (Join-Path $root 'src\ClipDock.App\obj\project.assets.json') -Raw | ConvertFrom-Json
+    foreach ($framework in $runtime.runtimeOptions.includedFrameworks) {
+        $packageId = ($framework.name + '.Runtime.win-x64').ToLowerInvariant()
+        $package = $null
+        foreach ($folder in $assets.packageFolders.PSObject.Properties.Name) {
+            $candidate = Join-Path (Join-Path $folder $packageId) $framework.version
+            if (Test-Path -LiteralPath $candidate -PathType Container) { $package = $candidate; break }
+        }
+        if ($null -eq $package) { throw "Runtime package not found: $packageId/$($framework.version)" }
+        $license = @('LICENSE.TXT', 'LICENSE') | ForEach-Object { Join-Path $package $_ } | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+        if ($null -eq $license) { throw "Runtime license not found: $packageId/$($framework.version)" }
+        $licenseOutput = Join-Path (Join-Path (Join-Path $output 'licenses\dotnet') $framework.name) $framework.version
+        New-Item -ItemType Directory -Path $licenseOutput -Force | Out-Null
+        Copy-Item -LiteralPath $license -Destination $licenseOutput -Force
+        $notices = Join-Path $package 'THIRD-PARTY-NOTICES.TXT'
+        if (Test-Path -LiteralPath $notices -PathType Leaf) { Copy-Item -LiteralPath $notices -Destination $licenseOutput -Force }
+        elseif ($framework.name -eq 'Microsoft.NETCore.App') { throw "Runtime third-party notices not found: $packageId/$($framework.version)" }
+    }
     Copy-Item -LiteralPath (Join-Path $root 'extension') -Destination $output -Recurse -Force
     Copy-Item -LiteralPath (Join-Path $root 'docs') -Destination $output -Recurse -Force
     foreach ($name in @('README.md', 'THIRD-PARTY.md', 'LICENSE', 'START-HERE.html')) {

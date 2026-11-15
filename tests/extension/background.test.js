@@ -9,6 +9,7 @@ let cookieReads = 0;
 const menus = [];
 const actionCalls = [];
 const tab = { id: 7, url: "https://example.com/watch", title: "テスト動画", incognito: false };
+let currentDocumentId = "doc1";
 const base = "chrome-extension://oeolbdjffnnmaanghklbkhfhgihepfhd/";
 globalThis.chrome = {
   runtime: { id: base.split("/")[2], onMessage: event(), onInstalled: event(), onStartup: event(), getURL: path => base + path,
@@ -18,8 +19,8 @@ globalThis.chrome = {
     local: { async get(defaults) { return defaults; } },
   },
   tabs: { async get() { return { ...tab }; }, onRemoved: event(), onReplaced: event() },
-  webNavigation: { onCommitted: event(), onHistoryStateUpdated: event(), async getFrame() { return { url: tab.url, documentId: "doc1" }; } },
-  webRequest: { onHeadersReceived: event() },
+  webNavigation: { onCommitted: event(), onHistoryStateUpdated: event(), async getFrame() { return { url: tab.url, documentId: currentDocumentId }; } },
+  webRequest: { onBeforeRequest: event(), onHeadersReceived: event(), onCompleted: event(), onErrorOccurred: event() },
   action: {
     async setBadgeText(details) { actionCalls.push(["badge", details]); }, async setBadgeBackgroundColor() {},
     async setTitle(details) { actionCalls.push(["title", details]); },
@@ -36,6 +37,16 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 const candidates = async () => (await send({ type: "snapshot", tabId: 7 })).candidates;
 
 test("background integration: discovery, navigation, consent and native bridge", async t => {
+  await t.test("accepts media from the new document when its request starts before navigation commits", async () => {
+    const request = { requestId: "first-media", tabId: 7, frameId: 0, documentId: "doc1", url: "https://cdn.example.com/initial.m3u8" };
+    chrome.webRequest.onBeforeRequest.listeners[0]({ ...request, timeStamp: 80 });
+    chrome.webNavigation.onCommitted.listeners[0]({ tabId: 7, frameId: 0, documentId: "doc1", timeStamp: 90, url: tab.url });
+    chrome.webRequest.onHeadersReceived.listeners[0]({ ...request, documentLifecycle: "active", statusCode: 200, timeStamp: 95,
+      responseHeaders: [{ name: "Content-Type", value: "application/vnd.apple.mpegurl" }] });
+    chrome.webRequest.onCompleted.listeners[0]({ ...request, timeStamp: 96 });
+    await flush();
+    assert.deepEqual((await candidates()).map(candidate => candidate.url), [request.url]);
+  });
   await t.test("captures a playlist with its frame referer", async () => {
     chrome.webNavigation.onCommitted.listeners[0]({ tabId: 7, frameId: 0, timeStamp: 100, url: tab.url });
     await flush();
@@ -76,6 +87,39 @@ test("background integration: discovery, navigation, consent and native bridge",
     await flush();
     assert.equal((await candidates()).length, 0);
   });
+  await t.test("ignores requests started before SPA navigation even when the response arrives afterwards", async () => {
+    const request = { requestId: "spa-old", tabId: 7, frameId: 0, documentId: "doc1", url: "https://cdn.example.com/previous.mp4" };
+    chrome.webRequest.onBeforeRequest.listeners[0]({ ...request, timeStamp: 210 });
+    tab.url = "https://example.com/watch?v=third";
+    chrome.webNavigation.onHistoryStateUpdated.listeners[0]({ tabId: 7, frameId: 0, timeStamp: 220, url: tab.url });
+    chrome.webRequest.onBeforeRequest.listeners[0]({ ...request, timeStamp: 225 });
+    chrome.webRequest.onHeadersReceived.listeners[0]({ ...request, statusCode: 200, timeStamp: 230, responseHeaders: [{ name: "Content-Type", value: "video/mp4" }] });
+    chrome.webRequest.onCompleted.listeners[0]({ ...request, timeStamp: 231 });
+    await flush();
+    assert.equal((await candidates()).length, 0);
+
+    const next = { ...request, requestId: "spa-new", url: "https://cdn.example.com/current.mp4" };
+    chrome.webRequest.onBeforeRequest.listeners[0]({ ...next, timeStamp: 240 });
+    chrome.webRequest.onHeadersReceived.listeners[0]({ ...next, statusCode: 200, timeStamp: 250, responseHeaders: [{ name: "Content-Type", value: "video/mp4" }] });
+    chrome.webRequest.onCompleted.listeners[0]({ ...next, timeStamp: 251 });
+    await flush();
+    assert.deepEqual((await candidates()).map(candidate => candidate.url), [next.url]);
+  });
+  await t.test("a full navigation clears the previous same-document request boundary", async () => {
+    const request = { requestId: "new-document-media", tabId: 7, frameId: 0, documentId: "doc2", url: "https://cdn.example.com/new-page.m3u8" };
+    chrome.webRequest.onBeforeRequest.listeners[0]({ ...request, timeStamp: 215 });
+    tab.url = "https://example.com/new-page";
+    currentDocumentId = "doc2";
+    chrome.webNavigation.onCommitted.listeners[0]({ tabId: 7, frameId: 0, documentId: "doc2", timeStamp: 260, url: tab.url });
+    chrome.webRequest.onHeadersReceived.listeners[0]({ ...request, documentLifecycle: "active", statusCode: 200, timeStamp: 265,
+      responseHeaders: [{ name: "Content-Type", value: "application/vnd.apple.mpegurl" }] });
+    chrome.webRequest.onCompleted.listeners[0]({ ...request, timeStamp: 266 });
+    await flush();
+    assert.deepEqual((await candidates()).map(candidate => candidate.url), [request.url]);
+    content.documentId = currentDocumentId;
+    content.url = tab.url;
+    content.tab = { ...tab };
+  });
   await t.test("obsolete content scripts cannot enqueue downloads", async () => {
     const before = nativeCalls.length;
     const result = await send({ type: "download", url: "https://cdn.example.com/old.mp4" }, { ...content, documentId: "obsolete" });
@@ -88,6 +132,14 @@ test("background integration: discovery, navigation, consent and native bridge",
     assert.equal(nativeCalls.at(-1).host, "com.clipdock.downloader");
     assert.equal(nativeCalls.at(-1).request.quality, "720");
     assert.deepEqual(nativeCalls.at(-1).request.cookies, []);
+  });
+  await t.test("toolbar refresh failure does not turn an accepted download into an error", async () => {
+    const getSession = chrome.storage.session.get;
+    chrome.storage.session.get = async () => { throw new Error("Storage unavailable"); };
+    try {
+      const result = await send({ type: "download", tabId: 7, url: tab.url });
+      assert.equal(result.ok, true);
+    } finally { chrome.storage.session.get = getSession; }
   });
   await t.test("content scripts cannot opt in to cookie transfer", async () => {
     const result = await send({ type: "download", url: tab.url, useCookies: true }, content);
@@ -149,6 +201,11 @@ test("background integration: discovery, navigation, consent and native bridge",
     assert.equal(nativeCalls.length, before);
     assert.ok(actionCalls.some(([kind, details]) => kind === "badge" && details.text === "!"));
     assert.ok(actionCalls.some(([kind, details]) => kind === "title" && details.title.startsWith("ClipDock: ")));
+    actionCalls.length = 0;
+    click({ menuItemId: "save-page" });
+    await flush();
+    assert.ok(actionCalls.some(([kind, details]) => kind === "badge" && details.text !== "!"));
+    assert.ok(actionCalls.some(([kind, details]) => kind === "title" && details.title === "ClipDockで動画を保存"));
   });
   await t.test("tab closure and replacement delete captured media URLs", async () => {
     chrome.tabs.onRemoved.listeners[0](7); await flush();

@@ -3,7 +3,20 @@ $target = [System.IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'Programs\C
 if ([System.IO.Path]::GetFullPath($PSScriptRoot) -ne $target) { throw 'Run the installed copy in LocalAppData\Programs\ClipDock.' }
 if (Get-Process -Name ClipDock,ClipDock.NativeHost -ErrorAction SilentlyContinue) { throw 'Close ClipDock first.' }
 $nativeKey = 'Software\Google\Chrome\NativeMessagingHosts\com.clipdock.downloader'
-[Microsoft.Win32.Registry]::CurrentUser.DeleteSubKey($nativeKey, $false)
+$key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($nativeKey)
+if ($null -ne $key) {
+    try { $manifestPath = $key.GetValue('') }
+    finally { $key.Dispose() }
+    if ($manifestPath -is [string] -and (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        try {
+            $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+            if ($manifest.path -is [string] -and [System.IO.Path]::GetFullPath($manifest.path) -eq (Join-Path $target 'ClipDock.NativeHost.exe')) {
+                [Microsoft.Win32.Registry]::CurrentUser.DeleteSubKey($nativeKey, $false)
+            }
+        }
+        catch { Write-Warning 'The Chrome registration could not be read and was retained.' }
+    }
+}
 $shortcutShell = New-Object -ComObject WScript.Shell
 foreach ($folder in @([Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('Programs'))) {
     $shortcutPath = Join-Path $folder 'ClipDock.lnk'
@@ -11,12 +24,10 @@ foreach ($folder in @([Environment]::GetFolderPath('Desktop'), [Environment]::Ge
         Remove-Item -LiteralPath $shortcutPath -Force
     }
 }
-# A folder cannot be removed while it is a working directory, and "Run with PowerShell" starts inside it.
-# Set-Location moves PowerShell; the process itself keeps its own copy, so move that as well.
+# Release both working directories before removing the installed folder.
 $elsewhere = [System.IO.Path]::GetTempPath()
 Set-Location -LiteralPath $elsewhere
 [Environment]::CurrentDirectory = $elsewhere
-# Exact target validated above; never enumerate paths in another shell for deletion.
 Remove-Item -LiteralPath $target -Recurse -Force
 Write-Host 'ClipDock removed. Remove its Chrome extension from chrome://extensions.'
 Write-Host 'Downloaded videos and LocalAppData\ClipDock settings/history were retained.'

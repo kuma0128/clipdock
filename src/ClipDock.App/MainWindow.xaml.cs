@@ -36,6 +36,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        VersionLabel.Text = $"ClipDock  {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)}  /  Windows";
         Directory.CreateDirectory(AppPaths.Data);
         Directory.CreateDirectory(AppPaths.Inbox);
         // Remove leftover plaintext cookie jars from a previous crash before accepting work.
@@ -56,6 +57,7 @@ public partial class MainWindow : Window
         inboxTimer.Tick += (_, _) => ReadInbox();
         inboxTimer.Start();
         ConcurrencyBox.SelectionChanged += Concurrency_Changed;
+        QualityBox.SelectionChanged += (_, _) => SaveState();
         Loaded += (_, _) => ReadInbox();
         Closing += OnClosing;
     }
@@ -187,7 +189,6 @@ public partial class MainWindow : Window
     private void Filter_Click(object sender, RoutedEventArgs e)
     {
         filter = (sender as FrameworkElement)?.Tag as string ?? "all";
-        // Move the "selected" tint with the choice; it used to stay on the first entry.
         foreach (var button in new[] { AllFilter, ActiveFilter, CompletedFilter })
             button.Background = (string)button.Tag == filter ? SelectedFilter : Brushes.Transparent;
         RefreshSummary();
@@ -220,11 +221,21 @@ public partial class MainWindow : Window
         { Notice.Text = "フォルダーを開けませんでした: " + ex.Message; }
     }
     private void OpenOutput_Click(object sender, RoutedEventArgs e) => OpenFolder(outputDirectory);
+    private void OpenPage_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not DownloadItem item) return;
+        var url = DownloadRequest.IsWebUrl(item.Request.PageUrl) ? item.Request.PageUrl : item.Request.Url;
+        if (!DownloadRequest.IsWebUrl(url)) return;
+        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true })?.Dispose(); }
+        catch (Win32Exception ex) { Notice.Text = "ページを開けませんでした: " + ex.Message; }
+    }
     private void OpenFile_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not DownloadItem item) return;
         if (!DownloadPlan.IsOutputFile(item.FilePath, item.OutputDirectory) || !File.Exists(item.FilePath)) { Notice.Text = "動画が見つかりません。移動または削除されていないか確認してください。"; return; }
-        Process.Start(new ProcessStartInfo(item.FilePath) { UseShellExecute = true });
+        try { Process.Start(new ProcessStartInfo(item.FilePath) { UseShellExecute = true })?.Dispose(); }
+        catch (Exception ex) when (ex is Win32Exception or IOException or UnauthorizedAccessException)
+        { Notice.Text = "動画を開けませんでした: " + ex.Message; }
     }
     private void ShowFile_Click(object sender, RoutedEventArgs e)
     {
@@ -241,7 +252,7 @@ public partial class MainWindow : Window
     private void ExtensionFolder_Click(object sender, RoutedEventArgs e)
     {
         var extension = Path.Combine(AppContext.BaseDirectory, "extension");
-        if (!Directory.Exists(extension)) { Notice.Text = "拡張フォルダーがありません。scripts/build.ps1で配布用アプリを作成してください。"; return; }
+        if (!Directory.Exists(extension)) { Notice.Text = "拡張フォルダーがありません。配布ZIPをすべて展開し、もう一度インストールしてください。"; return; }
         OpenFolder(extension);
         Notice.Text = "chrome://extensions でデベロッパーモードをON →「パッケージ化されていない拡張機能を読み込む」→ 今開いたextensionフォルダーを選択してください。";
     }
@@ -316,7 +327,7 @@ public partial class MainWindow : Window
                 var terminal = item.State is "completed" or "failed" or "cancelled";
                 var job = new DownloadItem { Id = item.Id, Request = request, CreatedAt = item.CreatedAt,
                     OutputDirectory = item.OutputDirectory, Title = item.Title ?? "", State = terminal ? item.State : "interrupted", FilePath = item.FilePath ?? "",
-                    Detail = terminal ? item.Detail ?? "" : "前回の終了で中断しました。再試行するか、Chromeから送り直してください。", Percent = item.State == "completed" ? 100 : 0 };
+                    Detail = item.State == "failed" ? DownloadFailure.Describe(request.Url, item.Detail) : terminal ? item.Detail ?? "" : "前回の終了で中断しました。再試行するか、Chromeから送り直してください。", Percent = item.State == "completed" ? 100 : 0 };
                 Attach(job); jobs.Add(job);
             }
         }
