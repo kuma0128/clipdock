@@ -1,3 +1,7 @@
+import "./distribution.js";
+import "./site-policy.js";
+
+export const { storeBuild, isRestrictedUrl, restrictionMessage } = globalThis.ClipDockSitePolicy;
 export const HOST = "com.clipdock.downloader";
 export const QUALITIES = new Set(["best", "2160", "1080", "720", "480"]);
 
@@ -8,7 +12,7 @@ export function isWebUrl(value) {
 }
 
 export function classifyMedia(url, contentType = "") {
-  if (!isWebUrl(url)) return null;
+  if (!isWebUrl(url) || isRestrictedUrl(url)) return null;
   const u = new URL(url);
   const path = u.pathname.toLowerCase();
   const mime = contentType.toLowerCase().split(";")[0].trim();
@@ -22,9 +26,9 @@ export function classifyMedia(url, contentType = "") {
 }
 
 export function mergeCandidates(existing, incoming) {
-  const result = [...existing];
+  const result = existing.filter(item => !isRestrictedUrl(item.url) && !isRestrictedUrl(item.referer));
   for (const candidate of incoming) {
-    if (!isWebUrl(candidate?.url)) continue;
+    if (!isWebUrl(candidate?.url) || isRestrictedUrl(candidate.url) || isRestrictedUrl(candidate.referer)) continue;
     const clean = {
       url: candidate.url,
       kind: ["HLS", "DASH", "MP4", "VIDEO"].includes(candidate.kind) ? candidate.kind : "VIDEO",

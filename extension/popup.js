@@ -1,4 +1,4 @@
-import { isWebUrl } from "./media.js";
+import { isWebUrl, isRestrictedUrl, restrictionMessage, storeBuild } from "./media.js";
 
 const $ = id => document.getElementById(id);
 let activeTab;
@@ -33,7 +33,8 @@ async function refresh(scan = false) {
   activeTab = result.tab;
   $("page-title").textContent = activeTab.title || "動画ページを開いてください";
   $("page-host").textContent = isWebUrl(activeTab.url) ? new URL(activeTab.url).hostname : "Chromeの設定画面などでは利用できません";
-  $("save-page").disabled = busy || !isWebUrl(activeTab.url);
+  $("save-page").disabled = busy || !isWebUrl(activeTab.url) || isRestrictedUrl(activeTab.url);
+  $("save-page").title = isRestrictedUrl(activeTab.url) ? restrictionMessage : "";
   render(result.candidates);
 }
 async function save(url, referer) {
@@ -72,6 +73,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 async function init() {
+  $("store-note").hidden = !storeBuild;
   const settings = await chrome.storage.local.get({ quality: "1080", overlay: true });
   $("quality").value = settings.quality;
   $("overlay").checked = settings.overlay;

@@ -46,7 +46,7 @@ for (const framework of runtime.runtimeOptions.includedFrameworks) {
     assert.ok(existsSync(join(folder, "THIRD-PARTY-NOTICES.TXT")), "Missing .NET runtime third-party notices");
 }
 console.log("PASS licenses for the bundled .NET runtime");
-for (const file of ["ClipDock.exe", "INSTALL.cmd", "Install.ps1", "UNINSTALL.cmd", "Uninstall.ps1", "README.md", "LICENSE", "THIRD-PARTY.md", "START-HERE.html", "docs/manual-checks.md", ...Object.values(manifest.icons).map(f => "extension/" + f)])
+for (const file of ["ClipDock.exe", "INSTALL.cmd", "Install.ps1", "UNINSTALL.cmd", "Uninstall.ps1", "README.md", "PRIVACY.md", "LICENSE", "THIRD-PARTY.md", "START-HERE.html", "docs/manual-checks.md", ...Object.values(manifest.icons).map(f => "extension/" + f)])
   assert.ok(existsSync(join(directory, file)), file);
 console.log("PASS self-contained runtime and installation files present");
 const bundled = existsSync(join(directory, "tools"));

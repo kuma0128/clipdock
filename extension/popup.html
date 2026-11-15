@@ -5,6 +5,7 @@
   <header><div class="brand"><span class="logo" aria-hidden="true">↓</span><strong>ClipDock</strong></div><span class="tag">CHROME → MP4</span></header>
   <main>
     <div id="connection" class="connection" role="status">● アプリとの接続を確認中…</div>
+    <p class="hint">Windows 10 / 11（x64）のClipDockアプリが必要です。<a href="https://github.com/kuma0128/clipdock/releases/latest" target="_blank" rel="noopener noreferrer">アプリをダウンロード</a></p>
     <section class="page-card"><div class="eyebrow">いま開いているページ</div><h1 id="page-title">ページを読み込み中…</h1><p id="page-host"></p><button id="save-page" class="primary" disabled>↓ このページの動画を保存</button></section>
     <div class="controls"><label for="quality">最大画質</label><select id="quality"><option value="1080">1080p</option><option value="720">720p</option><option value="480">480p</option><option value="2160">4K / 2160p</option><option value="best">最高画質</option></select><span class="format">MP4に変換</span></div>
     <label class="check"><input type="checkbox" id="cookies"> この保存にページのログイン情報を使う</label>
@@ -14,6 +15,8 @@
     <p id="empty" class="empty">動画を一度再生すると、ここに候補が表示されます。候補がなくても上のボタンからページを解析できます。</p>
     <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
     <details><summary>初回の接続方法</summary><ol><li>ClipDock.exeを起動</li><li>「Chrome連携を設定」をクリック</li><li>このポップアップを開き直す</li></ol><p>拡張を読み込んだ直後は、動画ページも再読み込みしてください。</p></details>
+    <p id="store-note" class="hint" hidden>Chrome ウェブストア版はYouTubeの動画保存に対応していません。</p>
+    <p class="hint"><a href="https://github.com/kuma0128/clipdock/blob/main/PRIVACY.md" target="_blank" rel="noopener noreferrer">プライバシーポリシー</a></p>
   </main>
   <footer><label class="check"><input id="overlay" type="checkbox" checked> 動画上に保存ボタン</label><button id="open-app" class="text-button">アプリを開く ↗</button></footer>
   <script type="module" src="popup.js"></script>

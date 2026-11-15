@@ -11,7 +11,7 @@
   "background": { "service_worker": "background.js", "type": "module" },
   "action": { "default_popup": "popup.html", "default_title": "ClipDockで動画を保存" },
   "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
-  "content_scripts": [{ "matches": ["http://*/*", "https://*/*"], "js": ["content.js"], "run_at": "document_idle", "all_frames": true }],
+  "content_scripts": [{ "matches": ["http://*/*", "https://*/*"], "js": ["distribution.js", "site-policy.js", "content.js"], "run_at": "document_idle", "all_frames": true }],
   "incognito": "not_allowed",
   "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'" }
 }

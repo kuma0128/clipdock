@@ -79,6 +79,8 @@ Cookieは待機中の受け渡しファイルではWindows DPAPIで暗号化し�
 
 外部の収集サーバーやテレメトリーは使いません。通信先は選んだ動画の配信元、yt-dlpが解析で必要とするサイト、およびエンジン取得時のGitHubです。Chromeとの連携にはNative Messagingを使います。
 
+取り扱う情報・保持期間・削除方法の詳細は [プライバシーポリシー](PRIVACY.md) を参照してください。
+
 アンインストールする場合は、Chromeから拡張を削除してアプリを閉じ、インストール先（`%LOCALAPPDATA%\Programs\ClipDock`）の `UNINSTALL.cmd` をダブルクリックしてください。保存動画とアプリ設定・履歴は残します。不要な場合は `%LOCALAPPDATA%\ClipDock` を別途削除できます。
 
 ## 開発
@@ -102,7 +104,9 @@ npm run check
 node scripts/smoke-downloads.mjs artifacts/ClipDock-win-x64/tools
 ```
 
-生成先は `artifacts\ClipDock-win-x64` と `artifacts\ClipDock-win-x64.zip` です。GitHub Actionsでも同じチェックとエンジン未同梱パッケージの生成を行います。バイナリはソースリポジトリにコミットしません。コード署名やChrome Web Storeへの登録は行っていません。
+生成先は `artifacts\ClipDock-win-x64` と `artifacts\ClipDock-win-x64.zip` です。GitHub Actionsでも同じチェックとエンジン未同梱パッケージの生成を行います。バイナリはソースリポジトリにコミットしません。コード署名は行っていません。
+
+Chromeウェブストア向けの拡張は `node scripts/package-extension.mjs` で `artifacts/webstore/package` に生成できます。ストア版はYouTubeの保存を除外します。公開には、ストアで発行された拡張IDをWindowsアプリへ登録し、接続・保存を検証する必要があります。[提出手順](docs/webstore-review.md) と [掲載情報](docs/webstore-listing-ja.md) を参照してください。
 
 構成: `ClipDock.App`（WPFアプリ）、`ClipDock.NativeHost`（Chrome連携）、`ClipDock.Core`（ダウンロード処理・設定・エンジン取得）、`extension`（Manifest V3拡張）。
 

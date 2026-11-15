@@ -9,6 +9,10 @@ foreach ($size in @(16, 32, 48, 128, 256)) {
     $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
     $graphics.Clear([System.Drawing.Color]::Transparent)
     $scale = $size / 128.0
+    if ($size -eq 128) {
+        $graphics.TranslateTransform(16, 16)
+        $scale = 96 / 128.0
+    }
     $graphics.ScaleTransform($scale, $scale)
     $shape = [System.Drawing.Drawing2D.GraphicsPath]::new()
     $shape.AddArc(2, 2, 32, 32, 180, 90)

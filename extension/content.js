@@ -2,6 +2,8 @@
   "use strict";
   // XML/SVG documents cannot host the overlay element and have no <video> to save.
   if (!(document.documentElement instanceof HTMLElement)) return;
+  const { isRestrictedUrl } = globalThis.ClipDockSitePolicy;
+  if (isRestrictedUrl(location.href)) return;
   const videos = new Set();
   const protectedVideos = new WeakSet();
   const host = document.createElement("clipdock-controls");
@@ -39,7 +41,7 @@
 
   function hide() { if (!busy) host.style.setProperty("display", "none", "important"); }
   function place() {
-    if (!current?.isConnected || !overlayEnabled) return hide();
+    if (!current?.isConnected || !overlayEnabled || isRestrictedUrl(current.currentSrc || current.src)) return hide();
     const rect = current.getBoundingClientRect();
     if (rect.width < 160 || rect.height < 80 || rect.bottom < 0 || rect.top > innerHeight || document.fullscreenElement === current) return hide();
     const parent = document.fullscreenElement || document.documentElement;
@@ -64,7 +66,8 @@
   addEventListener("resize", () => { if (host.style.display !== "none") place(); });
   document.addEventListener("fullscreenchange", hide);
   button.addEventListener("click", async event => {
-    if (!event.isTrusted || !current || busy || current.mediaKeys || protectedVideos.has(current)) return;
+    if (!event.isTrusted || !current || busy || current.mediaKeys || protectedVideos.has(current) ||
+        isRestrictedUrl(location.href) || isRestrictedUrl(current.currentSrc || current.src)) return;
     event.preventDefault(); event.stopPropagation();
     busy = true; button.disabled = true; button.textContent = "送信中…";
     const src = current.currentSrc || current.src;
@@ -96,7 +99,7 @@
       index++;
       if (protectedVideos.has(video) || video.mediaKeys) continue;
       const sources = [video.currentSrc, video.src, ...[...video.querySelectorAll("source")].map(s => s.src)];
-      for (const url of new Set(sources.filter(isWeb))) candidates.push({ url, kind: /\.m3u8(?:[?#]|$)/i.test(url) ? "HLS" : /\.mpd(?:[?#]|$)/i.test(url) ? "DASH" : /\.mp4(?:[?#]|$)/i.test(url) ? "MP4" : "VIDEO", title: `${document.title || "動画"} · ${index}` });
+      for (const url of new Set(sources.filter(url => isWeb(url) && !isRestrictedUrl(url)))) candidates.push({ url, kind: /\.m3u8(?:[?#]|$)/i.test(url) ? "HLS" : /\.mpd(?:[?#]|$)/i.test(url) ? "DASH" : /\.mp4(?:[?#]|$)/i.test(url) ? "MP4" : "VIDEO", title: `${document.title || "動画"} · ${index}` });
     }
     const signature = JSON.stringify(candidates);
     if (!force && signature === sentSignature) return;
