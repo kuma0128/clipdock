@@ -15,12 +15,13 @@ var passed = 0;
 var failed = 0;
 var skipped = 0;
 var clock = Stopwatch.StartNew();
+var notes = new List<string>();
 void Check(string name, Action check)
 {
     if (filter is not null && !name.Contains(filter, StringComparison.OrdinalIgnoreCase)) return;
     try { check(); passed++; Console.WriteLine("PASS " + name); }
-    catch (SkipCheckException ex) { skipped++; Console.WriteLine("SKIP " + name + ": " + ex.Message); }
-    catch (Exception ex) { failed++; Console.Error.WriteLine("FAIL " + name + ": " + ex.Message); }
+    catch (SkipCheckException ex) { skipped++; Console.WriteLine("SKIP " + name + ": " + ex.Message); notes.Add($"- SKIP {name}: {ex.Message}"); }
+    catch (Exception ex) { failed++; Console.Error.WriteLine("FAIL " + name + ": " + ex.Message); notes.Insert(0, $"- **FAIL** {name}: `{ex.Message.ReplaceLineEndings(" ").Replace('`', '\'')}`"); }
 }
 
 Check("language settings survive restart and legacy or invalid preferences fall back to Japanese", () =>
@@ -301,6 +302,12 @@ EngineChecks.Run(Check);
 BrowserOverlayChecks.Run(Check);
 ToolInstallerChecks.Run(Check);
 SessionChecks.Run(Check);
-Console.WriteLine($"{passed} passed; {failed} failed; {skipped} skipped on {(OperatingSystem.IsWindows() ? "Windows" : OperatingSystem.IsMacOS() ? "macOS" : "this OS")} in {clock.Elapsed.TotalSeconds:0.0}s.");
+var platform = OperatingSystem.IsWindows() ? "Windows" : OperatingSystem.IsMacOS() ? "macOS" : OperatingSystem.IsLinux() ? "Linux" : "this OS";
+var result = $"{passed} passed; {failed} failed; {skipped} skipped on {platform} in {clock.Elapsed.TotalSeconds:0.0}s.";
+Console.WriteLine(result);
+// On GitHub Actions the run page lists failures and skips per OS without opening the log.
+if (Environment.GetEnvironmentVariable("GITHUB_STEP_SUMMARY") is { Length: > 0 } summary)
+    File.AppendAllText(summary, $"### {(failed == 0 ? "✅" : "❌")} App checks on {platform}\n\n{result}\n\n" +
+        (notes.Count > 0 ? $"<details{(failed > 0 ? " open" : "")}><summary>Failed and skipped checks</summary>\n\n{string.Join("\n", notes)}\n\n</details>\n\n" : ""));
 if (filter is not null && passed + failed + skipped == 0) { Console.Error.WriteLine($"No check matches \"{filter}\"."); return 1; }
 return failed == 0 ? 0 : 1;

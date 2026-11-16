@@ -101,7 +101,18 @@ Windows版はアプリを閉じて、Windowsの「設定」→「アプリ」か
 
 ## 開発
 
-必要なもの: Windows、.NET 10 SDK、Node.js 22以降。
+日々の変更は、WindowsでもmacOS・Linuxでも数秒で確認できます（.NET 10 SDKとNode.js 22以降）。
+
+```bash
+npm run test:all                                        # 下の3つをまとめて実行
+dotnet run --project tests/ClipDock.Checks -c Release   # アプリのチェック。Windows専用の項目は他のOSでSKIP
+dotnet run --project tests/ClipDock.Checks -c Release -- --filter retry   # 名前に「retry」を含むチェックだけ
+npm test                                                # ダウンロード関数と公式サイトの静的チェック
+```
+
+アプリのチェックは、保存一覧のルール（`DownloadLibrary`：重複・上限・再試行・履歴の復元・終了処理）、エンジン出力の解釈（yt-dlpの代わりのスクリプトで進捗・完成ファイルの確認・エラー内の署名付きURLとログイン情報の伏せ字・キャンセル）、保存処理の引数、ログイン情報、エンジン更新を対象とします。サイトのチェックは、全ページのダウンロードリンクとバージョン、内部リンクとアンカー、言語ごとのcanonical・hreflang、sitemap、Content-Security-Policyに反するインライン記述を確認します。失敗すると条件式と行番号を表示します。GitHub Actions（`.github/workflows/build.yml`）はpush・PRのたびに、アプリのチェックをLinux・Windows・macOSで実行し、失敗・SKIPした項目を実行ページのサマリーに表示します。WindowsとmacOSのジョブは、続けて実エンジンでの保存とパッケージ作成も行います。同じブランチへ新しくpushすると、実行中の古い確認は取り消されます（リリースタグは除く）。WindowsのWPF画面もmacOS・Linuxで `dotnet build ClipDock.slnx -c Release -p:EnableWindowsTargeting=true` によりビルドだけは確認できます。
+
+Windows版のパッケージ作成に必要なもの: Windows、.NET 10 SDK、Node.js 22以降。
 
 ```powershell
 .\scripts\build.ps1 -Zip
@@ -125,7 +136,7 @@ bash scripts/test-mac.sh arm64    # 署名・ディスクイメージ・実エ�
 
 生成先は `artifacts/mac-<arch>/ClipDock.app` と `artifacts/mac/ClipDock-<version>-mac-<arch>-unsigned.dmg` です。画面はAvalonia製でWindowsでも起動できるため、`dotnet run --project src/ClipDock.Mac -- --data-dir <作業用フォルダー>` で見た目と操作を確認できます。
 
-構成は `ClipDock.App`（Windows用のWPFアプリ）、`ClipDock.Mac`（macOS用のAvaloniaアプリ）、`ClipDock.Core`（ダウンロード処理・設定・エンジン取得）です。自動チェックは保存処理、並列実行、ブラウザーからのURL取り込みを対象とします。実機での確認は [手動確認手順](docs/manual-checks.md) を使います。
+構成は `ClipDock.App`（Windows用のWPFアプリ）、`ClipDock.Mac`（macOS用のAvaloniaアプリ）、`ClipDock.Core`（ダウンロード処理・設定・エンジン取得）です。UIに依存しない `ClipDock.App` の `DownloadItem.cs`・`DownloadEngine.cs`・`DownloadFailure.cs`・`DownloadLibrary.cs` はMac版とチェックでも共有します。保存一覧の振る舞いを変えるときは、両方の画面ではなく `DownloadLibrary` を変更します。実機での確認は [手動確認手順](docs/manual-checks.md) を使います。
 
 macOS版では、設定・履歴・エンジンを `~/Library/Application Support/ClipDock` に保存します。macOSにはDPAPIがないため、履歴は暗号化せず、現在のユーザーだけが読み書きできるファイル（フォルダー700、ファイル600）として保存します。ログイン用のCookieはアプリ専用のWebKitデータに保持し、Safariとは共有しません。アンインストールは「アプリケーション」フォルダーの `ClipDock` をゴミ箱へ移します。設定・履歴・保存ファイルは残ります。
 
