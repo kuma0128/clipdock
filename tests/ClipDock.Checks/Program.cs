@@ -1,24 +1,26 @@
 
 
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using ClipDock.App;
 using ClipDock.Core;
+using static CheckAssert;
 
 if (args is ["--download-smoke", var tools, var server, var output])
     return await DownloadSmokeChecks.RunAsync(tools, server, output);
+// --filter <text>: run only the checks whose name contains the text (case-insensitive).
+var filter = args is ["--filter", var text] ? text : null;
 var passed = 0;
 var failed = 0;
+var skipped = 0;
+var clock = Stopwatch.StartNew();
 void Check(string name, Action check)
 {
+    if (filter is not null && !name.Contains(filter, StringComparison.OrdinalIgnoreCase)) return;
     try { check(); passed++; Console.WriteLine("PASS " + name); }
+    catch (SkipCheckException ex) { skipped++; Console.WriteLine("SKIP " + name + ": " + ex.Message); }
     catch (Exception ex) { failed++; Console.Error.WriteLine("FAIL " + name + ": " + ex.Message); }
-}
-void Assert(bool value) { if (!value) throw new Exception("Assertion failed"); }
-void Throws<T>(Action action) where T : Exception
-{
-    try { action(); } catch (T) { return; }
-    throw new Exception("Expected " + typeof(T).Name);
 }
 
 Check("language settings survive restart and legacy or invalid preferences fall back to Japanese", () =>
@@ -164,10 +166,12 @@ Check("separate video and audio keep one increasing progress bar until the compl
     Assert(audio.Percent == 95 && audio.Finished);
     Assert(tracker.Apply(new(10, 100, 2, false, "audio")).Percent == 95);
 });
+// Engine arguments and output checks use one absolute folder that is valid on every OS.
+var videos = Rooted("videos");
 Check("CLI uses discrete arguments and URL terminator, ignores external configs", () =>
 {
     var url = "https://example.com/v?x=\" & calc & echo \"";
-    var start = DownloadPlan.Create(new DownloadRequest { Url = url, Title = "--exec calc" }, @"C:\tool space", @"C:\video space", new string('a', 32));
+    var start = DownloadPlan.Create(new DownloadRequest { Url = url, Title = "--exec calc" }, Rooted("tool space"), Rooted("video space"), new string('a', 32));
     Assert(!start.UseShellExecute && start.CreateNoWindow);
     Assert(start.RedirectStandardInput && start.RedirectStandardOutput && start.RedirectStandardError);
     Assert(start.ArgumentList[^2] == "--" && start.ArgumentList[^1] == url);
@@ -181,49 +185,56 @@ Check("best quality omits height cap; all specified qualities are bounded", () =
 {
     foreach (var quality in new[] { "best", "480", "720", "1080", "2160" })
     {
-        var args = DownloadPlan.Create(new DownloadRequest { Url = "https://a.test", Quality = quality }, @"C:\tools", @"C:\videos", new string('b', 32)).ArgumentList;
+        var args = DownloadPlan.Create(new DownloadRequest { Url = "https://a.test", Quality = quality }, Rooted("tools"), videos, new string('b', 32)).ArgumentList;
         Assert(args.Contains(quality == "best" ? "bv*+ba/b" : $"bv*[height<=?{quality}]+ba/b[height<=?{quality}]"));
     }
 });
 Check("format sort ranks resolution above the H.264/AAC preference", () =>
 {
-    var args = DownloadPlan.Create(new DownloadRequest { Url = "https://a.test", Quality = "2160" }, @"C:\tools", @"C:\videos", new string('c', 32)).ArgumentList;
+    var args = DownloadPlan.Create(new DownloadRequest { Url = "https://a.test", Quality = "2160" }, Rooted("tools"), videos, new string('c', 32)).ArgumentList;
     var fields = args[args.IndexOf("--format-sort") + 1].Split(',').ToList();
     Assert(fields.IndexOf("res") >= 0 && fields.IndexOf("res") < fields.IndexOf("vcodec:h264") && fields.IndexOf("vcodec:h264") < fields.IndexOf("acodec:aac"));
 });
 Check("MP3 extracts best available audio without a video height cap or video recoding", () =>
 {
-    var args = DownloadPlan.Create(new DownloadRequest { Url = "https://a.test", Quality = "480", Format = "mp3" }, @"C:\tools", @"C:\videos", new string('c', 32)).ArgumentList;
+    var args = DownloadPlan.Create(new DownloadRequest { Url = "https://a.test", Quality = "480", Format = "mp3" }, Rooted("tools"), videos, new string('c', 32)).ArgumentList;
     Assert(args[args.IndexOf("--format") + 1] == "ba/b");
     Assert(args.Contains("--extract-audio") && args[args.IndexOf("--audio-format") + 1] == "mp3");
     Assert(!args.Contains("--recode-video") && !args.Contains("--merge-output-format") && !args.Any(a => a.Contains("height")));
-    Assert(DownloadPlan.IsOutputFile(@"C:\videos\audio.MP3", @"C:\videos", "mp3"));
-    Assert(!DownloadPlan.IsOutputFile(@"C:\videos\audio.mp4", @"C:\videos", "mp3"));
-    Assert(!DownloadPlan.IsOutputFile(@"C:\videos\audio.mp3", @"C:\videos", "mp4"));
-    Assert(!DownloadPlan.IsOutputFile(@"C:\videos\..\audio.mp3", @"C:\videos", "mp3"));
+    Assert(DownloadPlan.IsOutputFile(Path.Combine(videos, "audio.MP3"), videos, "mp3"));
+    Assert(!DownloadPlan.IsOutputFile(Path.Combine(videos, "audio.mp4"), videos, "mp3"));
+    Assert(!DownloadPlan.IsOutputFile(Path.Combine(videos, "audio.mp3"), videos, "mp4"));
+    Assert(!DownloadPlan.IsOutputFile(Path.Combine(videos, "..", "audio.mp3"), videos, "mp3"));
 });
 Check("output verification tolerates missing or malformed paths", () =>
 {
-    Assert(!DownloadPlan.IsOutputFile(null, @"C:\videos") && !DownloadPlan.IsOutputFile("", @"C:\videos"));
-    Assert(!DownloadPlan.IsOutputFile(@"C:\videos\clip.mp4", null) && !DownloadPlan.IsOutputFile(@"C:\videos\clip.mp4", "  "));
-    Assert(!DownloadPlan.IsOutputFile("C:\\videos\\cl\0ip.mp4", @"C:\videos"));
-    Assert(DownloadPlan.IsOutputFile(@"D:\clip.MP4", @"D:\"));
+    Assert(!DownloadPlan.IsOutputFile(null, videos) && !DownloadPlan.IsOutputFile("", videos));
+    Assert(!DownloadPlan.IsOutputFile(Path.Combine(videos, "clip.mp4"), null) && !DownloadPlan.IsOutputFile(Path.Combine(videos, "clip.mp4"), "  "));
+    Assert(!DownloadPlan.IsOutputFile(Path.Combine(videos, "cl\0ip.mp4"), videos));
+    Assert(DownloadPlan.IsOutputFile(Rooted("clip.MP4"), Rooted()));
 });
 Check("output verification rejects sibling path escapes and non-MP4", () =>
 {
-    Assert(DownloadPlan.IsOutputFile(@"C:\videos\clip.mp4", @"C:\videos"));
-    Assert(!DownloadPlan.IsOutputFile(@"C:\videos-other\clip.mp4", @"C:\videos"));
-    Assert(!DownloadPlan.IsOutputFile(@"C:\videos\..\secret.mp4", @"C:\videos"));
-    Assert(!DownloadPlan.IsOutputFile(@"C:\videos\app.exe", @"C:\videos"));
+    Assert(DownloadPlan.IsOutputFile(Path.Combine(videos, "clip.mp4"), videos));
+    Assert(!DownloadPlan.IsOutputFile(Rooted("videos-other", "clip.mp4"), videos));
+    Assert(!DownloadPlan.IsOutputFile(Path.Combine(videos, "..", "secret.mp4"), videos));
+    Assert(!DownloadPlan.IsOutputFile(Path.Combine(videos, "app.exe"), videos));
 });
 Check("DPAPI encrypts data at rest and rejects tampering", () =>
 {
-    var bytes = Encoding.UTF8.GetBytes("private-download-history");
-    var encrypted = WindowsProtection.Protect(bytes);
-    Assert(!encrypted.AsSpan().SequenceEqual(bytes));
-    Assert(WindowsProtection.Unprotect(encrypted).AsSpan().SequenceEqual(bytes));
-    encrypted[^1] ^= 0x20;
-    Throws<System.ComponentModel.Win32Exception>(() => WindowsProtection.Unprotect(encrypted));
+    if (!OperatingSystem.IsWindows()) throw new SkipCheckException("DPAPI exists only on Windows.");
+    CheckProtection();
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    static void CheckProtection()
+    {
+        var bytes = Encoding.UTF8.GetBytes("private-download-history");
+        var encrypted = WindowsProtection.Protect(bytes);
+        Assert(!encrypted.AsSpan().SequenceEqual(bytes));
+        Assert(WindowsProtection.Unprotect(encrypted).AsSpan().SequenceEqual(bytes));
+        encrypted[^1] ^= 0x20;
+        try { WindowsProtection.Unprotect(encrypted); throw new Exception("Tampered history was decrypted."); }
+        catch (System.ComponentModel.Win32Exception) { }
+    }
 });
 Check("engine update replaces executables, licenses and version metadata together", () =>
 {
@@ -236,9 +247,11 @@ Check("engine update replaces executables, licenses and version metadata togethe
 });
 Check("a locked engine rolls back all earlier moves without losing the old package", () =>
 {
+    // Only Windows refuses to move a file that another handle has open.
+    if (!OperatingSystem.IsWindows()) throw new SkipCheckException("needs Windows file locking.");
     WithToolPackage((destination, staging, names) =>
     {
-        using var locked = new FileStream(Path.Combine(destination, "ffprobe.exe"), FileMode.Open, FileAccess.Read, FileShare.Read);
+        using var locked = new FileStream(Path.Combine(destination, AppPaths.Executable("ffprobe")), FileMode.Open, FileAccess.Read, FileShare.Read);
         Throws<IOException>(() => ToolInstaller.PromoteStagedPackage(staging, destination));
         foreach (var name in names) Assert(File.ReadAllText(Path.Combine(destination, name)) == "old");
         foreach (var name in names) Assert(File.ReadAllText(Path.Combine(staging, name)) == "new");
@@ -251,7 +264,7 @@ Check("concurrent installers cannot remove each other's staging directories", ()
     {
         using var held = ToolInstaller.AcquireInstallLock(destination);
         Throws<IOException>(() => ToolInstaller.InstallAsync(destination).GetAwaiter().GetResult());
-        Assert(File.Exists(Path.Combine(staging, "yt-dlp.exe")));
+        Assert(File.Exists(Path.Combine(staging, AppPaths.Executable("yt-dlp"))));
     });
 });
 Check("an incomplete engine package leaves the current installation untouched", () =>
@@ -268,7 +281,7 @@ void WithToolPackage(Action<string, string, string[]> check)
 {
     var directory = Path.Combine(Path.GetTempPath(), "ClipDock-check-" + Guid.NewGuid().ToString("N"));
     var staging = Path.Combine(directory, ".staging-test");
-    string[] names = ["yt-dlp.exe", "ffmpeg.exe", "ffprobe.exe", "deno.exe", "versions.json", "licenses/NOTICE"];
+    string[] names = [.. new[] { "yt-dlp", "ffmpeg", "ffprobe", "deno" }.Select(AppPaths.Executable), "versions.json", "licenses/NOTICE"];
     try
     {
         foreach (var (path, value) in new[] { (directory, "old"), (staging, "new") })
@@ -283,8 +296,11 @@ void WithToolPackage(Action<string, string, string[]> check)
 
 
 QueueChecks.Run(Check);
+LibraryChecks.Run(Check);
+EngineChecks.Run(Check);
 BrowserOverlayChecks.Run(Check);
 ToolInstallerChecks.Run(Check);
 SessionChecks.Run(Check);
-Console.WriteLine($"{passed} passed; {failed} failed.");
+Console.WriteLine($"{passed} passed; {failed} failed; {skipped} skipped on {(OperatingSystem.IsWindows() ? "Windows" : OperatingSystem.IsMacOS() ? "macOS" : "this OS")} in {clock.Elapsed.TotalSeconds:0.0}s.");
+if (filter is not null && passed + failed + skipped == 0) { Console.Error.WriteLine($"No check matches \"{filter}\"."); return 1; }
 return failed == 0 ? 0 : 1;

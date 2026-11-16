@@ -36,8 +36,13 @@ public static partial class DownloadEngine
             // Nothing is ever typed into the engine: an immediate EOF makes any prompt fail fast instead of hanging the queue.
             try { process.StandardInput.Close(); } catch (IOException) { }
             using var registration = ct.Register(() => { try { if (!process.HasExited) process.Kill(true); } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { } });
+            // stdout and stderr are read concurrently and either may carry engine lines; the tracker is not thread-safe
+            // and progress must reach the window in the order it was computed.
+            var lineGate = new object();
             bool HandleLine(string line)
             {
+                lock (lineGate)
+                {
                     var progress = DownloadProgress.Parse(line);
                     if (progress is not null)
                     {
@@ -62,6 +67,7 @@ public static partial class DownloadEngine
                     }
                     else return false;
                     return true;
+                }
             }
             async Task ReadOutput()
             {

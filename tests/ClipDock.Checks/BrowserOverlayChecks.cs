@@ -1,9 +1,8 @@
 using ClipDock.App;
+using static CheckAssert;
 
 internal static class BrowserOverlayChecks
 {
-    private static void Assert(bool value) { if (!value) throw new Exception("Assertion failed"); }
-
     internal static void Run(Action<string, Action> check)
     {
         check("browser URL candidates preserve explicit web schemes and require review for an added scheme", () =>

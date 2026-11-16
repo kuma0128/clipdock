@@ -2,12 +2,19 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text.Json;
 using ClipDock.Core;
+using static CheckAssert;
 
 internal static class SessionChecks
 {
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    private static bool OnlyCurrentUserAllowed(string path)
+    {
+        var rules = new FileInfo(path).GetAccessControl().GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>();
+        return rules.All(r => r.AccessControlType != AccessControlType.Allow || r.IdentityReference.Equals(WindowsIdentity.GetCurrent().User));
+    }
+
     public static void Run(Action<string, Action> check)
     {
-        static void Assert(bool condition) { if (!condition) throw new Exception("Session check failed."); }
         check("login is on for new and migrated settings; an explicit opt-out survives restart", () =>
         {
             foreach (var json in new[] { "{}", "{\"quality\":\"1080\",\"format\":\"mp3\"}" })
@@ -18,9 +25,11 @@ internal static class SessionChecks
             var saved = JsonSerializer.Serialize(new AppSettings("videos", "1080", UseLogin: false), Json.Options);
             Assert(!JsonSerializer.Deserialize<AppSettings>(saved, Json.Options)!.UseLogin);
             var request = new DownloadRequest { Url = "https://x.com/example/status/123" };
-            var args = DownloadPlan.Create(request, @"C:\tools", @"C:\videos", new string('d', 32), @"C:\sessions\login.cookies").ArgumentList;
-            Assert(args.Contains("--cookies") && args[args.IndexOf("--cookies") + 1] == @"C:\sessions\login.cookies");
-            Assert(!DownloadPlan.Create(request with { UseLogin = false }, @"C:\tools", @"C:\videos", new string('d', 32), @"C:\sessions\login.cookies").ArgumentList.Contains("--cookies"));
+            var cookies = Rooted("sessions", "login.cookies");
+            var args = DownloadPlan.Create(request, Rooted("tools"), Rooted("videos"), new string('d', 32), cookies).ArgumentList;
+            Assert(args.Contains("--cookies") && args[args.IndexOf("--cookies") + 1] == cookies);
+            Assert(!DownloadPlan.Create(request with { UseLogin = false }, Rooted("tools"), Rooted("videos"), new string('d', 32), cookies).ArgumentList.Contains("--cookies"));
+            Throws<ArgumentException>(() => DownloadPlan.Create(request, Rooted("tools"), Rooted("videos"), new string('d', 32), "login.cookies"));
         });
         check("YouTube home and search URLs are rejected before saving while video URLs remain valid", () =>
         {
@@ -67,9 +76,12 @@ internal static class SessionChecks
                     var lines = File.ReadAllLines(path);
                     Assert(lines.Length == 2 && lines[1].StartsWith("#HttpOnly_.x.com\tTRUE\t/\tTRUE\t0\tauth_token\t"));
                     Assert(!file.Redact("error synthetic-private-value " + path).Contains("synthetic-private-value"));
-                    var acl = new FileInfo(path).GetAccessControl();
-                    var rules = acl.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToArray();
-                    Assert(rules.All(r => r.AccessControlType != AccessControlType.Allow || r.IdentityReference.Equals(WindowsIdentity.GetCurrent().User)));
+                    if (OperatingSystem.IsWindows()) Assert(OnlyCurrentUserAllowed(path));
+                    else
+                    {
+                        Assert(File.GetUnixFileMode(path) == (UnixFileMode.UserRead | UnixFileMode.UserWrite));
+                        Assert(File.GetUnixFileMode(directory) == (UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute));
+                    }
                 }
                 Assert(!File.Exists(path));
                 Assert(SessionCookieFile.Create("https://example.com/video", source, directory) is null);

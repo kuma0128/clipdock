@@ -13,6 +13,7 @@
     <Compile Include="../ClipDock.App/DownloadItem.cs" Link="Shared/DownloadItem.cs" />
     <Compile Include="../ClipDock.App/DownloadEngine.cs" Link="Shared/DownloadEngine.cs" />
     <Compile Include="../ClipDock.App/DownloadFailure.cs" Link="Shared/DownloadFailure.cs" />
+    <Compile Include="../ClipDock.App/DownloadLibrary.cs" Link="Shared/DownloadLibrary.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.1.6" />

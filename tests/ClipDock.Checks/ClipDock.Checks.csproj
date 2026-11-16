@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0-windows</TargetFramework></PropertyGroup>
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup>
   <ItemGroup><ProjectReference Include="../../src/ClipDock.Core/ClipDock.Core.csproj" /></ItemGroup>
   <!-- These app components have no WPF dependency; exercise the production sources without opening a window. -->
   <ItemGroup>
     <Compile Include="../../src/ClipDock.App/DownloadItem.cs" Link="App/DownloadItem.cs" />
     <Compile Include="../../src/ClipDock.App/DownloadEngine.cs" Link="App/DownloadEngine.cs" />
     <Compile Include="../../src/ClipDock.App/DownloadFailure.cs" Link="App/DownloadFailure.cs" />
+    <Compile Include="../../src/ClipDock.App/DownloadLibrary.cs" Link="App/DownloadLibrary.cs" />
     <Compile Include="../../src/ClipDock.App/BrowserUrlCandidate.cs" Link="App/BrowserUrlCandidate.cs" />
   </ItemGroup>
 </Project>

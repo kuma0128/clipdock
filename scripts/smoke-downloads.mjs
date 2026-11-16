@@ -51,7 +51,7 @@ const server = http.createServer((req, res) => {
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 try {
   const address = `http://127.0.0.1:${server.address().port}`;
-  const executable = path.resolve("tests/ClipDock.Checks/bin/Release/net10.0-windows/ClipDock.Checks.exe");
+  const executable = path.resolve("tests/ClipDock.Checks/bin/Release/net10.0/ClipDock.Checks.exe");
   const child = spawn(executable, ["--download-smoke", tools, address, path.join(root, "保存先 with spaces")], { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
   child.stdout.pipe(process.stdout); child.stderr.pipe(process.stderr);
   const status = await new Promise((resolve, reject) => { child.once("error", reject); child.once("exit", resolve); });

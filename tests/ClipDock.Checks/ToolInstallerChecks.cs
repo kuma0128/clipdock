@@ -5,10 +5,10 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using ClipDock.Core;
+using static CheckAssert;
 
 internal static class ToolInstallerChecks
 {
-    private static void Assert(bool value, string message = "Installer assertion failed") { if (!value) throw new Exception(message); }
     private static async Task ThrowsAsync<T>(Func<Task> action) where T : Exception
     {
         try { await action(); } catch (T) { return; }
@@ -17,7 +17,12 @@ internal static class ToolInstallerChecks
 
     public static void Run(Action<string, Action> check)
     {
-        void Async(string name, Func<Task> action) => check(name, () => action().WaitAsync(TimeSpan.FromSeconds(20)).GetAwaiter().GetResult());
+        // The fixture serves the Windows engine set (EXE and ZIP assets); macOS fetches a different set.
+        void Async(string name, Func<Task> action) => check(name, () =>
+        {
+            if (!OperatingSystem.IsWindows()) throw new SkipCheckException("the fixture serves the Windows engine set.");
+            action().WaitAsync(TimeSpan.FromSeconds(20)).GetAwaiter().GetResult();
+        });
 
         Async("engine update verifies every local file and skips all downloads and file rewrites when current", async () =>
         {

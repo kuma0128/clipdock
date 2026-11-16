@@ -2,11 +2,11 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using ClipDock.App;
 using ClipDock.Core;
+using static CheckAssert;
 
 internal static class QueueChecks
 {
     private static TaskCompletionSource Signal() => new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private static void Assert(bool condition) { if (!condition) throw new Exception("Queue assertion failed"); }
     private static async Task Cancelled(Task task)
     {
         try { await task; } catch (OperationCanceledException) { return; }

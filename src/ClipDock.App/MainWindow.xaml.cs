@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -18,16 +17,13 @@ namespace ClipDock.App;
 public partial class MainWindow : Window
 {
     private static readonly Brush SelectedFilter = new SolidColorBrush(Color.FromRgb(0xD9, 0xEE, 0xDF));
-    private readonly ObservableCollection<DownloadItem> jobs = [];
+    private readonly DownloadLibrary library = new();
     private readonly DispatcherTimer activationTimer;
     private readonly string historyFile = Path.Combine(AppPaths.Data, "history.dat");
     private readonly string settingsFile = Path.Combine(AppPaths.Data, "settings.json");
     private readonly ICollectionView view;
     private string outputDirectory = AppPaths.DefaultOutput;
     private string filter = "all";
-    private readonly DownloadScheduler scheduler = new();
-    private readonly Dictionary<DownloadItem, DownloadOperation> operations = [];
-    private readonly HashSet<DownloadItem> closingJobs = [];
     private Task? installTask;
     private CancellationTokenSource? installCancellation;
     private bool installing;
@@ -49,9 +45,11 @@ public partial class MainWindow : Window
         if (Directory.Exists(oldSessions))
             foreach (var file in Directory.EnumerateFiles(oldSessions, "*.cookies"))
                 try { File.Delete(file); } catch (IOException) { } catch (UnauthorizedAccessException) { }
-        view = CollectionViewSource.GetDefaultView(jobs);
-        view.Filter = value => value is DownloadItem item && (filter == "all" || filter == "active" && item.CanCancel || filter == "completed" && item.IsCompleted);
+        view = CollectionViewSource.GetDefaultView(library.Jobs);
+        view.Filter = value => value is DownloadItem item && DownloadLibrary.Shows(item, filter);
         JobList.ItemsSource = view;
+        library.StateChanged += RefreshSummary;
+        library.Settled += _ => DownloadSettled();
         LoadState();
         foreach (ComboBoxItem language in LanguageBox.Items)
             if ((string?)language.Tag == Localization.Language) LanguageBox.SelectedItem = language;
@@ -104,8 +102,8 @@ public partial class MainWindow : Window
         SaveState();
         Notice.Text = UseLoginBox.IsChecked == true ? ClipDock.Core.Localization.Text("接続済みサイトのログイン情報を保存に使います。初回は「ログイン」から接続してください。") : ClipDock.Core.Localization.Text("次の保存・再試行ではログイン情報を使いません。");
     }
-    private void Login_Click(object sender, RoutedEventArgs e) => browserSession.Show(UrlInput.Text.Trim() is { Length: > 0 } url ? url : jobs.FirstOrDefault()?.Request.Url,
-        () => jobs.Any(j => j.CanCancel), url => { UrlInput.Text = url; Notice.Text = ClipDock.Core.Localization.Text("URLと保存先を確認して「保存」を押してください。"); Activate(); });
+    private void Login_Click(object sender, RoutedEventArgs e) => browserSession.Show(UrlInput.Text.Trim() is { Length: > 0 } url ? url : library.Jobs.FirstOrDefault()?.Request.Url,
+        () => library.HasUnfinished, url => { UrlInput.Text = url; Notice.Text = ClipDock.Core.Localization.Text("URLと保存先を確認して「保存」を押してください。"); Activate(); });
     private void BrowserOverlay_Changed(object sender, RoutedEventArgs e)
     {
         browserOverlay.Enabled = BrowserOverlayBox.IsChecked == true;
@@ -133,64 +131,35 @@ public partial class MainWindow : Window
     private void Add(DownloadRequest source)
     {
         if (shuttingDown) throw new InvalidOperationException(ClipDock.Core.Localization.Text("終了処理中です。アプリを開き直してから保存してください。"));
-        var request = source.Validated();
-        request.ValidateVideoPage();
-        if (jobs.Any(j => j.CanCancel && j.Request.Url == request.Url && j.Request.Quality == request.Quality && j.Request.Format == request.Format))
+        if (library.Add(source, outputDirectory) is null)
         {
             Notice.Text = ClipDock.Core.Localization.Text("この動画はすでにダウンロード一覧にあります。");
             return;
         }
-        if (jobs.Count(j => j.CanCancel) >= 100) throw new InvalidOperationException(ClipDock.Core.Localization.Text("待機中の動画は100件までです。"));
-        var item = new DownloadItem { Request = request, Title = request.Title.Length > 0 ? request.Title : new Uri(request.Url).Host, OutputDirectory = outputDirectory };
-        Attach(item);
-        jobs.Insert(0, item);
         Notice.Text = ToolInstaller.IsReady(ToolInstaller.FindTools()) ? ClipDock.Core.Localization.Text("ダウンロード一覧に追加しました。") : ClipDock.Core.Localization.Text("待機リストに追加しました。初期セットアップが終わると開始します。");
         SaveState(); RefreshSummary(); StartQueue();
     }
-
-    private void Attach(DownloadItem item) => item.PropertyChanged += (_, args) =>
-    {
-        if (args.PropertyName == nameof(DownloadItem.State)) RefreshSummary();
-    };
 
     private void StartQueue()
     {
         var tools = ToolInstaller.FindTools();
         if (shuttingDown || installing || !ToolInstaller.IsReady(tools)) return;
-        // The list is newest first; the scheduler consumes work in insertion order.
-        foreach (var item in jobs.Reverse().Where(j => j.State == "queued" && !operations.ContainsKey(j)).ToList())
-        {
-            var operation = scheduler.Enqueue(ct => DownloadEngine.RunAsync(item, tools, action => Dispatcher.Invoke(action), ct,
-                (request, token) => Dispatcher.InvokeAsync(() => browserSession.CreateCookieFileAsync(request, token)).Task.Unwrap()));
-            operations.Add(item, operation);
-            _ = ObserveDownloadAsync(item, operation);
-        }
-        EngineButton.IsEnabled = operations.Count == 0;
+        library.Start((item, ct) => DownloadEngine.RunAsync(item, tools, action => Dispatcher.Invoke(action), ct,
+            (request, token) => Dispatcher.InvokeAsync(() => browserSession.CreateCookieFileAsync(request, token)).Task.Unwrap()));
+        EngineButton.IsEnabled = library.ActiveOperations == 0;
     }
 
-    private async Task ObserveDownloadAsync(DownloadItem item, DownloadOperation operation)
+    private void DownloadSettled()
     {
-        try { await operation.Completion; }
-        catch (OperationCanceledException)
-        {
-            // Queued work can be cancelled without invoking the download engine at all.
-            item.State = shuttingDown ? "interrupted" : "cancelled";
-            item.Detail = shuttingDown ? ClipDock.Core.Localization.Text("終了に伴い待機を中断しました。") : ClipDock.Core.Localization.Text("待機を取り消しました。");
-        }
-        catch (Exception ex) { item.State = "failed"; item.Detail = ex.Message; }
-        finally
-        {
-            operations.Remove(item);
-            EngineButton.IsEnabled = !shuttingDown && !installing && operations.Count == 0;
-            if (!shuttingDown) SaveState();
-            RefreshSummary();
-        }
+        EngineButton.IsEnabled = !shuttingDown && !installing && library.ActiveOperations == 0;
+        if (!shuttingDown) SaveState();
+        RefreshSummary();
     }
 
     private void Concurrency_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (shuttingDown || ConcurrencyBox.SelectedItem is not ComboBoxItem choice || !int.TryParse(choice.Tag as string, out var count)) return;
-        scheduler.MaxConcurrency = count;
+        library.MaxConcurrency = count;
         SaveState(); StartQueue(); RefreshSummary();
         Notice.Text = ClipDock.Core.Localization.Format($"同時に保存する動画を{count}件に設定しました。進行中の保存は中断しません。");
     }
@@ -206,24 +175,15 @@ public partial class MainWindow : Window
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not DownloadItem item) return;
-        if (operations.TryGetValue(item, out var operation)) { item.Detail = ClipDock.Core.Localization.Text("キャンセルしています…"); operation.Cancel(); }
-        else if (item.State == "queued") { item.State = "cancelled"; item.Detail = ClipDock.Core.Localization.Text("待機を取り消しました。"); }
+        library.Cancel(item);
         SaveState();
     }
     private void Retry_Click(object sender, RoutedEventArgs e)
     {
-        if (shuttingDown || (sender as FrameworkElement)?.DataContext is not DownloadItem item || !item.CanRetry || operations.ContainsKey(item)) return;
-        try { item.Request.ValidateVideoPage(); }
-        catch (ArgumentException ex) { Notice.Text = ex.Message; return; }
-        if (jobs.Any(j => j.CanCancel && j.Request.Url == item.Request.Url && j.Request.Quality == item.Request.Quality && j.Request.Format == item.Request.Format))
-        { Notice.Text = ClipDock.Core.Localization.Text("この動画はすでにダウンロード一覧にあります。"); return; }
-        if (jobs.Count(j => j.CanCancel) >= 100) { Notice.Text = ClipDock.Core.Localization.Text("待機中の動画は100件までです。"); return; }
-        // Retrying is a new queue insertion: wait behind work already queued and keep
-        // the retried item inside the persisted history window.
-        jobs.Move(jobs.IndexOf(item), 0);
-        item.Request = item.Request with { UseLogin = UseLoginBox.IsChecked == true };
-        item.Percent = 0; item.State = "queued"; item.Detail = ClipDock.Core.Localization.Text("再試行を待っています");
-        Notice.Text = item.Request.UseLogin ? ClipDock.Core.Localization.Text("最新のログイン情報を確認して、もう一度取得します。") : ClipDock.Core.Localization.Text("ログイン情報を使わずに、もう一度取得します。");
+        if (shuttingDown || (sender as FrameworkElement)?.DataContext is not DownloadItem item) return;
+        var retried = library.Retry(item, UseLoginBox.IsChecked == true, out var message);
+        if (message is not null) Notice.Text = message;
+        if (!retried) return;
         SaveState(); StartQueue();
     }
     private void Filter_Click(object sender, RoutedEventArgs e)
@@ -236,8 +196,8 @@ public partial class MainWindow : Window
     private void RefreshSummary()
     {
         view.Refresh();
-        CountLabel.Text = ClipDock.Core.Localization.Format($"{(filter == "active" ? ClipDock.Core.Localization.Text("ダウンロード中") : filter == "completed" ? ClipDock.Core.Localization.Text("保存したファイル") : ClipDock.Core.Localization.Text("ライブラリ"))}  /  {view.Cast<object>().Count()} 件     ·     保存完了 {jobs.Count(j => j.IsCompleted)} 件");
-        QueueStatus.Text = ClipDock.Core.Localization.Format($"保存中 {jobs.Count(j => j.IsBusy)} 件  ·  待機 {jobs.Count(j => j.State == "queued")} 件");
+        CountLabel.Text = library.CountText(filter, view.Cast<object>().Count());
+        QueueStatus.Text = library.QueueText();
         EmptyState.Visibility = view.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
     }
     private void ChooseOutput_Click(object sender, RoutedEventArgs e)
@@ -291,7 +251,7 @@ public partial class MainWindow : Window
     }
     private async void InstallEngine_Click(object sender, RoutedEventArgs e)
     {
-        if (operations.Count > 0 || installing || shuttingDown) return;
+        if (library.ActiveOperations > 0 || installing || shuttingDown) return;
         installTask = InstallEngineAsync();
         await installTask;
     }
@@ -333,11 +293,7 @@ public partial class MainWindow : Window
     }
     private void ClearHistory_Click(object sender, RoutedEventArgs e)
     {
-        foreach (var job in jobs.Where(j => !j.CanCancel && !operations.ContainsKey(j)).ToList())
-        {
-            try { DownloadPlan.CleanWorkDirectory(job.OutputDirectory, job.Id); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
-            jobs.Remove(job);
-        }
+        library.ClearFinished();
         SaveState(); RefreshSummary(); Notice.Text = ClipDock.Core.Localization.Text("完了・失敗・キャンセルの履歴を消去しました。保存した動画ファイルはそのままです。");
     }
     private void LoadState()
@@ -353,29 +309,15 @@ public partial class MainWindow : Window
                 foreach (ComboBoxItem format in FormatBox.Items) if ((string)format.Tag == settings.Format) FormatBox.SelectedItem = format;
                 BrowserOverlayBox.IsChecked = settings.BrowserOverlayEnabled;
                 UseLoginBox.IsChecked = settings.UseLogin;
-                scheduler.MaxConcurrency = Math.Clamp(settings.MaxConcurrentDownloads, 1, DownloadScheduler.MaximumConcurrency);
-                foreach (ComboBoxItem count in ConcurrencyBox.Items) if ((string)count.Tag == scheduler.MaxConcurrency.ToString()) ConcurrencyBox.SelectedItem = count;
+                library.MaxConcurrency = Math.Clamp(settings.MaxConcurrentDownloads, 1, DownloadScheduler.MaximumConcurrency);
+                foreach (ComboBoxItem count in ConcurrencyBox.Items) if ((string)count.Tag == library.MaxConcurrency.ToString()) ConcurrencyBox.SelectedItem = count;
             }
         }
         catch (Exception) { Notice.Text = ClipDock.Core.Localization.Text("以前の設定を読み込めませんでした。既定の設定で続行します。"); }
         try
         {
             if (!File.Exists(historyFile)) return;
-            var saved = JsonSerializer.Deserialize<List<SavedDownload?>>(WindowsProtection.Unprotect(File.ReadAllBytes(historyFile)), Json.Options) ?? [];
-            var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var item in saved.Take(300))
-            {
-                if (item?.Request is null || !Guid.TryParseExact(item.Id, "N", out _) ||
-                    item.OutputDirectory is not { Length: > 0 } || !Path.IsPathFullyQualified(item.OutputDirectory) || !ids.Add(item.Id)) continue;
-                DownloadRequest request;
-                try { request = item.Request.Validated(); }
-                catch (ArgumentException) { continue; }
-                var terminal = item.State is "completed" or "failed" or "cancelled";
-                var job = new DownloadItem { Id = item.Id, Request = request, CreatedAt = item.CreatedAt,
-                    OutputDirectory = item.OutputDirectory, Title = item.Title ?? "", State = terminal ? item.State : "interrupted", FilePath = item.FilePath ?? "",
-                    Detail = item.State == "failed" ? DownloadFailure.Describe(request.Url, item.Detail) : terminal ? item.Detail ?? "" : ClipDock.Core.Localization.Text("前回の終了で中断しました。再試行するか、URLを入力し直してください。"), Percent = item.State == "completed" ? 100 : 0 };
-                Attach(job); jobs.Add(job);
-            }
+            library.Restore(JsonSerializer.Deserialize<List<SavedDownload?>>(WindowsProtection.Unprotect(File.ReadAllBytes(historyFile)), Json.Options) ?? []);
         }
         catch (Exception) { Notice.Text = ClipDock.Core.Localization.Text("以前の履歴を読み込めませんでした。新しい履歴で続行します。"); }
     }
@@ -383,9 +325,9 @@ public partial class MainWindow : Window
     {
         try
         {
-            File.WriteAllText(settingsFile + ".tmp", JsonSerializer.Serialize(new AppSettings(outputDirectory, Quality, scheduler.MaxConcurrency, Format, BrowserOverlayBox.IsChecked == true, UseLoginBox.IsChecked == true, SelectedLanguage), Json.Options));
+            File.WriteAllText(settingsFile + ".tmp", JsonSerializer.Serialize(new AppSettings(outputDirectory, Quality, library.MaxConcurrency, Format, BrowserOverlayBox.IsChecked == true, UseLoginBox.IsChecked == true, SelectedLanguage), Json.Options));
             File.Move(settingsFile + ".tmp", settingsFile, true);
-            File.WriteAllBytes(historyFile + ".tmp", WindowsProtection.Protect(JsonSerializer.SerializeToUtf8Bytes(DownloadHistory.Snapshot(jobs, closingJobs), Json.Options)));
+            File.WriteAllBytes(historyFile + ".tmp", WindowsProtection.Protect(JsonSerializer.SerializeToUtf8Bytes(library.Snapshot(), Json.Options)));
             File.Move(historyFile + ".tmp", historyFile, true);
             return true;
         }
@@ -394,8 +336,8 @@ public partial class MainWindow : Window
     private async void OnClosing(object? sender, CancelEventArgs e)
     {
         if (allowClose) return;
-        var hasWork = installing && !updatingQuietly || jobs.Any(j => j.CanCancel);
-        if (!hasWork && !installing && operations.Count == 0) { activationTimer.Stop(); SaveState(); return; }
+        var hasWork = installing && !updatingQuietly || library.HasUnfinished;
+        if (!hasWork && !installing && library.ActiveOperations == 0) { activationTimer.Stop(); SaveState(); return; }
         e.Cancel = true;
         if (shuttingDown) return;
         // The engine download can take many minutes on a slow line; it is cancellable like any other work.
@@ -406,9 +348,7 @@ public partial class MainWindow : Window
         browserOverlay.Enabled = false;
         activationTimer.Stop();
         installCancellation?.Cancel();
-        closingJobs.UnionWith(jobs.Where(j => j.CanCancel));
-        foreach (var item in jobs.Where(j => j.State == "queued").ToList()) { item.State = "interrupted"; }
-        var stopDownloads = scheduler.StopAsync();
+        var stopDownloads = library.StopAsync();
         try
         {
             if (installTask is not null) await installTask;

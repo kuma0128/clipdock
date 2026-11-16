@@ -45,8 +45,8 @@
             <ComboBox x:Name="FormatBox" Grid.Column="1" SelectedIndex="0" Margin="10,0,0,0" AutomationProperties.Name="{DynamicResource LA3FDBA54BDC4A0BA}">
               <ComboBoxItem Content="MP4" Tag="mp4" /><ComboBoxItem Content="MP3" Tag="mp3" />
             </ComboBox>
-            <ComboBox x:Name="QualityBox" Grid.Column="2" SelectedIndex="1" Margin="10,0" AutomationProperties.Name="{DynamicResource L430BBAC6929DCDD9}" ToolTip.Tip="{DynamicResource L61F942DF3BC46F8C}">
-              <ComboBoxItem Content="{DynamicResource LE4CD52B47DEF81BE}" Tag="best" /><ComboBoxItem Content="1080p" Tag="1080" /><ComboBoxItem Content="720p" Tag="720" /><ComboBoxItem Content="480p" Tag="480" /><ComboBoxItem Content="4K" Tag="2160" />
+            <ComboBox x:Name="QualityBox" Grid.Column="2" SelectedIndex="2" Margin="10,0" AutomationProperties.Name="{DynamicResource L430BBAC6929DCDD9}" ToolTip.Tip="{DynamicResource L61F942DF3BC46F8C}">
+              <ComboBoxItem Content="{DynamicResource LE4CD52B47DEF81BE}" Tag="best" /><ComboBoxItem Content="4K" Tag="2160" /><ComboBoxItem Content="1080p" Tag="1080" /><ComboBoxItem Content="720p" Tag="720" /><ComboBoxItem Content="480p" Tag="480" />
             </ComboBox>
             <Button Grid.Column="3" Content="{DynamicResource LA9FB576FF2085565}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#C6EBCF" Foreground="#132B1D" FontWeight="SemiBold" Click="Add_Click" />
           </Grid>
