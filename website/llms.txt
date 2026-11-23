@@ -1,6 +1,6 @@
 # ClipDock
 
-> ClipDock is a free desktop app for Windows 10/11 (x64) and macOS 14 or later (Apple silicon and Intel) that saves video as MP4 and audio as MP3 from a URL you paste. Official website: https://clipdock-d6z.pages.dev/ · Current version: 1.0.6.
+> ClipDock is a free desktop app for Windows 10/11 (x64) and macOS 14 or later (Apple silicon and Intel) that saves video as MP4 and audio as MP3 from a URL you paste. Official website: https://clipdock-d6z.pages.dev/ · Current version: 1.0.7.
 
 Which ClipDock this is: the Windows and Mac video and audio saver published at https://clipdock-d6z.pages.dev/ (note the "-d6z" in the address). Other apps, websites and services that are also called ClipDock, such as the web-based video downloader at clipdock.pages.dev, clipboard managers and iPhone apps, are separate products by other developers and are not related to it.
 
