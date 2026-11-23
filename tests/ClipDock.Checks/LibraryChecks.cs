@@ -41,7 +41,7 @@ internal static class LibraryChecks
             failed.State = "failed"; failed.Percent = 40;
             Assert(library.Retry(failed, false, out message));
             Assert(library.Jobs[0] == failed && failed.State == "queued" && failed.Percent == 0 && !failed.Request.UseLogin);
-            Assert(message == Localization.Text("ログイン情報を使わずに、もう一度取得します。"));
+            Assert(message is null, "a retry that goes ahead has nothing to report");
             failed.State = "cancelled";
             library.Add(Request("https://example.com/a"), output);
             Assert(!library.Retry(failed, true, out message) && message == Localization.Text("この動画はすでにダウンロード一覧にあります。"));

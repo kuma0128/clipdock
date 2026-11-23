@@ -1,9 +1,4 @@
 {
-  "言語設定を保存しました。アプリを開き直すと適用されます。": [
-    "Language saved. Reopen ClipDock to apply it.",
-    "语言设置已保存，重新打开 ClipDock 后生效。",
-    "Idioma guardado. Vuelve a abrir ClipDock para aplicarlo."
-  ],
   "\n一時ログイン情報を削除できませんでした。アプリを再起動して削除を再試行してください。": [
     "\nCould not delete temporary login data. Restart ClipDock to try again.",
     "\n无法删除临时登录数据。请重启 ClipDock 后重试。",
@@ -83,11 +78,6 @@
     "● Engine ready",
     "● 引擎已就绪",
     "● Motor listo"
-  ],
-  "Chrome / Edgeの上中央にマウスを置くと、保存タブが表示されます。クリックしてURLを取り込んでください。": [
-    "Hover over the top center of Chrome or Edge, then click the tab to import the URL.",
-    "将鼠标移到 Chrome 或 Edge 顶部中央，点击出现的标签导入网址。",
-    "Sitúa el cursor en el centro superior de Chrome o Edge y pulsa la pestaña para importar la URL."
   ],
   "ClipDock — サイトにログイン": [
     "ClipDock — Sign in to a site",
@@ -178,21 +168,6 @@
     "Save from a URL",
     "从网址保存",
     "Guardar desde una URL"
-  ],
-  "URLと保存先を確認して「保存」を押してください。": [
-    "Check the URL and destination, then click Save.",
-    "确认网址和保存位置后，点击“保存”。",
-    "Comprueba la URL y el destino y pulsa Guardar."
-  ],
-  "URLを確認して「保存」を押してください。": [
-    "Check the URL, then click Save.",
-    "确认网址后，点击“保存”。",
-    "Comprueba la URL y pulsa Guardar."
-  ],
-  "URLを貼り付け、保存形式と保存先を選んで「保存」を押してください。": [
-    "Paste a URL, choose a format and destination, then click Save.",
-    "粘贴网址，选择格式和保存位置，然后点击“保存”。",
-    "Pega una URL, elige formato y destino y pulsa Guardar."
   ],
   "WebView2の公式ページ": [
     "Official WebView2 page",
@@ -304,11 +279,6 @@
     "中断下载并退出？\n如需继续，请最小化此窗口。",
     "¿Detener las descargas y salir?\nMinimiza esta ventana para continuar."
   ],
-  "ダウンロード一覧に追加しました。": [
-    "Added to downloads.",
-    "已添加到下载列表。",
-    "Añadido a las descargas."
-  ],
   "ダウンロード中": [
     "Downloading",
     "正在下载",
@@ -348,11 +318,6 @@
     "Show tab above browser",
     "显示浏览器顶部保存标签",
     "Pestaña sobre el navegador"
-  ],
-  "ブラウザー上部の保存タブを非表示にしました。": [
-    "The browser tab is now hidden.",
-    "已隐藏浏览器保存标签。",
-    "Se ha ocultado la pestaña del navegador."
   ],
   "ページを開けませんでした: ": [
     "Could not open the page: ",
@@ -413,11 +378,6 @@
     "Analyzing video using your login…",
     "正在使用登录信息解析视频…",
     "Analizando el vídeo con tu sesión…"
-  ],
-  "ログイン情報を使わずに、もう一度取得します。": [
-    "Retrying without login data.",
-    "正在不使用登录信息的情况下重试。",
-    "Reintentando sin datos de acceso."
   ],
   "ログイン情報を読み込めませんでした。アプリを開き直して再試行してください。": [
     "Could not read login data. Reopen ClipDock and try again.",
@@ -509,11 +469,6 @@
     "最佳画质",
     "Máxima"
   ],
-  "最新のログイン情報を確認して、もう一度取得します。": [
-    "Checking your current login and retrying.",
-    "正在检查最新登录信息并重试。",
-    "Comprobando la sesión actual y reintentando."
-  ],
   "最大画質": [
     "Maximum quality",
     "最高画质",
@@ -528,16 +483,6 @@
     "Could not delete data. Reopen the window and try again.",
     "无法删除数据，请重新打开窗口后重试。",
     "No se pudieron borrar los datos. Vuelve a abrir la ventana y reinténtalo."
-  ],
-  "次に保存する動画から、新しい保存先を使います。": [
-    "New downloads will use this destination.",
-    "之后的下载将使用新位置。",
-    "Las nuevas descargas usarán este destino."
-  ],
-  "次の保存・再試行ではログイン情報を使いません。": [
-    "New downloads and retries will not use login data.",
-    "之后的下载和重试将不使用登录信息。",
-    "Las nuevas descargas y reintentos no usarán datos de acceso."
   ],
   "終了する": [
     "Quit",
@@ -558,11 +503,6 @@
     "Waiting in queue",
     "正在排队",
     "Esperando turno"
-  ],
-  "初期セットアップが完了しました。URLを貼り付けて「保存」を押してください。": [
-    "Setup complete. Paste a URL and click Save.",
-    "初始化完成，请粘贴网址并点击“保存”。",
-    "Configuración completada. Pega una URL y pulsa Guardar."
   ],
   "初期セットアップ中: ": [
     "Setting up: ",
@@ -589,11 +529,6 @@
     "位置",
     "Ubicación"
   ],
-  "接続済みサイトのログイン情報を保存に使います。初回は「ログイン」から接続してください。": [
-    "Downloads will use your site login. Use Sign in to connect first.",
-    "下载将使用网站登录信息，请先通过“登录”连接。",
-    "Las descargas usarán tu sesión. Conéctate primero mediante Acceder."
-  ],
   "選んだ画質は上限です。4Kを選んでも元の動画より高画質にはなりません。": [
     "Quality is an upper limit. Choosing 4K does not upscale the source.",
     "所选画质是上限，选择 4K 不会提升源视频的画质。",
@@ -608,11 +543,6 @@
     "Continue",
     "继续",
     "Continuar"
-  ],
-  "待機リストに追加しました。初期セットアップが終わると開始します。": [
-    "Queued. Downloads will start after setup finishes.",
-    "已加入队列，初始化完成后开始下载。",
-    "En cola. La descarga comenzará al terminar la configuración."
   ],
   "待機を取り消しました。": [
     "Removed from queue.",
@@ -809,16 +739,6 @@
     "点击图标即可打开。要退出，请右键点击图标并选择“退出 ClipDock”。",
     "Haz clic en el icono para abrirlo. Para salir, haz clic con el botón derecho en el icono y elige Salir de ClipDock."
   ],
-  "Windowsへのサインイン時に、ClipDockを通知領域で開始します。": [
-    "ClipDock will start in the notification area when you sign in to Windows.",
-    "登录 Windows 时，ClipDock 将在通知区域启动。",
-    "ClipDock se iniciará en el área de notificación cuando inicies sesión en Windows."
-  ],
-  "Windowsの起動時にはClipDockを開始しません。": [
-    "ClipDock will not start when you sign in to Windows.",
-    "登录 Windows 时不会启动 ClipDock。",
-    "ClipDock no se iniciará cuando inicies sesión en Windows."
-  ],
   "Windowsの起動設定を変更できませんでした: ": [
     "Could not change the startup setting: ",
     "无法更改启动设置：",
@@ -864,16 +784,6 @@
     "无法更改登录时打开设置：",
     "No se pudo cambiar la apertura al iniciar sesión: "
   ],
-  "Macへのログイン時に、ClipDockをメニューバーで開始します。": [
-    "ClipDock will start in the menu bar when you log in to your Mac.",
-    "登录 Mac 时，ClipDock 将在菜单栏中启动。",
-    "ClipDock se iniciará en la barra de menús cuando inicies sesión en el Mac."
-  ],
-  "Macへのログイン時にはClipDockを開始しません。": [
-    "ClipDock will not start when you log in to your Mac.",
-    "登录 Mac 时不会启动 ClipDock。",
-    "ClipDock no se iniciará cuando inicies sesión en el Mac."
-  ],
   "ダウンロードを中断して終了しますか？\n終了しない場合、保存はメニューバーで続きます。": [
     "Stop downloads and quit?\nIf you do not quit, downloads continue in the menu bar.",
     "中断下载并退出？\n如果不退出，下载将在菜单栏中继续。",
@@ -903,11 +813,6 @@
     "Could not start the update: ",
     "无法开始更新：",
     "No se pudo iniciar la actualización: "
-  ],
-  "保存中の動画が終わると、ClipDockを再起動して更新します。": [
-    "ClipDock will restart and update when the current downloads finish.",
-    "当前下载完成后，ClipDock 将重启并更新。",
-    "ClipDock se reiniciará y se actualizará cuando terminen las descargas actuales."
   ],
   "ClipDock {0} に更新しました": [
     "ClipDock was updated to {0}",
@@ -993,5 +898,10 @@
     "Click Prepare engine at the top of the window.",
     "请点击窗口顶部的“准备下载引擎”。",
     "Pulsa Preparar motor en la parte superior de la ventana."
+  ],
+  "保存が終わると更新します": [
+    "Updates when saving finishes",
+    "保存完成后更新",
+    "Se actualizará al terminar de guardar"
   ]
 }

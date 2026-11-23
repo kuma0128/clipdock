@@ -27,16 +27,36 @@
     </Border>
 
     <Grid Grid.Row="1" Margin="24,20,24,24">
-      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
 
-      <!-- Shown only when the engine could not be fetched: nothing can be saved until it is. -->
-      <Border x:Name="EngineBanner" Visibility="Collapsed" Background="{StaticResource WarnSoft}" BorderBrush="{StaticResource WarnLine}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
-        <DockPanel>
-          <Button x:Name="EngineButton" DockPanel.Dock="Right" Content="{DynamicResource L6AD4BA2E2D7A2BAB}" ToolTip="{DynamicResource L45BAC65D26CA7228}" Click="InstallEngine_Click" Margin="12,0,0,0" />
-          <Viewbox Width="18" Height="18" VerticalAlignment="Center"><Path Style="{StaticResource Icon}" Data="{StaticResource IconWarning}" Stroke="{StaticResource WarnInk}" /></Viewbox>
-          <TextBlock Text="{DynamicResource L4D1DDFF0D8F723FD}" Foreground="{StaticResource WarnInk}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
-        </DockPanel>
-      </Border>
+      <!-- Bars that appear only when something needs attention; nothing is shown while all is well. -->
+      <StackPanel>
+        <!-- The first engine download: nothing can be saved until it is done. -->
+        <Border x:Name="SetupBanner" Visibility="Collapsed" Background="{StaticResource AccentSoft}" BorderBrush="{StaticResource AccentLine}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
+          <DockPanel>
+            <Viewbox Width="18" Height="18" VerticalAlignment="Top" Margin="0,1,0,0"><Path Style="{StaticResource Icon}" Data="{StaticResource IconDownload}" Stroke="{StaticResource Accent}" /></Viewbox>
+            <TextBlock x:Name="SetupText" Text="{DynamicResource LFB88DA4E39B9C8F0}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
+          </DockPanel>
+        </Border>
+        <!-- The engine could not be fetched; the reason and a way to try again. -->
+        <Border x:Name="EngineBanner" Visibility="Collapsed" Background="{StaticResource WarnSoft}" BorderBrush="{StaticResource WarnLine}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
+          <DockPanel>
+            <Button x:Name="EngineButton" DockPanel.Dock="Right" Content="{DynamicResource L6AD4BA2E2D7A2BAB}" ToolTip="{DynamicResource L45BAC65D26CA7228}" Click="InstallEngine_Click" Margin="12,0,0,0" />
+            <Viewbox Width="18" Height="18" VerticalAlignment="Center"><Path Style="{StaticResource Icon}" Data="{StaticResource IconWarning}" Stroke="{StaticResource WarnInk}" /></Viewbox>
+            <TextBlock x:Name="EngineProblem" Text="{DynamicResource L4D1DDFF0D8F723FD}" Foreground="{StaticResource WarnInk}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
+          </DockPanel>
+        </Border>
+        <!-- Something the user asked for did not work, or ClipDock could not read or save its data. -->
+        <Border x:Name="AlertBar" Visibility="Collapsed" Background="{StaticResource DangerSoft}" BorderBrush="{StaticResource DangerLine}" BorderThickness="1" CornerRadius="8" Padding="14,6,6,6" Margin="0,0,0,16">
+          <DockPanel>
+            <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Click="CloseAlert_Click" VerticalAlignment="Top" ToolTip="{DynamicResource LF6C244F98893CD95}" AutomationProperties.Name="{DynamicResource LF6C244F98893CD95}">
+              <Viewbox Width="16" Height="16"><Path Style="{StaticResource Icon}" Data="{StaticResource IconClose}" /></Viewbox>
+            </Button>
+            <Viewbox Width="18" Height="18" VerticalAlignment="Top" Margin="0,7,0,0"><Path Style="{StaticResource Icon}" Data="{StaticResource IconWarning}" Stroke="{StaticResource Danger}" /></Viewbox>
+            <TextBlock x:Name="AlertText" Foreground="{StaticResource DangerInk}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,8,0" />
+          </DockPanel>
+        </Border>
+      </StackPanel>
 
       <!-- What to save and how. -->
       <Border Grid.Row="1" Style="{StaticResource Card}" Padding="20,16,20,6">
@@ -55,6 +75,8 @@
               </StackPanel>
             </Button>
           </Grid>
+          <!-- Why this URL was not added, or what to check about it; cleared as soon as the URL is edited. -->
+          <TextBlock x:Name="UrlMessage" Visibility="Collapsed" FontSize="12" TextWrapping="Wrap" Margin="2,8,0,0" Foreground="{StaticResource Danger}" />
 
           <Border Height="1" Background="{StaticResource Line}" Margin="0,16,0,2" />
           <Grid>
@@ -91,14 +113,8 @@
         </StackPanel>
       </Border>
 
-      <!-- The latest message about what ClipDock did or needs. -->
-      <DockPanel Grid.Row="2" Margin="4,12,4,0">
-        <Viewbox Width="16" Height="16" VerticalAlignment="Top" Margin="0,1,0,0"><Path Style="{StaticResource Icon}" Data="{StaticResource IconInfo}" Stroke="{StaticResource Muted}" /></Viewbox>
-        <TextBlock x:Name="Notice" Text="{DynamicResource LFD341411F2BFD178}" Style="{StaticResource Caption}" FontSize="12.5" Margin="8,0,0,0" />
-      </DockPanel>
-
       <!-- Saved files; work in progress and anything that failed appear at the top. -->
-      <Border Grid.Row="3" Style="{StaticResource Card}" Margin="0,16,0,0">
+      <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,16,0,0">
         <Grid>
           <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
           <Grid Margin="20,10,12,10">
@@ -210,7 +226,7 @@
 
               <Border Height="1" Background="{StaticResource Line}" Margin="0,20" />
               <TextBlock Text="{DynamicResource LEE2351E65074E8EC}" Style="{StaticResource SectionTitle}" />
-              <CheckBox x:Name="BrowserOverlayBox" Margin="0,12,0,0" AutomationProperties.Name="{DynamicResource LF493806A7C431D23}"><TextBlock Text="{DynamicResource LF493806A7C431D23}" TextWrapping="Wrap" /></CheckBox>
+              <CheckBox x:Name="BrowserOverlayBox" IsChecked="True" Margin="0,12,0,0" AutomationProperties.Name="{DynamicResource LF493806A7C431D23}"><TextBlock Text="{DynamicResource LF493806A7C431D23}" TextWrapping="Wrap" /></CheckBox>
               <TextBlock Text="{DynamicResource LBA562776974E3B46}" Style="{StaticResource Caption}" Margin="27,4,0,0" />
 
               <Border Height="1" Background="{StaticResource Line}" Margin="0,20" />

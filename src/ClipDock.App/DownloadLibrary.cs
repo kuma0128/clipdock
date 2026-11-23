@@ -47,19 +47,19 @@ public sealed class DownloadLibrary
 
     // Queues a failed, cancelled or interrupted item again with the current login choice.
     // Retrying is a new queue insertion: the item moves to the top, behind work already waiting, and stays
-    // inside the saved history window. message is what to tell the user, or null when there is nothing to say.
-    public bool Retry(DownloadItem item, bool useLogin, out string? message)
+    // inside the saved history window. A retry that goes ahead speaks for itself in the list; refusal says why one
+    // did not, or is null when there is nothing to tell (the item cannot be retried at all).
+    public bool Retry(DownloadItem item, bool useLogin, out string? refusal)
     {
-        message = null;
+        refusal = null;
         if (Stopping || !item.CanRetry || IsScheduled(item) || !Jobs.Contains(item)) return false;
         try { item.Request.ValidateVideoPage(); }
-        catch (ArgumentException ex) { message = ex.Message; return false; }
-        if (IsDuplicate(item.Request)) { message = Localization.Text("この動画はすでにダウンロード一覧にあります。"); return false; }
-        if (UnfinishedCount >= MaxUnfinished) { message = Localization.Text("待機中の動画は100件までです。"); return false; }
+        catch (ArgumentException ex) { refusal = ex.Message; return false; }
+        if (IsDuplicate(item.Request)) { refusal = Localization.Text("この動画はすでにダウンロード一覧にあります。"); return false; }
+        if (UnfinishedCount >= MaxUnfinished) { refusal = Localization.Text("待機中の動画は100件までです。"); return false; }
         Jobs.Move(Jobs.IndexOf(item), 0);
         item.Request = item.Request with { UseLogin = useLogin };
         item.Percent = 0; item.State = "queued"; item.Detail = Localization.Text("再試行を待っています");
-        message = useLogin ? Localization.Text("最新のログイン情報を確認して、もう一度取得します。") : Localization.Text("ログイン情報を使わずに、もう一度取得します。");
         return true;
     }
 

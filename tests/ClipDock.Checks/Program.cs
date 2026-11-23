@@ -216,11 +216,11 @@ Check("unsupported qualities and formats cannot become downloader arguments", ()
     foreach (var format in new string?[] { "avi", "MP3", "mp3 --exec calc", "", null })
         Throws<ArgumentException>(() => new DownloadRequest { Url = "https://example.com", Format = format! }.Validated());
 });
-Check("legacy requests, history and settings default to MP4 with browser overlay off", () =>
+Check("legacy requests, history and settings default to MP4 with the browser tab on", () =>
 {
     var request = JsonSerializer.Deserialize<DownloadRequest>("{\"url\":\"https://example.com/video\"}", Json.Options)!.Validated();
     var settings = JsonSerializer.Deserialize<AppSettings>("{\"outputDirectory\":\"videos\",\"quality\":\"720\"}", Json.Options)!;
-    Assert(request.Format == "mp4" && settings.Format == "mp4" && !settings.BrowserOverlayEnabled && request.UseLogin && settings.UseLogin);
+    Assert(request.Format == "mp4" && settings.Format == "mp4" && settings.BrowserOverlayEnabled && request.UseLogin && settings.UseLogin);
     // Settings written before the notification-area version start at sign-in and explain the icon once.
     Assert(settings.StartAtLogin && !settings.TrayNoticeShown);
     var saved = JsonSerializer.Deserialize<AppSettings>(JsonSerializer.Serialize(settings with { StartAtLogin = false, TrayNoticeShown = true }, Json.Options), Json.Options)!;

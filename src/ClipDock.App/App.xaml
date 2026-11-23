@@ -5,6 +5,7 @@
     <SolidColorBrush x:Key="AccentHover" Color="#21623F" />
     <SolidColorBrush x:Key="AccentPressed" Color="#1B5134" />
     <SolidColorBrush x:Key="AccentSoft" Color="#E9F3ED" />
+    <SolidColorBrush x:Key="AccentLine" Color="#C9E0D1" />
     <SolidColorBrush x:Key="Ink" Color="#1B2620" />
     <SolidColorBrush x:Key="Muted" Color="#5B6862" />
     <SolidColorBrush x:Key="Faint" Color="#737E78" />
@@ -18,6 +19,8 @@
     <SolidColorBrush x:Key="Track" Color="#E4EAE6" />
     <SolidColorBrush x:Key="Danger" Color="#B42318" />
     <SolidColorBrush x:Key="DangerSoft" Color="#FCEFEE" />
+    <SolidColorBrush x:Key="DangerLine" Color="#F1C8C4" />
+    <SolidColorBrush x:Key="DangerInk" Color="#7A1C14" />
     <SolidColorBrush x:Key="WarnSoft" Color="#FFF7E6" />
     <SolidColorBrush x:Key="WarnLine" Color="#EED6A0" />
     <SolidColorBrush x:Key="WarnInk" Color="#6B4700" />
@@ -88,7 +91,8 @@
         <Grid>
           <Border x:Name="Ring" Margin="-1" CornerRadius="7" BorderThickness="1" BorderBrush="Transparent" />
           <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" SnapsToDevicePixels="True">
-            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+            <!-- The text box applies its own Padding inside the content host. -->
+            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
           </Border>
         </Grid>
         <ControlTemplate.Triggers>
