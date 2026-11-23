@@ -1,20 +1,20 @@
 {
-  "version": "1.0.4",
+  "version": "1.0.5",
   "files": {
     "win-x64": {
-      "url": "/downloads/ClipDock-1.0.4-win-x64-unsigned-setup.exe",
-      "size": 46924818,
-      "sha256": "9ab8c0c8b8ba7f82e507894094b953b9c83245325be7d46764d8a8caf91376fa"
+      "url": "/downloads/ClipDock-1.0.5-win-x64-unsigned-setup.exe",
+      "size": 46941760,
+      "sha256": "c700360ea5928a47b9c6905e72d7bdf42744085fc4ac4948f1cde64c0a67c5f9"
     },
     "mac-arm64": {
-      "url": "/downloads/ClipDock-1.0.4-mac-arm64-unsigned.dmg",
-      "size": 51128071,
-      "sha256": "454e4417b3ebd2afcd8535cbd7252ed15af14fa085188835e9e61bb5db1fcc27"
+      "url": "/downloads/ClipDock-1.0.5-mac-arm64-unsigned.dmg",
+      "size": 51410570,
+      "sha256": "cb554d94fb0ee0f491e69d805443d5640453612e1a273b2eb2e3d74ffea82c35"
     },
     "mac-x64": {
-      "url": "/downloads/ClipDock-1.0.4-mac-x64-unsigned.dmg",
-      "size": 53061871,
-      "sha256": "8e6c31dba3816e717109e7c6b21b121c1461792eba690f2bebcb61bbdd407a80"
+      "url": "/downloads/ClipDock-1.0.5-mac-x64-unsigned.dmg",
+      "size": 52620704,
+      "sha256": "b89ea956afb08c51405e240407c4894bc3e6b05cb2d9194c8d067cdefcc65606"
     }
   }
 }
