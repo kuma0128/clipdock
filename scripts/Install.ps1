@@ -14,7 +14,7 @@ try {
         'Uninstall.ps1', 'UNINSTALL.cmd', '.clipdock-package.json')) {
         if (-not (Test-Path -LiteralPath (Join-Path $sourceRoot $required) -PathType Leaf)) { throw "Incomplete distribution: $required. Extract the entire ZIP before running INSTALL.cmd." }
     }
-    if (Get-Process -Name ClipDock,ClipDock.NativeHost -ErrorAction SilentlyContinue) { throw 'Close ClipDock before installing or updating.' }
+    if (Get-Process -Name ClipDock,ClipDock.NativeHost -ErrorAction SilentlyContinue) { throw 'Quit ClipDock before installing or updating: right-click its notification-area icon and choose Quit ClipDock.' }
     if ((Test-Path -LiteralPath $installRoot) -and @(Get-ChildItem -LiteralPath $installRoot -Filter 'unins*.exe' -File).Count) {
         throw 'This copy was installed with the EXE installer. Use the latest setup EXE to update it.'
     }

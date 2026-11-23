@@ -41,7 +41,8 @@ Windows固有のログイン画面・保存タブ・保存場所は以下に記�
 
 | 保存場所 | 内容と保持期間 |
 | --- | --- |
-| `%LOCALAPPDATA%\ClipDock\settings.json` | 表示言語・保存先・形式・画質・同時保存数・保存タブ・ログイン情報の利用設定。変更またはファイル削除まで保持します |
+| `%LOCALAPPDATA%\ClipDock\settings.json` | 表示言語・保存先・形式・画質・同時保存数・保存タブ・ログイン情報の利用設定、サインイン時の起動設定、通知領域の案内を表示済みかどうか。変更またはファイル削除まで保持します |
+| レジストリ `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` の `ClipDock` | サインイン時に通知領域で起動するための `ClipDock.exe` のパス。「Windowsの起動時に開始」をOFFにするか、アンインストールすると削除します |
 | `%LOCALAPPDATA%\ClipDock\history.dat` | 最大300件の保存履歴。Cookie値を除く保存要求（URL、ページURL、参照元、タイトル、User-Agent、形式、画質、ログイン情報の利用有無）と、作成日時、状態、保存先、結果・エラー説明。Windows DPAPIで暗号化します |
 | `%LOCALAPPDATA%\ClipDock\browser-profile` | 専用ログイン画面のCookie、サイトの保存データ、閲覧データ。Windows・WebView2が管理し、有効期限、サイトでのログアウト、アプリの「ログイン情報を削除」等に従って保持します |
 | `%LOCALAPPDATA%\ClipDock\sessions` | 保存処理中の一時Cookieファイル。暗号化されていません。フォルダーのアクセス権を現在のWindowsユーザーに限定します |
@@ -72,7 +73,7 @@ macOS版も、取り扱う情報・目的・通信先はWindows版と同じで�
 
 保存処理では、動画の配信元とページ解析に必要なサイトへ、URL、参照元、保存エンジンのUser-Agentなど取得に必要な情報を送ります。ログイン情報の利用がONの場合は、対応するサイトへの認証にCookieも使います。これらのサイトは通信元のIPアドレスを受け取ります。
 
-保存エンジンの準備・更新はアプリの起動時に自動で行い、GitHubから配布ファイルとライセンス情報を取得します。専用ログイン画面は、ユーザーが開いたHTTPSサイトと認証に必要なページへ接続します。ログイン画面はWindows版でMicrosoft Edge WebView2 Runtime、Mac版でmacOS標準のWebKitを使用します。
+保存エンジンの準備・更新はアプリの起動時に自動で行い（Windows版は通知領域で起動中も1日に1回確認します）、GitHubから配布ファイルとライセンス情報を取得します。専用ログイン画面は、ユーザーが開いたHTTPSサイトと認証に必要なページへ接続します。ログイン画面はWindows版でMicrosoft Edge WebView2 Runtime、Mac版でmacOS標準のWebKitを使用します。
 
 ユーザーデータを販売せず、広告、信用評価、動画・音声の保存と無関係な分析には使用しません。開発者がアプリの保存履歴やCookieを取得する仕組みはありません。
 

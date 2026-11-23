@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Windows;
 using ClipDock.Core;
 
@@ -14,6 +15,8 @@ public partial class App : Application
         var dataIndex = Array.IndexOf(e.Args, "--data-dir");
         if (dataIndex >= 0 && dataIndex + 1 < e.Args.Length)
             AppPaths.UseDataDirectory(System.IO.Path.GetFullPath(e.Args[dataIndex + 1]));
+        // Started by Windows at sign-in: stay in the notification area until the user opens the window.
+        var background = e.Args.Contains(StartupRegistration.BackgroundArgument);
         var user = System.Security.Principal.WindowsIdentity.GetCurrent().User!.Value;
         if (dataIndex >= 0)
             user += "-" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(AppPaths.Data)))[..16];
@@ -21,7 +24,12 @@ public partial class App : Application
         instance = new Mutex(true, @"Local\ClipDock-" + user, out var first);
         if (!first)
         {
-            activation.Set();
+            if (!background)
+            {
+                // This launch came from the user; let the running copy bring its (possibly hidden) window to the front.
+                AllowSetForegroundWindow(-1);
+                activation.Set();
+            }
             Shutdown(); return;
         }
         DispatcherUnhandledException += (_, args) =>
@@ -31,7 +39,9 @@ public partial class App : Application
         };
         ShutdownMode = ShutdownMode.OnMainWindowClose;
         MainWindow = new MainWindow(activation);
-        MainWindow.Show();
+        if (!background) MainWindow.Show();
     }
     protected override void OnExit(ExitEventArgs e) { activation?.Dispose(); instance?.Dispose(); base.OnExit(e); }
+
+    [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool AllowSetForegroundWindow(int processId);
 }

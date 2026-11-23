@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $target = [IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'Programs\ClipDock'))
 if ([IO.Path]::GetFullPath($PSScriptRoot) -ne $target) { throw 'Run the installed copy in LocalAppData\Programs\ClipDock.' }
-if (Get-Process -Name ClipDock,ClipDock.NativeHost -ErrorAction SilentlyContinue) { throw 'Close ClipDock first.' }
+if (Get-Process -Name ClipDock,ClipDock.NativeHost -ErrorAction SilentlyContinue) { throw 'Quit ClipDock first: right-click its notification-area icon and choose Quit ClipDock.' }
 if (@(Get-ChildItem -LiteralPath $target -Filter 'unins*.exe' -File).Count) { throw 'Use the registered EXE uninstaller for this installation.' }
 $inventory = Join-Path $target '.clipdock-package.json'
 $package = Get-Content -LiteralPath $inventory -Raw | ConvertFrom-Json
@@ -38,6 +38,15 @@ if ($null -ne $key) {
 }
 $canonicalManifest = Join-Path $env:LOCALAPPDATA 'ClipDock\native-host.json'
 if (Test-OwnedManifest $canonicalManifest) { Remove-Item -LiteralPath $canonicalManifest -Force }
+# Sign-in startup: remove the entry only when it starts this installation.
+$runKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Software\Microsoft\Windows\CurrentVersion\Run', $true)
+if ($null -ne $runKey) {
+    try {
+        $command = $runKey.GetValue('ClipDock')
+        if ($command -is [string] -and $command -match '^"([^"]+)"' -and
+            [IO.Path]::GetFullPath($Matches[1]) -eq (Join-Path $target 'ClipDock.exe')) { $runKey.DeleteValue('ClipDock', $false) }
+    } finally { $runKey.Dispose() }
+}
 $shortcutShell = New-Object -ComObject WScript.Shell
 foreach ($folder in @([Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('Programs'))) {
     $shortcutPath = Join-Path $folder 'ClipDock.lnk'

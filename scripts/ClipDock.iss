@@ -64,8 +64,8 @@ Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
-japanese.CloseClipDock=ClipDockを閉じてから、もう一度お試しください。保存中の動画がある場合は、完了するまでお待ちください。
-english.CloseClipDock=Close ClipDock, then try again. If a video is being saved, wait for it to finish first.
+japanese.CloseClipDock=ClipDockを終了してから、もう一度お試しください。通知領域のClipDockアイコンを右クリックし、「ClipDockを終了」を選びます。保存中の動画がある場合は、完了するまでお待ちください。
+english.CloseClipDock=Quit ClipDock, then try again. Right-click the ClipDock icon in the notification area and choose Quit ClipDock. If a video is being saved, wait for it to finish first.
 japanese.ProcessCheckFailed=ClipDockの実行状態を確認できませんでした。Windowsを再起動してから、もう一度お試しください。
 english.ProcessCheckFailed=Could not check whether ClipDock is running. Restart Windows and try again.
 japanese.InvalidInstallDirectory=ClipDockは、このユーザーの標準インストール先にインストールしてください。
@@ -96,6 +96,7 @@ Filename: "{app}\ClipDock.exe"; WorkingDir: "{app}"; Description: "{cm:LaunchCli
 
 [Code]
 const
+  RunKey = 'Software\Microsoft\Windows\CurrentVersion\Run';
   NativeKey = 'Software\Google\Chrome\NativeMessagingHosts\com.clipdock.downloader';
 
 #if Int(UnsignedRelease)
@@ -303,6 +304,22 @@ begin
   end;
 end;
 
+// The app starts itself at sign-in with "<app>\ClipDock.exe" --background. Only that entry is removed.
+procedure RemoveOwnedStartupEntry;
+var
+  Command, Target: String;
+  Closing: Integer;
+begin
+  if not RegQueryStringValue(HKCU, RunKey, 'ClipDock', Command) then Exit;
+  if (Length(Command) < 3) or (Command[1] <> '"') then Exit;
+  Target := Copy(Command, 2, Length(Command) - 1);
+  Closing := Pos('"', Target);
+  if Closing < 2 then Exit;
+  Target := Copy(Target, 1, Closing - 1);
+  if CompareText(ExpandFileName(Target), ExpandConstant('{app}\ClipDock.exe')) = 0 then
+    RegDeleteValue(HKCU, RunKey, 'ClipDock');
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   Reason: String;
@@ -311,6 +328,7 @@ begin
   Reason := RunningCheck;
   if Reason <> '' then RaiseException(Reason);
   RemoveOwnedNativeRegistration;
+  RemoveOwnedStartupEntry;
   RemoveOwnedShortcut(ExpandConstant('{userprograms}\ClipDock.lnk'));
   RemoveOwnedShortcut(ExpandConstant('{userdesktop}\ClipDock.lnk'));
 end;

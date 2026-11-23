@@ -82,6 +82,49 @@ Check("translations retain all format arguments and every XAML resource has a va
     finally { Localization.Initialize("ja"); }
 });
 
+Check("sign-in startup points at this copy, follows a move and respects Windows' Startup apps switch", () =>
+{
+    if (!OperatingSystem.IsWindows()) throw new SkipCheckException("the Run key exists only on Windows.");
+    CheckStartup();
+
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    static void CheckStartup()
+    {
+        var root = @"Software\ClipDock-check-" + Guid.NewGuid().ToString("N");
+        var startup = new StartupRegistration(root + @"\Run", root + @"\StartupApproved");
+        var installed = @"C:\Users\Test User\AppData\Local\Programs\ClipDock\ClipDock.exe";
+        var moved = @"D:\Portable ClipDock\ClipDock.exe";
+        try
+        {
+            Assert(!startup.IsEnabled(installed) && !startup.DisabledByWindows());
+            startup.Enable(installed, clearWindowsSwitch: false);
+            using (var run = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(root + @"\Run")!)
+                Assert((string)run.GetValue(StartupRegistration.ValueName)! == "\"" + installed + "\" --background");
+            Assert(startup.IsEnabled(installed) && startup.Targets(installed.ToUpperInvariant()) && !startup.Targets(moved));
+            startup.Enable(moved, clearWindowsSwitch: false);
+            Assert(startup.IsEnabled(moved) && !startup.Targets(installed));
+
+            // Turned off in Settings > Apps > Startup: launch keeps it off, the app's own switch turns it back on.
+            using (var approval = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(root + @"\StartupApproved"))
+                approval.SetValue(StartupRegistration.ValueName, new byte[] { 3, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8 }, Microsoft.Win32.RegistryValueKind.Binary);
+            startup.Enable(moved, clearWindowsSwitch: false);
+            Assert(startup.DisabledByWindows() && !startup.IsEnabled(moved) && startup.Targets(moved));
+            startup.Enable(moved, clearWindowsSwitch: true);
+            Assert(!startup.DisabledByWindows() && startup.IsEnabled(moved));
+            using (var approval = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(root + @"\StartupApproved"))
+                approval.SetValue(StartupRegistration.ValueName, new byte[] { 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, Microsoft.Win32.RegistryValueKind.Binary);
+            Assert(!startup.DisabledByWindows() && startup.IsEnabled(moved));
+
+            startup.Disable();
+            Assert(!startup.Targets(moved));
+            startup.Disable();
+            foreach (var command in new string?[] { null, "", "\"", "\"\"", "C:\\ClipDock.exe", "\"C:\\ClipDock.exe", "\"\0\" --background" })
+                Assert(StartupRegistration.Target(command) is null);
+            Assert(StartupRegistration.Target(StartupRegistration.Command(moved)) == moved);
+        }
+        finally { Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree(root, false); }
+    }
+});
 Check("only absolute HTTP(S) URLs are accepted", () =>
 {
     foreach (var url in new[] { "file:///C:/secret", "javascript:alert(1)", "ftp://a.com/file", "--exec=calc", "https://u:p@example.com/v", "https://example.com/\n--exec", "", "https://" })
@@ -100,6 +143,10 @@ Check("legacy requests, history and settings default to MP4 with browser overlay
     var request = JsonSerializer.Deserialize<DownloadRequest>("{\"url\":\"https://example.com/video\"}", Json.Options)!.Validated();
     var settings = JsonSerializer.Deserialize<AppSettings>("{\"outputDirectory\":\"videos\",\"quality\":\"720\"}", Json.Options)!;
     Assert(request.Format == "mp4" && settings.Format == "mp4" && !settings.BrowserOverlayEnabled && request.UseLogin && settings.UseLogin);
+    // Settings written before the notification-area version start at sign-in and explain the icon once.
+    Assert(settings.StartAtLogin && !settings.TrayNoticeShown);
+    var saved = JsonSerializer.Deserialize<AppSettings>(JsonSerializer.Serialize(settings with { StartAtLogin = false, TrayNoticeShown = true }, Json.Options), Json.Options)!;
+    Assert(!saved.StartAtLogin && saved.TrayNoticeShown);
     var item = new DownloadItem { Request = request with { Format = "mp3" }, State = "converting" };
     Assert(item.FormatLabel == "MP3" && item.StateLabel.Contains("MP3") && item.Meta.Contains("音声のみ"));
     Assert(item.Save().Request.Format == "mp3");

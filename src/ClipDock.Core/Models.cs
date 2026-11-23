@@ -70,6 +70,9 @@ public static class AppPaths
     public static string Data => dataOverride ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipDock");
     public static string Tools => Path.Combine(Data, "tools");
 
+    // True for development and check runs (--data-dir), which must not change the user's sign-in startup either.
+    public static bool UsesCustomDataDirectory => dataOverride is not null;
+
     // Development and automated checks only: keeps a test run away from the user's real settings and history.
     public static void UseDataDirectory(string directory)
     {

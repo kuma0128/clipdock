@@ -33,12 +33,26 @@ public partial class MainWindow : Window
     private bool allowClose;
     private readonly BrowserOverlay browserOverlay;
     private readonly BrowserSession browserSession;
+    // Closing the window keeps ClipDock in the notification area; only the icon's menu quits it.
+    private readonly TrayIcon trayIcon;
+    private readonly StartupRegistration startup = new();
+    private bool startAtLogin = true;
+    private bool trayNoticeShown;
+    private bool exitRequested;
+    private bool sessionEnding;
+    private bool changingStartup;
+    // Launch checks the engine for updates. ClipDock can then wait in the notification area for days,
+    // so it checks again once a day while nothing is being saved, and retries sooner after a failure.
+    private static readonly TimeSpan EngineRecheck = TimeSpan.FromHours(24);
+    private readonly DispatcherTimer engineTimer = new() { Interval = TimeSpan.FromMinutes(5) };
+    private DateTime nextEngineCheck = DateTime.MaxValue;
 
     public MainWindow(EventWaitHandle activation)
     {
         Localization.Initialize(Localization.ReadPreference(settingsFile));
         foreach (var resource in Localization.Resources) System.Windows.Application.Current.Resources[resource.Key] = resource.Value;
         InitializeComponent();
+        trayIcon = new TrayIcon(ShowFromTray, RequestExit);
         VersionLabel.Text = $"ClipDock  {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)}  /  Windows";
         Directory.CreateDirectory(AppPaths.Data);
         var oldSessions = Path.Combine(AppPaths.Data, "sessions");
@@ -51,6 +65,7 @@ public partial class MainWindow : Window
         library.StateChanged += RefreshSummary;
         library.Settled += _ => DownloadSettled();
         LoadState();
+        ApplyStartupAtLaunch();
         foreach (ComboBoxItem language in LanguageBox.Items)
             if ((string?)language.Tag == Localization.Language) LanguageBox.SelectedItem = language;
         LanguageBox.SelectionChanged += Language_Changed;
@@ -65,10 +80,23 @@ public partial class MainWindow : Window
         activationTimer.Tick += (_, _) =>
         {
             if (shuttingDown || !activation.WaitOne(0)) return;
-            if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
-            Show(); Activate();
+            ShowFromTray();
         };
         activationTimer.Start();
+        engineTimer.Tick += (_, _) =>
+        {
+            if (DateTime.UtcNow < nextEngineCheck || installing || shuttingDown || library.ActiveOperations > 0) return;
+            installTask = InstallEngineAsync();
+        };
+        engineTimer.Start();
+        StartupBox.Checked += Startup_Changed;
+        StartupBox.Unchecked += Startup_Changed;
+        System.Windows.Application.Current.SessionEnding += (_, _) =>
+        {
+            // Windows is signing out or shutting down: never hold it up with a question or a hidden window.
+            sessionEnding = true;
+            SaveState();
+        };
         ConcurrencyBox.SelectionChanged += Concurrency_Changed;
         QualityBox.SelectionChanged += (_, _) => SaveState();
         FormatBox.SelectionChanged += (_, _) => { UpdateFormat(); SaveState(); };
@@ -76,15 +104,83 @@ public partial class MainWindow : Window
         BrowserOverlayBox.Unchecked += BrowserOverlay_Changed;
         UseLoginBox.Checked += LoginPreference_Changed;
         UseLoginBox.Unchecked += LoginPreference_Changed;
-        Loaded += async (_, _) =>
+        // Not tied to Loaded: at sign-in the window stays hidden, and the engine is still checked at launch.
+        _ = Dispatcher.InvokeAsync(async () =>
         {
             installTask = InstallEngineAsync();
             try { await browserSession.RefreshStatusAsync(); }
             catch (Exception ex) { LoginStatus.Text = ex.Message; }
-        };
+        }, DispatcherPriority.Background);
         UpdateFormat();
         Closing += OnClosing;
-        Closed += (_, _) => { browserOverlay.Dispose(); browserSession.Dispose(); };
+        Closed += (_, _) => { engineTimer.Stop(); trayIcon.Dispose(); browserOverlay.Dispose(); browserSession.Dispose(); };
+    }
+
+    private void ShowFromTray()
+    {
+        if (shuttingDown) return;
+        Show();
+        if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+        Activate();
+    }
+    private void HideToTray()
+    {
+        Hide();
+        if (trayNoticeShown) return;
+        // Said once, the first time the window disappears into the notification area.
+        trayNoticeShown = true;
+        trayIcon.Notify(Localization.Text("ClipDockは通知領域で動作しています"),
+            Localization.Text("アイコンをクリックすると開きます。終了するには、アイコンを右クリックして「ClipDockを終了」を選びます。"));
+        SaveState();
+    }
+    private void RequestExit()
+    {
+        if (shuttingDown) return;
+        exitRequested = true;
+        // A question about unfinished work is asked over the window, so bring it back first.
+        if (installing && !updatingQuietly || library.HasUnfinished) ShowFromTray();
+        // A window that was never shown needs its handle for Closing to run.
+        new System.Windows.Interop.WindowInteropHelper(this).EnsureHandle();
+        Close();
+    }
+
+    private void ApplyStartupAtLaunch()
+    {
+        changingStartup = true;
+        try
+        {
+            if (Environment.ProcessPath is not { } executable || AppPaths.UsesCustomDataDirectory) { StartupBox.IsChecked = startAtLogin; return; }
+            // Keeps the entry pointing at this copy; a switch turned off in Windows' Startup apps stays off.
+            if (startAtLogin) startup.Enable(executable, clearWindowsSwitch: false);
+            StartupBox.IsChecked = startAtLogin && startup.IsEnabled(executable);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        { StartupBox.IsChecked = startAtLogin; }
+        finally { changingStartup = false; }
+    }
+    private void Startup_Changed(object sender, RoutedEventArgs e)
+    {
+        if (changingStartup || shuttingDown) return;
+        var enable = StartupBox.IsChecked == true;
+        try
+        {
+            if (Environment.ProcessPath is { } executable && !AppPaths.UsesCustomDataDirectory)
+            {
+                if (enable) startup.Enable(executable, clearWindowsSwitch: true);
+                else startup.Disable();
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            changingStartup = true;
+            StartupBox.IsChecked = !enable;
+            changingStartup = false;
+            Notice.Text = Localization.Text("Windowsの起動設定を変更できませんでした: ") + ex.Message;
+            return;
+        }
+        startAtLogin = enable;
+        SaveState();
+        Notice.Text = enable ? Localization.Text("Windowsへのサインイン時に、ClipDockを通知領域で開始します。") : Localization.Text("Windowsの起動時にはClipDockを開始しません。");
     }
 
     private void Language_Changed(object sender, SelectionChangedEventArgs e)
@@ -198,6 +294,7 @@ public partial class MainWindow : Window
         view.Refresh();
         CountLabel.Text = library.CountText(filter, view.Cast<object>().Count());
         QueueStatus.Text = library.QueueText();
+        trayIcon.Text = library.Jobs.Any(j => j.IsBusy || j.State == "queued") ? "ClipDock\n" + QueueStatus.Text : "ClipDock";
         EmptyState.Visibility = view.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
     }
     private void ChooseOutput_Click(object sender, RoutedEventArgs e)
@@ -267,6 +364,7 @@ public partial class MainWindow : Window
         // Downloads wait for this task, so a quiet update gives up once the network stops answering.
         var patience = TimeSpan.FromSeconds(45);
         if (quiet) cancellation.CancelAfter(patience);
+        var checkedEngine = false;
         try
         {
             await ToolInstaller.InstallAsync(AppPaths.Tools, new Progress<string>(message =>
@@ -275,13 +373,19 @@ public partial class MainWindow : Window
                 if (quiet) { EngineStatus.Text = message; cancellation.CancelAfter(patience); }
                 else Notice.Text = ClipDock.Core.Localization.Text("初期セットアップ中: ") + message;
             }), cancellation.Token);
+            checkedEngine = true;
         }
         catch (OperationCanceledException) when (quiet) { }
         catch (OperationCanceledException) { Notice.Text = shuttingDown ? ClipDock.Core.Localization.Text("エンジンの準備を中止しました。") : ClipDock.Core.Localization.Text("エンジンの取得が時間内に終わりませんでした。通信環境を確認して「保存エンジンを準備」を押してください。"); }
         // The installed engine keeps working when an update cannot be fetched.
         catch (Exception) when (quiet) { }
         catch (Exception ex) { Notice.Text = ClipDock.Core.Localization.Text("エンジンの取得に失敗しました: ") + ex.Message; }
-        finally { installCancellation = null; installing = false; updatingQuietly = false; EngineButton.IsEnabled = !shuttingDown; UpdateEngineStatus(); StartQueue(); }
+        finally
+        {
+            // At sign-in the network may not be ready yet: a missing engine is retried within minutes, a failed update within half an hour.
+            nextEngineCheck = DateTime.UtcNow + (checkedEngine ? EngineRecheck : quiet ? TimeSpan.FromMinutes(30) : TimeSpan.FromMinutes(5));
+            installCancellation = null; installing = false; updatingQuietly = false; EngineButton.IsEnabled = !shuttingDown; UpdateEngineStatus(); StartQueue();
+        }
         if (!quiet && ToolInstaller.IsReady(ToolInstaller.FindTools())) Notice.Text = ClipDock.Core.Localization.Text("初期セットアップが完了しました。URLを貼り付けて「保存」を押してください。");
     }
     private void UpdateEngineStatus()
@@ -309,6 +413,8 @@ public partial class MainWindow : Window
                 foreach (ComboBoxItem format in FormatBox.Items) if ((string)format.Tag == settings.Format) FormatBox.SelectedItem = format;
                 BrowserOverlayBox.IsChecked = settings.BrowserOverlayEnabled;
                 UseLoginBox.IsChecked = settings.UseLogin;
+                startAtLogin = settings.StartAtLogin;
+                trayNoticeShown = settings.TrayNoticeShown;
                 library.MaxConcurrency = Math.Clamp(settings.MaxConcurrentDownloads, 1, DownloadScheduler.MaximumConcurrency);
                 foreach (ComboBoxItem count in ConcurrencyBox.Items) if ((string)count.Tag == library.MaxConcurrency.ToString()) ConcurrencyBox.SelectedItem = count;
             }
@@ -325,7 +431,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            File.WriteAllText(settingsFile + ".tmp", JsonSerializer.Serialize(new AppSettings(outputDirectory, Quality, library.MaxConcurrency, Format, BrowserOverlayBox.IsChecked == true, UseLoginBox.IsChecked == true, SelectedLanguage), Json.Options));
+            File.WriteAllText(settingsFile + ".tmp", JsonSerializer.Serialize(new AppSettings(outputDirectory, Quality, library.MaxConcurrency, Format, BrowserOverlayBox.IsChecked == true, UseLoginBox.IsChecked == true, SelectedLanguage, startAtLogin, trayNoticeShown), Json.Options));
             File.Move(settingsFile + ".tmp", settingsFile, true);
             File.WriteAllBytes(historyFile + ".tmp", WindowsProtection.Protect(JsonSerializer.SerializeToUtf8Bytes(library.Snapshot(), Json.Options)));
             File.Move(historyFile + ".tmp", historyFile, true);
@@ -335,18 +441,26 @@ public partial class MainWindow : Window
     }
     private async void OnClosing(object? sender, CancelEventArgs e)
     {
-        if (allowClose) return;
+        if (allowClose || sessionEnding) return;
+        // The close button hides the window; downloads and the daily engine check go on in the notification area.
+        // Without a notification icon (the taskbar never accepted it) closing quits as before.
+        var tray = trayIcon.IsVisible;
+        var exiting = exitRequested || !tray;
+        exitRequested = false;
+        if (!exiting && !shuttingDown) { e.Cancel = true; HideToTray(); return; }
         var hasWork = installing && !updatingQuietly || library.HasUnfinished;
-        if (!hasWork && !installing && library.ActiveOperations == 0) { activationTimer.Stop(); SaveState(); return; }
+        if (!hasWork && !installing && library.ActiveOperations == 0) { activationTimer.Stop(); engineTimer.Stop(); SaveState(); return; }
         e.Cancel = true;
         if (shuttingDown) return;
         // The engine download can take many minutes on a slow line; it is cancellable like any other work.
-        var question = installing ? ClipDock.Core.Localization.Text("エンジンの準備を中止して終了しますか？\n続ける場合は、このウィンドウを最小化してください。")
-            : ClipDock.Core.Localization.Text("ダウンロードを中断して終了しますか？\n続ける場合は、このウィンドウを最小化してください。");
+        var question = installing
+            ? Localization.Text(tray ? "エンジンの準備を中止して終了しますか？\n終了しない場合、準備は通知領域で続きます。" : "エンジンの準備を中止して終了しますか？\n続ける場合は、このウィンドウを最小化してください。")
+            : Localization.Text(tray ? "ダウンロードを中断して終了しますか？\n終了しない場合、保存は通知領域で続きます。" : "ダウンロードを中断して終了しますか？\n続ける場合は、このウィンドウを最小化してください。");
         if (hasWork && MessageBox.Show(this, question, "ClipDock", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         shuttingDown = true;
         browserOverlay.Enabled = false;
         activationTimer.Stop();
+        engineTimer.Stop();
         installCancellation?.Cancel();
         var stopDownloads = library.StopAsync();
         try

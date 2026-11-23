@@ -137,5 +137,7 @@ public sealed class DownloadOperation
     }
 }
 
+// StartAtLogin and TrayNoticeShown are used by the Windows app only; settings from older versions start at sign-in.
 public sealed record AppSettings(string OutputDirectory, string Quality, int MaxConcurrentDownloads = DownloadScheduler.DefaultConcurrency,
-    string Format = "mp4", bool BrowserOverlayEnabled = false, bool UseLogin = true, string Language = "ja");
+    string Format = "mp4", bool BrowserOverlayEnabled = false, bool UseLogin = true, string Language = "ja",
+    bool StartAtLogin = true, bool TrayNoticeShown = false);

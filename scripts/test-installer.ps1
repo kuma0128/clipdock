@@ -44,6 +44,29 @@ function Read-NativeRegistration {
     finally { $key.Dispose() }
 }
 
+$runKey = 'Software\Microsoft\Windows\CurrentVersion\Run'
+
+function Read-StartupEntry {
+    $key = $registry.OpenSubKey($runKey)
+    if ($null -eq $key) { return $null }
+    try { return $key.GetValue('ClipDock') }
+    finally { $key.Dispose() }
+}
+
+# The app writes this entry itself on first launch; the lifecycle test never launches it, so it plants the same value.
+function Set-StartupEntry([string]$Executable) {
+    $key = $registry.CreateSubKey($runKey)
+    try { $key.SetValue('ClipDock', "`"$Executable`" --background") }
+    finally { $key.Dispose() }
+}
+
+function Remove-StartupEntry {
+    $key = $registry.OpenSubKey($runKey, $true)
+    if ($null -eq $key) { return }
+    try { $key.DeleteValue('ClipDock', $false) }
+    finally { $key.Dispose() }
+}
+
 function Test-RegistryKey([Microsoft.Win32.RegistryKey]$Base, [string]$Name) {
     $key = $Base.OpenSubKey($Name)
     if ($null -eq $key) { return $false }
@@ -129,7 +152,8 @@ function Invoke-Uninstall([string]$Step) {
 try {
     Assert-AppClosed
     Assert-True (-not (Test-Path -LiteralPath $installRoot)) 'A ClipDock installation already exists on this runner.'
-    Assert-True (-not (Test-RegistryKey $registry $nativeKey) -and -not (Test-RegistryKey $registry $uninstallKey)) 'ClipDock is already registered on this runner.'
+    Assert-True (-not (Test-RegistryKey $registry $nativeKey) -and -not (Test-RegistryKey $registry $uninstallKey) -and
+        $null -eq (Read-StartupEntry)) 'ClipDock is already registered on this runner.'
     Assert-True (-not (Test-Path -LiteralPath $nativeManifest) -and -not (Test-Path -LiteralPath $programShortcut) -and
         -not (Test-Path -LiteralPath $desktopShortcut)) 'A ClipDock manifest or shortcut already exists on this runner.'
     New-Item -ItemType Directory -Path $logs -Force | Out-Null
@@ -165,9 +189,11 @@ try {
     Assert-Preserved 'update'
     Write-Output 'PASS update retires owned native registration, extension files and legacy uninstall scripts'
 
+    Set-StartupEntry (Join-Path $installRoot 'ClipDock.exe')
     Invoke-Uninstall '03-uninstall-owned'
     Assert-True (-not (Test-RegistryKey $registry $nativeKey) -and -not (Test-Path -LiteralPath $nativeManifest)) 'Uninstall did not remove its own native registration and manifest.'
-    Write-Output 'PASS owned native registration removed'
+    Assert-True ($null -eq (Read-StartupEntry)) 'Uninstall left its sign-in startup entry.'
+    Write-Output 'PASS owned native registration and sign-in startup entry removed'
 
     $alternateRoot = Join-Path $env:RUNNER_TEMP ('clipdock-alternate-' + [Guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $alternateRoot | Out-Null
@@ -181,7 +207,11 @@ try {
         Assert-Installed
         Assert-True ((Read-NativeRegistration) -eq $registeredManifest -and
             (Get-FileHash -LiteralPath $registeredManifest).Hash -eq $otherManifestHash) 'Update changed another installation''s native registration.'
+        Set-StartupEntry (Join-Path $alternateRoot 'ClipDock.exe')
+        $otherStartup = Read-StartupEntry
         Invoke-Uninstall ("05-uninstall-$scenario")
+        Assert-True ((Read-StartupEntry) -eq $otherStartup) 'Uninstall removed another installation''s sign-in startup entry.'
+        Remove-StartupEntry
         Assert-True ((Read-NativeRegistration) -eq $registeredManifest -and (Test-Path -LiteralPath $registeredManifest)) 'Uninstall removed another installation''s native registration.'
         Assert-True ((Get-FileHash -LiteralPath $registeredManifest).Hash -eq $otherManifestHash) 'Uninstall changed another installation''s native manifest.'
         Write-Output "PASS update and uninstall retain another installation's registration: $scenario"
@@ -194,8 +224,10 @@ try {
     $editedReadme = Join-Path $installRoot 'README.md'
     Set-Content -LiteralPath $editedReadme -Value 'user modified document'
     $preserved[$editedReadme] = (Get-FileHash -LiteralPath $editedReadme).Hash
+    Set-StartupEntry (Join-Path $installRoot 'ClipDock.exe')
     & (Join-Path $installRoot 'Uninstall.ps1')
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $installRoot 'ClipDock.exe'))) 'ZIP uninstall retained its application executable.'
+    Assert-True ($null -eq (Read-StartupEntry)) 'ZIP uninstall left its sign-in startup entry.'
     Assert-True ((Read-NativeRegistration) -eq $registeredManifest -and
         (Get-FileHash -LiteralPath $registeredManifest).Hash -eq $otherManifestHash) 'ZIP uninstall changed a foreign native registration.'
     Assert-Preserved 'ZIP install/uninstall'
