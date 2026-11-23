@@ -24,26 +24,60 @@ void Check(string name, Action check)
     catch (Exception ex) { failed++; Console.Error.WriteLine("FAIL " + name + ": " + ex.Message); notes.Insert(0, $"- **FAIL** {name}: `{ex.Message.ReplaceLineEndings(" ").Replace('`', '\'')}`"); }
 }
 
-Check("language settings survive restart and legacy or invalid preferences fall back to Japanese", () =>
+Check("a language chosen in the app survives restart and wins; without one (first launch, older or unreadable settings) the system's applies", () =>
 {
     var directory = Path.Combine(Path.GetTempPath(), "clipdock-language-" + Guid.NewGuid().ToString("N"));
     Directory.CreateDirectory(directory);
     var file = Path.Combine(directory, "settings.json");
     try
     {
-        Assert(Localization.ReadPreference(file) == "ja");
+        // First launch: no settings yet, so the system's display language decides.
+        Assert(Localization.ReadPreference(file) is null);
+        Localization.Initialize(file, ["es-MX"]);
+        Assert(Localization.Language == "es");
         foreach (var language in Localization.Languages)
         {
             File.WriteAllText(file, JsonSerializer.Serialize(new AppSettings("videos", "1080", Language: language), Json.Options));
             Assert(Localization.ReadPreference(file) == language);
             Assert(JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(file), Json.Options)!.Language == language);
+            // The saved choice wins over every system language, one ClipDock has or not.
+            foreach (var system in new[] { "ja-JP", "en-US", "zh-Hans-CN", "es-ES", "fr-FR" })
+            {
+                Localization.Initialize(file, [system]);
+                Assert(Localization.Language == language, system);
+            }
         }
-        foreach (var json in new[] { "{}", "{\"language\":\"unknown\"}", "{\"language\":null}", "{\"language\":42}", "null", "broken" })
-        { File.WriteAllText(file, json); Assert(Localization.ReadPreference(file) == "ja"); }
-        Assert(JsonSerializer.Deserialize<AppSettings>("{\"outputDirectory\":\"videos\",\"quality\":\"720\"}", Json.Options)!.Language == "ja");
+        // Settings from before the language menu, and unreadable ones, hold no choice.
+        foreach (var json in new[] { "{}", "{\"outputDirectory\":\"videos\",\"quality\":\"720\"}", "{\"language\":\"unknown\"}",
+            "{\"language\":null}", "{\"language\":42}", "null", "broken" })
+        {
+            File.WriteAllText(file, json);
+            Assert(Localization.ReadPreference(file) is null, json);
+            Localization.Initialize(file, ["zh-CN"]);
+            Assert(Localization.Language == "zh-CN", json);
+        }
+        Assert(JsonSerializer.Deserialize<AppSettings>("{\"outputDirectory\":\"videos\",\"quality\":\"720\"}", Json.Options)!.Language is null);
         Assert(Localization.Normalize("zh-cn") == "zh-CN");
+        // An unknown code stays in the current display language rather than switching to Japanese.
+        Localization.Initialize("en");
+        Assert(Localization.Normalize("fr") == "en" && Localization.Normalize(null) == "en");
     }
-    finally { Directory.Delete(directory, true); }
+    finally { Directory.Delete(directory, true); Localization.Initialize("ja"); }
+});
+Check("without a saved choice the first system language ClipDock has wins; any other, Traditional Chinese included, gets English", () =>
+{
+    // Windows passes its display language; macOS its preferred languages, most preferred first. LANG-style names too.
+    foreach (var (system, expected) in new (string?[], string)[]
+    {
+        (["ja-JP"], "ja"), (["ja"], "ja"), (["en-US"], "en"), (["en-GB"], "en"), (["en-JP"], "en"),
+        (["zh-CN"], "zh-CN"), (["zh-SG"], "zh-CN"), (["zh-Hans"], "zh-CN"), (["zh-Hans-JP"], "zh-CN"), (["zh-Hans-HK"], "zh-CN"), (["zh"], "zh-CN"),
+        (["es-ES"], "es"), (["es-MX"], "es"), (["es-419"], "es"),
+        (["zh-TW"], "en"), (["zh-HK"], "en"), (["zh-MO"], "en"), (["zh-Hant"], "en"), (["zh-Hant-TW"], "en"),
+        (["fr-FR"], "en"), (["ko-KR"], "en"), (["pt-BR"], "en"), ([""], "en"), ([null], "en"), ([], "en"),
+        (["fr-FR", "ja-JP", "en-US"], "ja"), (["zh-Hant-TW", "zh-Hans-CN"], "zh-CN"), (["de-DE", "es-ES", "en-US"], "es"),
+        (["ja_JP.UTF-8"], "ja"), (["zh_TW.UTF-8"], "en"), (["zh_CN.UTF-8"], "zh-CN")
+    })
+        Assert(Localization.FromSystem(system) == expected, string.Join(", ", system));
 });
 Check("translations retain all format arguments and every XAML resource has a value", () =>
 {

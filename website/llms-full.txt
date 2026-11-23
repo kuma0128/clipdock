@@ -78,7 +78,7 @@ The first launch downloads the download engine automatically. This requires an i
 
 ### Paste a URL and save
 
-Paste a video URL into 「URLから保存」, choose MP4 or MP3 and a folder, then click 「保存」 (Save).
+Paste a video URL into “Save from a URL”, choose MP4 or MP3 and a folder, then click “Save”.
 
 ## Frequently asked questions
 
@@ -92,7 +92,7 @@ Supported sites and non-DRM media such as HLS/DASH are handled by the download e
 
 **Can it save videos that require a login?**
 
-“Use login information for this download” is on by default. Sign in to the site you want to save from through the app's Login window first. This is separate from existing Chrome or Edge sessions. A site's restrictions or a post's availability may still prevent a download.
+“Use login for this download” is on by default. First click “Sign in” in the app and sign in to the site you want to save from. This is separate from existing Chrome or Edge sessions. A site's restrictions or a post's availability may still prevent a download.
 
 **Does choosing 4K improve the source?**
 
@@ -140,7 +140,7 @@ Source: https://clipdock-d6z.pages.dev/en/help
 
 # Help
 
-Setup instructions, saving options and checks to try when a download fails. The app supports four display languages. Japanese control labels are included below.
+Setup instructions, saving options and checks to try when a download fails.
 
 [Download for Windows](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.6-win-x64-unsigned-setup.exe) Download for Mac: [Apple silicon](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.6-mac-arm64-unsigned.dmg) · [Intel](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.6-mac-x64-unsigned.dmg)
 
@@ -154,7 +154,7 @@ Setup instructions, saving options and checks to try when a download fails. The 
 
 Windows 10 or 11, 64-bit x64, is required. You do not need to install .NET or Python separately. For the ZIP package, extract all files and open `INSTALL.cmd`.
 
-The app checks for engine updates when it starts and once a day while it keeps running. An unchanged, intact version is reused. Older installations or damaged files may require a one-time download of the same version. If a download fails, 「保存エンジンを準備」 (Prepare download engine) appears; click it to try again.
+The app checks for engine updates when it starts and once a day while it keeps running. An unchanged, intact version is reused. Older installations or damaged files may require a one-time download of the same version. If a download fails, “Prepare engine” appears; click it to try again.
 
 The login window requires [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/). If it is missing, use the Microsoft link in that window to install it.
 
@@ -204,14 +204,14 @@ The Mac version has no Apple Developer ID signature or notarization, so macOS ca
 
 ## Display language
 
-Choose 日本語, English, 简体中文 or Español in Language (after restart) at the bottom left. Your choice is saved and applied when you close and reopen the app. Changing the language does not interrupt downloads. The instructions below use the Japanese control labels.
+On first launch, ClipDock opens in your computer's display language if it is Japanese, English, Simplified Chinese or Spanish, and in English otherwise. On a Mac, it goes down the preferred languages in System Settings → General → Language & Region and uses the first one it supports. To change the language, choose 日本語, English, 简体中文 or Español in “Language (after restart)” at the bottom left. Your choice is saved and applied when you close and reopen the app. Changing the language does not interrupt downloads.
 
 ## Save from a URL
 
-1. Copy a video page or media URL and paste it into 「URLから保存」.
+1. Copy a video page or media URL and paste it into “Save from a URL”.
 2. Choose a format. MP4 is the default; MP3 saves audio only.
-3. Choose a folder with 「保存先を変更」, then click 「保存」 (Save).
-4. Wait for 「保存完了」 (Saved). Use 「開く」 to open the file or 「場所」 to show its folder.
+3. Choose a folder with “Change folder”, then click “Save”.
+4. Wait for “Saved”. Use “Open” to open the file or “Show file” to show its folder.
 
 The default is `ClipDock` inside Downloads on Windows and Mac. Folder changes apply to jobs added afterward. Format, quality and destination choices are retained.
 
@@ -227,13 +227,13 @@ Separate audio and video streams share one progress indicator. Downloading and c
 
 ## Videos that require a login
 
-「この保存にログイン情報を使う」 (Use login information for this download) is on by default, and your choice is retained. Click 「ログイン」 and sign in to the site you want to save from in ClipDock's dedicated window. This session is separate from Chrome and Edge.
+“Use login for this download” is on by default, and your choice is retained. Click “Sign in” and sign in to the site you want to save from in ClipDock's dedicated window. This session is separate from Chrome and Edge.
 
-Use 「このページを取り込む」 to place the video's URL in the main window, review it, and click 「保存」.
+Click “Use this page” to place the video's URL in the main window, review it, and click “Save”.
 
 The app uses cookies for the target site when a download or retry starts. Turning the option off prevents cookies being passed to the next added or retried job. It does not sign you out of the login window.
 
-「ログイン情報を削除」 clears login and browsing data for all sites in the dedicated profile. Finish or cancel active jobs first. Cookie values are not included in download history; temporary cookie files are deleted after processing.
+“Delete login data” clears login and browsing data for all sites in the dedicated profile. Finish or cancel active jobs first. Cookie values are not included in download history; temporary cookie files are deleted after processing.
 
 Password autosave is disabled. Site restrictions and post availability can still prevent downloads even when you are signed in.
 
@@ -241,11 +241,11 @@ Password autosave is disabled. Site restrictions and post availability can still
 
 This is a Windows feature. It is not available on Mac.
 
-「ブラウザー上部に保存タブ」 is off by default. When enabled, it can try to import a URL from Chrome or Edge.
+“Show tab above browser” is off by default. When enabled, it can try to import a URL from Chrome or Edge.
 
 1. Bring Chrome or Edge to the front and move the pointer to the top center of its window.
-2. Click 「ClipDockに取り込む」 (Import to ClipDock).
-3. Check the address placed in the app, then click 「保存」. Importing alone does not start a download.
+2. Click “Send to ClipDock”.
+3. Check the address placed in the app, then click “Save”. Importing alone does not start a download.
 
 If the address is being edited or cannot be read, paste it manually. An omitted `https://` may be added, so always review the URL. This feature does not read cookies, login information, page content or browsing history.
 
@@ -255,11 +255,11 @@ After importing a URL, the app's login-information setting applies to the downlo
 
 **403, a login request, or no video found on X**
 
-Check the URL and availability. If needed, sign in to the site you want to save from through the app's 「ログイン」 window, then retry. Existing browser sessions are not imported. Site restrictions may still prevent a download.
+Check the URL and availability. If needed, click “Sign in” in the app, sign in to the site you want to save from, then retry. Existing browser sessions are not imported. Site restrictions may still prevent a download.
 
 **A job stays queued**
 
-The queue waits while the download engine is being installed. If 「保存エンジンを準備」 (Prepare download engine) is shown, check your connection and click it.
+The queue waits while the download engine is being installed. If “Prepare engine” is shown, check your connection and click it.
 
 **A supported site fails**
 
@@ -273,13 +273,13 @@ ClipDock does not remove DRM or bypass access restrictions. A `blob:` URL cannot
 
 ## Delete history or uninstall
 
-「履歴を消去」 clears completed, failed and cancelled records, along with any unfinished work files for those jobs. It does not delete completed media or login information.
+“Clear history” clears completed, failed and cancelled records, along with any unfinished work files for those jobs. It does not delete completed media or login information.
 
 Quit ClipDock from its notification-area icon, then uninstall it in Windows Settings → Apps. For the ZIP package, use `UNINSTALL.cmd` in its installation folder. Both remove the start-at-sign-in entry.
 
 Settings, history and saved files remain. To remove all app data, quit ClipDock and delete `%LOCALAPPDATA%\ClipDock` and any saved files you no longer need.
 
-The login profile also remains after uninstalling. To clear only login information, use 「ログイン情報を削除」 in the dedicated login window.
+The login profile also remains after uninstalling. To clear only login information, use “Delete login data” in the dedicated login window.
 
 On Mac, choose “Quit ClipDock” from the menu bar icon and move `ClipDock` from the Applications folder to the Trash. Settings, history and login data remain in `~/Library/Application Support/ClipDock` and `~/Library/WebKit/app.clipdock.ClipDock`. The login item file `~/Library/LaunchAgents/app.clipdock.ClipDock.plist` also remains. To remove everything, delete those folders and files and any saved files you no longer need.
 

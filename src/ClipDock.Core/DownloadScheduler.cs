@@ -138,7 +138,8 @@ public sealed class DownloadOperation
 }
 
 // StartAtLogin and TrayNoticeShown: start at sign-in (Windows) or login (Mac) and whether the "still running" notice was shown.
-// Settings from older versions start at sign-in.
+// Settings from older versions start at sign-in. Language is null in settings from before the language menu; the app
+// then follows the system's display language (Localization.ReadPreference).
 public sealed record AppSettings(string OutputDirectory, string Quality, int MaxConcurrentDownloads = DownloadScheduler.DefaultConcurrency,
-    string Format = "mp4", bool BrowserOverlayEnabled = false, bool UseLogin = true, string Language = "ja",
+    string Format = "mp4", bool BrowserOverlayEnabled = false, bool UseLogin = true, string? Language = null,
     bool StartAtLogin = true, bool TrayNoticeShown = false);

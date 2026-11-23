@@ -60,7 +60,8 @@ public partial class MainWindow : Window
 
     public MainWindow(EventWaitHandle activation)
     {
-        Localization.Initialize(Localization.ReadPreference(settingsFile));
+        // Until a language is chosen in the app, Windows' display language decides.
+        Localization.Initialize(settingsFile, [System.Globalization.CultureInfo.CurrentUICulture.Name]);
         foreach (var resource in Localization.Resources) System.Windows.Application.Current.Resources[resource.Key] = resource.Value;
         InitializeComponent();
         FontFamily = UiFont.For(Localization.Language);

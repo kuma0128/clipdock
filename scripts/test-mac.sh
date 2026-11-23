@@ -59,14 +59,22 @@ pass "login item: a valid LaunchAgent that opens this bundle in the menu bar"
 real_agent="$HOME/Library/LaunchAgents/app.clipdock.ClipDock.plist"
 real_before="$(cat "$real_agent" 2>/dev/null || true)"
 
-for language in ja en zh-CN es; do
+# Each language chosen in the app, then a first launch with nothing saved, where macOS's preferred languages decide
+# (given for this run only with -AppleLanguages): Traditional Chinese is not one of ClipDock's, so the next, Spanish, is.
+for language in ja en zh-CN es first-launch; do
 result="$logs/window-check-$language.json"
 mkdir -p "$work/data-$language"
-printf '{"language":"%s"}\n' "$language" > "$work/data-$language/settings.json"
 rm -f "$result"
 # English starts as the login item does: hidden, with only the menu bar icon, until the check opens the window.
 case "$language" in en) background="--background" ;; *) background="" ;; esac
-"$binary" --data-dir "$work/data-$language" $background --smoke "$result" > "$logs/window-$language.log" 2>&1 &
+if [ "$language" = first-launch ]; then
+  expected=es
+  "$binary" --data-dir "$work/data-$language" --smoke "$result" -AppleLanguages '("zh-Hant-TW", "es-ES")' > "$logs/window-$language.log" 2>&1 &
+else
+  expected="$language"
+  printf '{"language":"%s"}\n' "$language" > "$work/data-$language/settings.json"
+  "$binary" --data-dir "$work/data-$language" $background --smoke "$result" > "$logs/window-$language.log" 2>&1 &
+fi
 pid=$!
 for _ in $(seq 1 240); do
   [ -f "$result" ] && break
@@ -87,7 +95,12 @@ wait "$pid" || true
 [ -f "$result" ] || { echo "FAIL the app did not report a window check result" >&2; cat "$logs/window-$language.log" >&2; exit 1; }
 cat "$result"; echo
 grep -q '"passed": true' "$result" || { echo "FAIL window check" >&2; cat "$logs/window-$language.log" >&2; exit 1; }
+grep -q "\"language\": \"$expected\"" "$result" || { echo "FAIL the window was not in $expected ($language)" >&2; exit 1; }
 pass "main window, sign-in session and sign-in window; closing keeps the menu bar icon, Quit ends ClipDock${background:+ (started with $background)}"
+if [ "$language" = first-launch ]; then
+  grep -q "\"language\": \"$expected\"" "$work/data-$language/settings.json"
+  pass "with no language saved, the first of macOS's preferred languages ClipDock has is shown and saved"
+fi
 
 [ "$(stat -f %Lp "$work/data-$language")" = "700" ] && [ "$(stat -f %Lp "$work/data-$language/history.dat")" = "600" ] && [ "$(stat -f %Lp "$work/data-$language/settings.json")" = "600" ]
 pass "settings and history are readable by the current user only ($language)"

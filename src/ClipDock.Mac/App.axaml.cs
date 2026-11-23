@@ -19,7 +19,8 @@ public partial class App : Application
 
     public override void Initialize()
     {
-        Localization.Initialize(Localization.ReadPreference(Path.Combine(AppPaths.Data, "settings.json")));
+        // Until a language is chosen in the app, the preferred languages in macOS's Language & Region decide.
+        Localization.Initialize(Path.Combine(AppPaths.Data, "settings.json"), MacApp.PreferredLanguages());
         AvaloniaXamlLoader.Load(this);
         foreach (var resource in Localization.Resources) Resources[resource.Key] = resource.Value;
     }
