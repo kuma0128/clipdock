@@ -14,7 +14,8 @@ const root = fileURLToPath(new URL("../website/", import.meta.url));
 const version = readFileSync(new URL("../Directory.Build.props", import.meta.url), "utf8").match(/<Version>(\d+\.\d+\.\d+)<\/Version>/)[1];
 const screenshot = { width: 1186, height: 813 };
 // Ownership proofs for webmaster tools. They are public by design; removing one ends that tool's access.
-const verification = [["google-site-verification", "FQT_edwaiw8ZB0ohzxScJlazAQRKzzdjQ_XNJiiWWQk"]];
+const verification = [["google-site-verification", "FQT_edwaiw8ZB0ohzxScJlazAQRKzzdjQ_XNJiiWWQk"],
+  ["msvalidate.01", "96E8B5FA571AC413CD5AF5C83DAA733A"]];
 
 const languages = [
   { prefix: "", lang: "ja", locale: "ja_JP", image: "/assets/clipdock-desktop.jpg" },

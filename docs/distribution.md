@@ -40,7 +40,7 @@ npm run site:metadata
 npm run notify:search
 ```
 
-Google Search ConsoleとBing Webmaster Toolsへの登録はアカウントが必要なため、手動で行います。所有権の確認にはHTMLタグ（`google-site-verification` など）を使い、`scripts/site-metadata.mjs` の `<head>` に追加してからサイトを配置し、`sitemap.xml` を送信します。
+Google Search ConsoleとBing Webmaster Toolsへの登録はアカウントが必要なため、手動で行います。所有権の確認にはHTMLタグ（`google-site-verification` など）を使い、`scripts/site-metadata.mjs` の `<head>` に追加してからサイトを配置し、`sitemap.xml` を送信します。現在はGoogle（`google-site-verification`）とBing（`msvalidate.01`）のタグを入れています。Bingは、Search Consoleで確認したばかりのサイトを取り込めなかったため、タグで確認しました。
 
 ## 必要なもの
 
