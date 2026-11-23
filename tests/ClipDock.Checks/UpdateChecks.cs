@@ -104,6 +104,31 @@ internal static class UpdateChecks
             finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
         });
 
+        check("after an update only a verified download of a newer version stays in the update folder", () =>
+        {
+            var directory = Path.Combine(Path.GetTempPath(), "clipdock-update-cleanup-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                Directory.CreateDirectory(directory);
+                string[] removed = ["ClipDock-1.0.5-win-x64-unsigned-setup.exe", "ClipDock-1.0.6-win-x64-unsigned-setup.exe",
+                    "ClipDock-1.0.6-mac-arm64-unsigned.dmg", "ClipDock-1.0.7-win-x64-unsigned-setup.exe.partial", "ClipDock-next.exe", "notes.txt"];
+                string[] kept = ["ClipDock-1.0.7-win-x64-unsigned-setup.exe", "ClipDock-1.1.0-mac-x64-unsigned.dmg"];
+                foreach (var name in removed.Concat(kept)) File.WriteAllText(Path.Combine(directory, name), name);
+                AppUpdate.RemoveInstalled(directory, new Version(1, 0, 6, 0));
+                Assert(Directory.GetFiles(directory).Select(Path.GetFileName).Order().SequenceEqual(kept.Order()));
+
+                // A file still in use (an installer that is just finishing) stays without failing; the next call removes it.
+                var busy = Path.Combine(directory, "ClipDock-1.0.6-win-x64-unsigned-setup.exe");
+                File.WriteAllText(busy, "installer");
+                using (new FileStream(busy, FileMode.Open, FileAccess.Read, FileShare.None))
+                    if (OperatingSystem.IsWindows()) { AppUpdate.RemoveInstalled(directory, new Version(1, 0, 6)); Assert(File.Exists(busy)); }
+                AppUpdate.RemoveInstalled(directory, new Version(1, 0, 6));
+                Assert(!File.Exists(busy));
+                AppUpdate.RemoveInstalled(Path.Combine(directory, "missing"), new Version(1, 0, 6));
+            }
+            finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+        });
+
         check("the Mac update script swaps in the bundle from the disk image after ClipDock quits and keeps it otherwise", () =>
         {
             if (!OperatingSystem.IsMacOS()) throw new SkipCheckException("needs hdiutil and PlistBuddy.");

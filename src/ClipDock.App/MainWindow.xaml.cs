@@ -79,6 +79,7 @@ public partial class MainWindow : Window
         LoadState();
         ApplyStartupAtLaunch();
         ReportFinishedUpdate();
+        RemoveInstalledUpdates();
         foreach (ComboBoxItem language in LanguageBox.Items)
             if ((string?)language.Tag == Localization.Language) LanguageBox.SelectedItem = language;
         LanguageBox.SelectionChanged += Language_Changed;
@@ -99,6 +100,7 @@ public partial class MainWindow : Window
         engineTimer.Tick += (_, _) =>
         {
             if (DateTime.UtcNow >= nextUpdateCheck) _ = CheckForUpdateAsync();
+            RemoveInstalledUpdates();
             TryApplyUpdate(updateRequested);
             if (DateTime.UtcNow < nextEngineCheck || installing || shuttingDown || library.ActiveOperations > 0) return;
             installTask = InstallEngineAsync();
@@ -338,6 +340,14 @@ public partial class MainWindow : Window
     }
 
     // After setup restarted ClipDock: say once that the update is done, or that it will be tried again.
+    // The installer or disk image of the running version (and anything older) is deleted; not while a download is written.
+    private void RemoveInstalledUpdates()
+    {
+        if (checkingUpdate) return;
+        try { AppUpdate.RemoveInstalled(updateDirectory, AppUpdate.Current); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+    }
+
     private void ReportFinishedUpdate()
     {
         if (!File.Exists(updateMarker)) return;

@@ -72,6 +72,23 @@ public static class AppUpdate
         return true;
     }
 
+    // Once a version is installed, its installer (or disk image) and anything older or unfinished is only taking space.
+    // A verified download of a newer version is kept, so it is not fetched again after a restart. Files still in use,
+    // such as an installer that is just finishing, stay until the next call.
+    public static void RemoveInstalled(string directory, Version current)
+    {
+        if (!Directory.Exists(directory)) return;
+        foreach (var path in Directory.EnumerateFiles(directory))
+        {
+            var name = Path.GetFileName(path);
+            var newer = name.StartsWith("ClipDock-", StringComparison.Ordinal) && !name.EndsWith(".partial", StringComparison.Ordinal) &&
+                TryParseVersion(name.Split('-')[1], out var version) && version > Normalize(current);
+            if (newer) continue;
+            try { File.Delete(path); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        }
+    }
+
     public static Task<UpdateOffer?> CheckAsync(CancellationToken ct = default) => CheckWithClientAsync(Client, ManifestUrl, Current, Platform, ct);
 
     internal static async Task<UpdateOffer?> CheckWithClientAsync(HttpClient client, Uri manifest, Version current, string platform, CancellationToken ct)
