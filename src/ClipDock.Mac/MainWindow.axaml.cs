@@ -550,7 +550,7 @@ public partial class MainWindow : Window
         // one unreadable file or record must not discard everything else.
         try
         {
-            if (File.Exists(settingsFile) && JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(settingsFile), Json.Options) is { } settings)
+            if (File.Exists(settingsFile) && JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(settingsFile), Json.Options)?.Upgraded() is { } settings)
             {
                 if (settings.OutputDirectory is { Length: > 0 } directory && Path.IsPathFullyQualified(directory)) outputDirectory = directory;
                 Select(QualityBox, settings.Quality);
@@ -575,7 +575,7 @@ public partial class MainWindow : Window
         try
         {
             // The browser overlay is a Windows feature; its setting is carried through unchanged.
-            HistoryFile.Write(settingsFile, JsonSerializer.SerializeToUtf8Bytes(new AppSettings(outputDirectory, Quality, Format, false, UseLogin, SelectedLanguage, startAtLogin, trayNoticeShown), Json.Options), plain: true);
+            HistoryFile.Write(settingsFile, JsonSerializer.SerializeToUtf8Bytes(new AppSettings(outputDirectory, Quality, Format, false, UseLogin, SelectedLanguage, startAtLogin, trayNoticeShown, AppSettings.CurrentVersion), Json.Options), plain: true);
             HistoryFile.Write(historyFile, JsonSerializer.SerializeToUtf8Bytes(library.Snapshot(), Json.Options));
             return true;
         }

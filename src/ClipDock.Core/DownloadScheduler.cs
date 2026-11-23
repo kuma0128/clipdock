@@ -141,6 +141,14 @@ public sealed class DownloadOperation
 // Settings from older versions start at sign-in. Language is null in settings from before the language menu; the app
 // then follows the system's display language (Localization.ReadPreference). Versions up to 1.0.7 also saved
 // maxConcurrentDownloads; it is ignored now that ClipDock always saves DownloadScheduler.DefaultConcurrency at a time.
-// The browser tab starts on; settings saved by older versions keep the choice they recorded.
+// Version says which changes to the defaults a settings file has already been through (0: written up to 1.0.7); the
+// windows read settings through Upgraded() and always save CurrentVersion.
 public sealed record AppSettings(string OutputDirectory, string Quality, string Format = "mp4", bool BrowserOverlayEnabled = true,
-    bool UseLogin = true, string? Language = null, bool StartAtLogin = true, bool TrayNoticeShown = false);
+    bool UseLogin = true, string? Language = null, bool StartAtLogin = true, bool TrayNoticeShown = false, int Version = 0)
+{
+    public const int CurrentVersion = 1;
+
+    // Version 1: the browser tab starts on. Up to 1.0.7 it started off and was always saved, so an older file cannot tell
+    // a choice from the old default; the tab is turned on once, and any choice made from then on stays.
+    public AppSettings Upgraded() => Version >= CurrentVersion ? this : this with { BrowserOverlayEnabled = true, Version = CurrentVersion };
+}

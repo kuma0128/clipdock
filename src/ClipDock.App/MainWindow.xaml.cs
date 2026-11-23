@@ -539,7 +539,7 @@ public partial class MainWindow : Window
         // one unreadable file or record must not discard everything else.
         try
         {
-            if (File.Exists(settingsFile) && JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(settingsFile), Json.Options) is { } settings)
+            if (File.Exists(settingsFile) && JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(settingsFile), Json.Options)?.Upgraded() is { } settings)
             {
                 if (settings.OutputDirectory is { Length: > 0 } directory && Path.IsPathFullyQualified(directory)) outputDirectory = directory;
                 foreach (ComboBoxItem quality in QualityBox.Items) if ((string)quality.Tag == settings.Quality) QualityBox.SelectedItem = quality;
@@ -562,7 +562,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            File.WriteAllText(settingsFile + ".tmp", JsonSerializer.Serialize(new AppSettings(outputDirectory, Quality, Format, BrowserOverlayBox.IsChecked == true, UseLoginBox.IsChecked == true, SelectedLanguage, startAtLogin, trayNoticeShown), Json.Options));
+            File.WriteAllText(settingsFile + ".tmp", JsonSerializer.Serialize(new AppSettings(outputDirectory, Quality, Format, BrowserOverlayBox.IsChecked == true, UseLoginBox.IsChecked == true, SelectedLanguage, startAtLogin, trayNoticeShown, AppSettings.CurrentVersion), Json.Options));
             File.Move(settingsFile + ".tmp", settingsFile, true);
             File.WriteAllBytes(historyFile + ".tmp", WindowsProtection.Protect(JsonSerializer.SerializeToUtf8Bytes(library.Snapshot(), Json.Options)));
             File.Move(historyFile + ".tmp", historyFile, true);

@@ -229,6 +229,18 @@ Check("legacy requests, history and settings default to MP4 with the browser tab
     Assert(item.FormatLabel == "MP3" && item.StateLabel.Contains("MP3") && item.Meta.Contains("音声のみ"));
     Assert(item.Save().Request.Format == "mp3");
 });
+Check("the browser tab is turned on once for settings from 1.0.7 and earlier, then stays as chosen", () =>
+{
+    // 1.0.7 always saved the tab, off unless the user had turned it on, and no version.
+    var old = JsonSerializer.Deserialize<AppSettings>("{\"outputDirectory\":\"videos\",\"quality\":\"720\",\"browserOverlayEnabled\":false,\"startAtLogin\":false}", Json.Options)!;
+    Assert(old.Version == 0 && !old.BrowserOverlayEnabled);
+    var upgraded = old.Upgraded();
+    Assert(upgraded.BrowserOverlayEnabled && upgraded.Version == AppSettings.CurrentVersion);
+    Assert(!upgraded.StartAtLogin && upgraded.Quality == "720", "nothing else changes");
+    // Turned off after the upgrade: saved with the current version, so the choice survives the next launch.
+    var off = JsonSerializer.Deserialize<AppSettings>(JsonSerializer.Serialize(upgraded with { BrowserOverlayEnabled = false }, Json.Options), Json.Options)!;
+    Assert(off.Version == AppSettings.CurrentVersion && !off.Upgraded().BrowserOverlayEnabled);
+});
 Check("legacy history keeps download fields and drops retired browser credentials", () =>
 {
     var request = JsonSerializer.Deserialize<DownloadRequest>("{\"url\":\"https://example.com/video\",\"quality\":\"720\",\"cookies\":[{\"value\":\"old-secret\"}],\"restrictYouTube\":true}", Json.Options)!.Validated();
