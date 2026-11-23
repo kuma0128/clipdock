@@ -33,7 +33,7 @@ const fallback = languages.find(language => language.lang === "en");
 const text = {
   ja: {
     home: "ホーム", help: "使い方・ヘルプ", privacy: "プライバシーポリシー",
-    imageAlt: "ClipDockのWindowsアプリ画面。URLの入力欄、MP4・MP3と画質の選択、保存ボタン、保存先、同時保存数が並んでいる",
+    imageAlt: "ClipDockのWindowsアプリ画面。URLの入力欄と保存ボタン、MP4・MP3の切り替えと画質、保存先、保存したファイルの一覧が並んでいる",
     alternateName: "クリップドック", category: "動画ダウンローダー",
     disambiguation: "このサイトで配布しているWindows・Mac用のデスクトップアプリです。ClipDockという名前の別のアプリやWebサービスとは関係ありません。",
     pages: {
@@ -44,13 +44,13 @@ const text = {
       privacy: ["プライバシーポリシー — ClipDock",
         "ClipDockが扱う情報（保存したURL・履歴・ログイン情報）とPC内の保存場所、通信先、公式サイトのアクセス解析について説明します。アプリは利用状況を送信しません。"]
     },
-    features: ["URLから動画をMP4、音声をMP3で保存", "画質の上限（480p〜4K・最高画質）と保存先を選択", "1〜4件の同時保存と進捗表示",
+    features: ["URLから動画をMP4、音声をMP3で保存", "画質の上限（480p〜4K・最高画質）と保存先を選択", "保存の進捗と保存したファイルの一覧",
       "ログインが必要なサイトに専用画面でサインイン", "通知領域・メニューバーで常駐し、サインイン時に自動起動", "アプリと保存エンジンの自動アップデート", "日本語・English・简体中文・Español"],
     requirements: "Windows 10 / 11（64bit、x64）、またはmacOS 14以降（Appleシリコン・Intel）。初回の起動時にインターネット接続が必要です。"
   },
   en: {
     home: "Home", help: "Help", privacy: "Privacy policy",
-    imageAlt: "ClipDock for Windows in English, showing the URL box, the MP4/MP3 and quality menus, the Save button, the destination folder and the parallel-download setting",
+    imageAlt: "ClipDock for Windows in English, showing the URL box and Save button, the MP4/MP3 switch and quality menu, the destination folder and the list of saved files",
     category: "Video downloader",
     disambiguation: "The Windows and Mac desktop app published on this site. It is not related to other apps or web services that are also called ClipDock.",
     pages: {
@@ -61,13 +61,13 @@ const text = {
       privacy: ["Privacy policy — ClipDock",
         "What ClipDock handles (saved URLs, history, login data), where it is stored on your computer, which services it connects to, and how the website measures visits. The app sends no usage data."]
     },
-    features: ["Save video as MP4 and audio as MP3 from a URL", "Choose a quality limit (480p to 4K or best) and a folder", "One to four downloads at once with progress",
+    features: ["Save video as MP4 and audio as MP3 from a URL", "Choose a quality limit (480p to 4K or best) and a folder", "Progress and saved files in one list",
       "Sign in to sites that need a login in a dedicated window", "Runs in the notification area or menu bar and starts at sign-in", "Automatic updates for the app and the download engine", "English, Japanese, Simplified Chinese and Spanish"],
     requirements: "Windows 10 or 11 (64-bit x64), or macOS 14 or later (Apple silicon or Intel). An internet connection is needed on first launch."
   },
   "zh-Hans": {
     home: "首页", help: "帮助", privacy: "隐私政策",
-    imageAlt: "ClipDock Windows 应用界面（简体中文），显示网址输入框、MP4/MP3 和画质选择、保存按钮、保存位置和同时下载数",
+    imageAlt: "ClipDock Windows 应用界面（简体中文），显示网址输入框和保存按钮、MP4/MP3 切换与画质选择、保存位置以及已保存的文件列表",
     category: "视频下载器",
     disambiguation: "在本网站发布的 Windows 和 Mac 桌面应用，与其他同样名为 ClipDock 的应用或网络服务无关。",
     pages: {
@@ -78,13 +78,13 @@ const text = {
       privacy: ["隐私政策 — ClipDock",
         "说明 ClipDock 处理的信息（保存的网址、历史记录、登录数据）、在电脑中的保存位置、连接的服务，以及官网如何统计访问。应用不会发送使用情况数据。"]
     },
-    features: ["从网址将视频保存为 MP4、音频保存为 MP3", "选择画质上限（480p 至 4K 或最高画质）和保存位置", "同时下载 1 至 4 项并显示进度",
+    features: ["从网址将视频保存为 MP4、音频保存为 MP3", "选择画质上限（480p 至 4K 或最高画质）和保存位置", "在同一列表中查看进度和已保存的文件",
       "在专用窗口中登录需要账号的网站", "在通知区域或菜单栏后台运行，登录时自动启动", "应用和下载引擎自动更新", "简体中文、英语、日语和西班牙语界面"],
     requirements: "Windows 10 或 11（64 位 x64），或 macOS 14 及以上（Apple 芯片或 Intel）。首次启动时需要联网。"
   },
   es: {
     home: "Inicio", help: "Ayuda", privacy: "Política de privacidad",
-    imageAlt: "ClipDock para Windows en español, con el cuadro de URL, los menús de MP4/MP3 y calidad, el botón Guardar, la carpeta de destino y las descargas simultáneas",
+    imageAlt: "ClipDock para Windows en español, con el cuadro de URL y el botón Guardar, el selector de MP4/MP3 y calidad, la carpeta de destino y la lista de archivos guardados",
     category: "Descargador de vídeos",
     disambiguation: "La aplicación de escritorio para Windows y Mac que se publica en este sitio. No tiene relación con otras aplicaciones o servicios web que también se llaman ClipDock.",
     pages: {
@@ -95,7 +95,7 @@ const text = {
       privacy: ["Política de privacidad — ClipDock",
         "Qué datos maneja ClipDock (URL guardadas, historial, datos de acceso), dónde se guardan en tu ordenador, a qué servicios se conecta y cómo mide las visitas el sitio. La aplicación no envía datos de uso."]
     },
-    features: ["Guarda vídeo en MP4 y audio en MP3 desde una URL", "Elige el límite de calidad (de 480p a 4K o la mejor) y la carpeta", "De una a cuatro descargas a la vez con progreso",
+    features: ["Guarda vídeo en MP4 y audio en MP3 desde una URL", "Elige el límite de calidad (de 480p a 4K o la mejor) y la carpeta", "Progreso y archivos guardados en una sola lista",
       "Inicia sesión en sitios que lo requieren desde una ventana propia", "Se ejecuta en el área de notificación o la barra de menús y se inicia con la sesión",
       "Actualizaciones automáticas de la aplicación y del motor", "Español, inglés, japonés y chino simplificado"],
     requirements: "Windows 10 u 11 (64 bits x64), o macOS 14 o posterior (Apple silicon o Intel). Se necesita conexión a internet en el primer inicio."
@@ -233,7 +233,7 @@ Which ClipDock this is: the Windows and Mac video and audio saver published at $
 
 ## Key facts
 
-- What it does: paste the URL of a video page or media file, choose MP4 (with a quality limit from 480p to 4K, or best) or MP3 and a folder, then click Save. One to four downloads run at once (two by default).
+- What it does: paste the URL of a video page or media file, choose MP4 (with a quality limit from 480p to 4K, or best) or MP3 and a folder, then click Save. Two downloads run at once; progress and saved files appear in one list.
 - Price: free, with no ads and no account. License: MIT.
 - Platforms: Windows 10/11 (64-bit x64) and macOS 14 or later (Apple silicon or Intel). There is no iPhone, Android or Linux version, and ClipDock is neither a website nor a browser extension.
 - Engine: yt-dlp and FFmpeg, which ClipDock downloads on first launch and keeps up to date. .NET and Python do not need to be installed.
@@ -241,7 +241,7 @@ Which ClipDock this is: the Windows and Mac video and audio saver published at $
 - Videos that need a login: sign in inside ClipDock's own login window, separate from your browser. ClipDock does not read your browser's cookies or passwords.
 - Saved files: by default in a "ClipDock" folder inside Downloads; another folder can be chosen.
 - Background and updates: by default ClipDock starts at sign-in and waits in the Windows notification area or the Mac menu bar. From 1.0.6 on it updates itself, after checking the size and SHA-256 of the new version against this site.
-- Interface languages: English, Japanese, Simplified Chinese and Spanish. On first launch the app uses the computer's display language when it is one of these (on a Mac, the first of them in the preferred languages) and English otherwise, Traditional Chinese included; choose another language under "Language (after restart)" at the bottom left and reopen the app.
+- Interface languages: English, Japanese, Simplified Chinese and Spanish. On first launch the app uses the computer's display language when it is one of these (on a Mac, the first of them in the preferred languages) and English otherwise, Traditional Chinese included; choose another language under Settings → "Language" at the top right and reopen the app.
 - Privacy: the app sends no usage data or telemetry. The website counts visits with cookieless Cloudflare Web Analytics.
 - Safety: the Windows installer is not code-signed and the Mac app is not notarized, so Windows and macOS show a warning on first install. Download only from the official website and compare the SHA-256 checksums printed on its home page; the help pages explain how to check the warning.
 

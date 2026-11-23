@@ -1,6 +1,6 @@
 # ClipDock — full text of the English website
 
-> The home, help and privacy pages of https://clipdock-d6z.pages.dev/en/ as Markdown, generated from the pages themselves. ClipDock 1.0.7 is a free Windows and Mac app that saves video as MP4 and audio as MP3 from a URL. A short summary with links is in https://clipdock-d6z.pages.dev/llms.txt. The same pages exist in Japanese (https://clipdock-d6z.pages.dev/), Simplified Chinese (https://clipdock-d6z.pages.dev/zh-cn/) and Spanish (https://clipdock-d6z.pages.dev/es/).
+> The home, help and privacy pages of https://clipdock-d6z.pages.dev/en/ as Markdown, generated from the pages themselves. ClipDock 1.0.8 is a free Windows and Mac app that saves video as MP4 and audio as MP3 from a URL. A short summary with links is in https://clipdock-d6z.pages.dev/llms.txt. The same pages exist in Japanese (https://clipdock-d6z.pages.dev/), Simplified Chinese (https://clipdock-d6z.pages.dev/zh-cn/) and Spanish (https://clipdock-d6z.pages.dev/es/).
 
 ---
 
@@ -24,25 +24,25 @@ Save audio only
 
 Files stay on your PC, in the folder you choose. App languages: 日本語 · English · 简体中文 · Español
 
-Free download · Version 1.0.7
+Free download · Version 1.0.8
 
-- [Windows (Windows 10 / 11 (x64))](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.7-win-x64-unsigned-setup.exe)
-- [Mac (Apple silicon) (macOS 14 or later · M1 or newer)](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.7-mac-arm64-unsigned.dmg)
-- [Mac (Intel) (macOS 14 or later · Intel processor)](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.7-mac-x64-unsigned.dmg)
+- [Windows (Windows 10 / 11 (x64))](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.8-win-x64-unsigned-setup.exe)
+- [Mac (Apple silicon) (macOS 14 or later · M1 or newer)](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.8-mac-arm64-unsigned.dmg)
+- [Mac (Intel) (macOS 14 or later · Intel processor)](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.8-mac-x64-unsigned.dmg)
 
 SHA-256 (click a value to select all of it)
 
 **Windows**
 
-`34c257e4cffafad3ba5d5bea30aa0b50871aeda82a0346b861553b53c0ee0778`
+`1e459ac8e8e6be29f0937afb84d06afb9b6a7e7b63b4e0eab553ba7697f7d3a2`
 
 **Mac (Apple silicon)**
 
-`23794c090e76a137bde6fbfdd4074ca1f9efa65eb5a9155c483d89f751a7a0e9`
+`894af098aaa36969efeb966ee15338c8fd54899157799da8398625270dcd89e1`
 
 **Mac (Intel)**
 
-`9b7612394e861d71d06d842800b5c167cf63cdcb7ba1ee549111b00fb8ea3d4f`
+`93b278286731b7c9a30dc72e60e0f6995d24d0d16764e2150e170b8f1b2169c0`
 
 To check a file, run `Get-FileHash file-name` in PowerShell on Windows or `shasum -a 256 file-name` in Terminal on Mac, and compare the result with the value above. Letter case does not matter.
 
@@ -56,7 +56,7 @@ Choose 480p, 720p, 1080p, 4K or best available for MP4. 4K is a resolution limit
 
 **Follow each download**
 
-See download and conversion progress, cancel a job or retry it. The default is two downloads at a time.
+See download and conversion progress, cancel a job or retry it. Finished files are listed in “Saved files”, newest first, with “Open” and “Show file”.
 
 **Add a URL**
 
@@ -84,7 +84,7 @@ Paste a video URL into “Save from a URL”, choose MP4 or MP3 and a folder, th
 
 **What is ClipDock?**
 
-ClipDock is a free Windows and Mac app that saves video as MP4 and audio as MP3 from the URL of a video page or media file. It uses yt-dlp and FFmpeg to save, and lets you choose a quality limit, a folder and how many downloads run at once. The app is available in English, Japanese, Simplified Chinese and Spanish.
+ClipDock is a free Windows and Mac app that saves video as MP4 and audio as MP3 from the URL of a video page or media file. It uses yt-dlp and FFmpeg to save, lets you choose a quality limit and a folder, and shows progress and your saved files in one list. The app is available in English, Japanese, Simplified Chinese and Spanish.
 
 **Which videos can I save?**
 
@@ -124,7 +124,7 @@ Windows 10 or 11 (64-bit x64) and Macs with macOS 14 or later (Apple silicon or 
 
 **Where are my saved files?**
 
-By default in a “ClipDock” folder inside your Downloads folder. Choose another folder with Change folder. When a download finishes, Open and Show file take you straight to it.
+By default in a “ClipDock” folder inside your Downloads folder. Choose another folder with “Change folder”. Finished downloads are listed in “Saved files”, where “Open” and “Show file” take you straight to each one.
 
 **Do I need to update it?**
 
@@ -142,7 +142,7 @@ Source: https://clipdock-d6z.pages.dev/en/help
 
 Setup instructions, saving options and checks to try when a download fails.
 
-[Download for Windows](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.7-win-x64-unsigned-setup.exe) Download for Mac: [Apple silicon](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.7-mac-arm64-unsigned.dmg) · [Intel](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.7-mac-x64-unsigned.dmg)
+[Download for Windows](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.8-win-x64-unsigned-setup.exe) Download for Mac: [Apple silicon](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.8-mac-arm64-unsigned.dmg) · [Intel](https://clipdock-d6z.pages.dev/downloads/ClipDock-1.0.8-mac-x64-unsigned.dmg)
 
 ## Installation
 
@@ -154,7 +154,7 @@ Setup instructions, saving options and checks to try when a download fails.
 
 Windows 10 or 11, 64-bit x64, is required. You do not need to install .NET or Python separately. For the ZIP package, extract all files and open `INSTALL.cmd`.
 
-The app checks for engine updates when it starts and once a day while it keeps running. An unchanged, intact version is reused. Older installations or damaged files may require a one-time download of the same version. If a download fails, “Prepare engine” appears; click it to try again.
+The app checks for engine updates when it starts and once a day while it keeps running. An unchanged, intact version is reused. Older installations or damaged files may require a one-time download of the same version. If a download fails, “Prepare engine” appears at the top of the window; click it to try again.
 
 The login window requires [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/). If it is missing, use the Microsoft link in that window to install it.
 
@@ -172,7 +172,7 @@ By default, ClipDock starts when you sign in to Windows (or log in to your Mac) 
 
 - To open the window, click the notification-area icon (on Mac, choose “Open ClipDock” from the menu bar icon), or open ClipDock from Start or Applications.
 - To quit, right-click the icon (on Mac, use the icon's menu) and choose “Quit ClipDock”. If a download is running, ClipDock asks first.
-- Turn starting at sign-in on or off with “Start with Windows” (on Mac, “Open at login”) at the lower left. If you turn ClipDock off in Windows Settings → Apps → Startup or in the Mac's Login Items, that setting wins.
+- Turn starting at sign-in on or off with “Start with Windows” (on Mac, “Open at login”) in “Settings” at the top right. If you turn ClipDock off in Windows Settings → Apps → Startup or in the Mac's Login Items, that setting wins.
 - On Windows the icon first appears in the list behind the taskbar's “^” button. To keep it visible, turn ClipDock on in the taskbar settings.
 
 ## Automatic app updates
@@ -180,7 +180,7 @@ By default, ClipDock starts when you sign in to Windows (or log in to your Mac) 
 ClipDock checks for a new version when it starts and once a day while it keeps running. A new version is downloaded in the background and used only when its size and SHA-256 match the update information on this site.
 
 - When nothing is being saved or queued and the window is closed to the notification area or menu bar, ClipDock updates itself and starts again.
-- While the window is open, “Restart to update to ClipDock …” appears at the lower left. Click it to update right away.
+- While the window is open, “Restart to update to ClipDock …” appears at the top right of the window. Click it to update right away. If something is being saved, it changes to “Updates when saving finishes” and ClipDock updates afterwards.
 - After updating, ClipDock says so once. Settings, history and saved files are kept.
 - If you use an earlier version without automatic updates, install the new version from this site once. A copy run straight from the extracted ZIP or opened directly from the Mac disk image does not update itself.
 
@@ -204,24 +204,26 @@ The Mac version has no Apple Developer ID signature or notarization, so macOS ca
 
 ## Display language
 
-On first launch, ClipDock opens in your computer's display language if it is Japanese, English, Simplified Chinese or Spanish, and in English otherwise. On a Mac, it goes down the preferred languages in System Settings → General → Language & Region and uses the first one it supports. To change the language, choose 日本語, English, 简体中文 or Español in “Language (after restart)” at the bottom left. Your choice is saved and applied when you close and reopen the app. Changing the language does not interrupt downloads.
+On first launch, ClipDock opens in your computer's display language if it is Japanese, English, Simplified Chinese or Spanish, and in English otherwise. On a Mac, it goes down the preferred languages in System Settings → General → Language & Region and uses the first one it supports. To change the language, open “Settings” at the top right and choose 日本語, English, 简体中文 or Español under “Language”. Your choice is saved and applies the next time ClipDock opens. Changing the language does not interrupt downloads.
 
 ## Save from a URL
 
-1. Copy a video page or media URL and paste it into “Save from a URL”.
-2. Choose a format. MP4 is the default; MP3 saves audio only.
-3. Choose a folder with “Change folder”, then click “Save”.
-4. Wait for “Saved”. Use “Open” to open the file or “Show file” to show its folder.
+1. Copy a video page or media URL and paste it into the URL box under “Save from a URL”.
+2. In “Format”, choose MP4 or MP3. MP4 is the default; MP3 saves audio only.
+3. To use another folder, click “Change folder” in “Destination”. Then click “Save”.
+4. The item appears at the top of “Saved files” with a progress bar, speed and time left. When it is saved, use “Open” to open the file or “Show file” to show it in its folder.
 
-The default is `ClipDock` inside Downloads on Windows and Mac. Folder changes apply to jobs added afterward. Format, quality and destination choices are retained.
+The default is `ClipDock` inside Downloads on Windows and Mac. Folder changes apply to jobs added afterward. Format, quality and destination choices are retained. “Open folder” above the list opens the destination folder.
 
-The default is two simultaneous jobs, adjustable from one to four. Conversion counts as an active job. Reducing the limit does not interrupt running jobs.
+ClipDock saves two items at a time. Conversion counts as one of the two. Further items show “Queued” and start by themselves when a slot frees. Finished files stay in “Saved files”, newest first.
+
+An item that failed (shown in red), was cancelled or was interrupted shows the reason with “Retry”, “Source page” and ×. “Retry” tries the same URL and format again. × (“Remove from list”) removes the item and its unfinished work files. Saved video and audio files and login data are not touched.
 
 ## Quality and file formats
 
 MP4 saves video; MP3 saves audio only. The quality field is disabled for MP3.
 
-480p, 720p, 1080p and 4K are maximum resolutions. A 1080p source is not enlarged to 4K. “Best available” cannot improve on the source stream.
+480p, 720p, 1080p and 4K are maximum resolutions. A 1080p source is not enlarged to 4K. “Best” cannot improve on the source stream.
 
 Separate audio and video streams share one progress indicator. Downloading and conversion advance to 95%; the job reaches 100% after the finished file is verified. The completed MP4 or MP3 is placed in your destination folder. MP4 may retain the source codec; if a device cannot play it, trying 1080p or lower may help.
 
@@ -241,7 +243,7 @@ Password autosave is disabled. Site restrictions and post availability can still
 
 This is a Windows feature. It is not available on Mac.
 
-“Show tab above browser” is off by default. When enabled, it can try to import a URL from Chrome or Edge.
+“Show tab above browser” in “Settings” is on by default. If you updated from an earlier version, it is also turned on once. If you turn it off in “Settings”, it stays off. While it is on, it can try to import a URL from Chrome or Edge.
 
 1. Bring Chrome or Edge to the front and move the pointer to the top center of its window.
 2. Click “Send to ClipDock”.
@@ -259,7 +261,7 @@ Check the URL and availability. If needed, click “Sign in” in the app, sign 
 
 **A job stays queued**
 
-The queue waits while the download engine is being installed. If “Prepare engine” is shown, check your connection and click it.
+ClipDock saves two items at a time; others show “Queued” until a slot frees. The queue also waits while the download engine is being installed. If “Prepare engine” is shown at the top of the window, check your connection and click it.
 
 **A supported site fails**
 
@@ -267,13 +269,13 @@ ClipDock checks for engine updates when it starts and once a day. To check right
 
 **Files remain after cancellation**
 
-Download and conversion files are kept in the hidden `.clipdock-work/<job-id>/` folder inside your destination. It is removed after success. Cancellation, failure or closing the app keeps it for retry. Clear history also removes unfinished work files for those records; completed media is kept.
+Download and conversion files are kept in the hidden `.clipdock-work/<job-id>/` folder inside your destination. It is removed after success. Cancellation, failure or closing the app keeps it for retry. Removing the item with × (“Remove from list”) also removes its work files; completed media is kept.
 
 ClipDock does not remove DRM or bypass access restrictions. A `blob:` URL cannot be used directly; use the HTTP(S) URL of the video page. A live stream may keep running until the broadcast ends.
 
-## Delete history or uninstall
+## Remove items from the list or uninstall
 
-“Clear history” clears completed, failed and cancelled records, along with any unfinished work files for those jobs. It does not delete completed media or login information.
+Items that failed, were cancelled or were interrupted can be removed from the list one at a time with × (“Remove from list”). This also deletes the item's unfinished work files. It does not delete completed media or login information.
 
 Quit ClipDock from its notification-area icon, then uninstall it in Windows Settings → Apps. For the ZIP package, use `UNINSTALL.cmd` in its installation folder. Both remove the start-at-sign-in entry.
 
@@ -299,7 +301,7 @@ This policy covers the ClipDock Windows and Mac apps and its official website. C
 | --- | --- |
 | Page or video URLs you enter or import | Analyze and retrieve media, open the source page, and retry downloads |
 | Titles, formats, file names, sizes, results and errors obtained by the engine | Show progress and results, save files, and maintain history |
-| Selected format, quality, concurrency and destination | Save MP4 video or MP3 audio and retain settings |
+| Selected format, quality and destination | Save MP4 video or MP3 audio and retain settings |
 | Foreground window type and position, and pointer position while the browser tab is enabled | Position the import tab above Chrome or Edge |
 | Address-bar URL candidate when you click the tab | Fill the URL field in the app |
 | Cookies and browsing data from sites you sign in to within the app | Keep the dedicated session, display login status, and authenticate downloads for the target site |
@@ -310,17 +312,17 @@ The login window, browser tab and storage details below describe Windows. See Di
 
 ## Login information within the app
 
-“Use login information for this download” is on by default and retained locally. Turning it off prevents login cookies being passed to the engine for the next added or retried job. The dedicated window remains signed in.
+“Use login for this download” is on by default and retained locally. Turning it off prevents login cookies being passed to the engine for the next added or retried job. The dedicated window remains signed in.
 
-Use Login to sign in to the site you want to save from in a dedicated WebView2 window. Its profile is separate from Chrome and Edge. Information entered on login pages is sent to the relevant site. Password autosave and general autofill are disabled.
+Use “Sign in” to sign in to the site you want to save from in a dedicated WebView2 window. Its profile is separate from Chrome and Edge. Information entered on login pages is sent to the relevant site. Password autosave and general autofill are disabled.
 
 The dedicated profile's cookies are also checked to display login status. When the option is on, a download or retry exports only cookies for its target site to a temporary engine file. Cookie values are excluded from download history and removed from engine error displays.
 
-“Delete login information” clears all sites’ login information and browsing data in ClipDock. It cannot be used while jobs are active; finish or cancel them first. Pages opened inside the app are also subject to their sites' terms and privacy policies.
+“Delete login data” clears all sites’ login information and browsing data in ClipDock. It cannot be used while jobs are active; finish or cancel them first. Pages opened inside the app are also subject to their sites' terms and privacy policies.
 
 ## Optional browser tab
 
-The browser tab is off by default. When enabled, the app checks the type and position of the foreground Chrome or Edge window and the pointer position. Pointer movement history is not stored. Turning it off stops these checks.
+The browser tab (“Show tab above browser”) is on by default. If you updated from an earlier version, it is also turned on once. If you turn it off in “Settings”, it stays off. While it is on, the app checks the type and position of the foreground Chrome or Edge window and the pointer position. Pointer movement history is not stored. Turning it off in “Settings” stops these checks.
 
 The address bar is read only when you click the tab. Windows UI Automation reads a URL candidate and places it in the app. No download starts until you check the URL and click Save.
 
@@ -332,16 +334,16 @@ Your display language is also stored in the settings file.
 
 | Location | Contents and retention |
 | --- | --- |
-| `%LOCALAPPDATA%\ClipDock\settings.json` | Destination, format, quality, concurrency, browser tab and login-use settings, retained until changed or deleted |
+| `%LOCALAPPDATA%\ClipDock\settings.json` | Destination, format, quality, browser tab and login-use settings, retained until changed or deleted |
 | `%LOCALAPPDATA%\ClipDock\history.dat` | Up to 300 records: requests excluding cookie values (URL, page URL, referrer, title, User-Agent, format, quality and whether login is used), creation time, state, destination, result and error description. Encrypted with Windows DPAPI |
 | Your selected destination | Completed video and audio files, kept until you delete them |
-| `%LOCALAPPDATA%\ClipDock\browser-profile` | Cookies, site storage and browsing data for the dedicated login window. Managed by Windows and WebView2, retained subject to expiry, site logout or Delete login information |
+| `%LOCALAPPDATA%\ClipDock\browser-profile` | Cookies, site storage and browsing data for the dedicated login window. Managed by Windows and WebView2, retained subject to expiry, site logout or “Delete login data” |
 | `%LOCALAPPDATA%\ClipDock\sessions` | Temporary cookie files used during processing. They are not encrypted. Folder access is restricted to the current Windows user |
-| `.clipdock-work/<job-id>/` inside your destination | Download and conversion work files. Deleted on success; kept after cancellation, failure or app exit for retry, and deleted when the associated history is cleared |
+| `.clipdock-work/<job-id>/` inside your destination | Download and conversion work files. Deleted on success; kept after cancellation, failure or app exit for retry, and deleted when you remove the item from the list with × |
 
 Temporary cookie files are deleted after completion, failure or cancellation. If deletion fails or the app exits unexpectedly, deletion is attempted again at the next startup.
 
-Clear history removes completed, failed and cancelled records and their unfinished work files. It does not delete completed media or login information. Uninstalling leaves settings, history, the login profile and saved files. To remove all app data, close the app and delete `%LOCALAPPDATA%\ClipDock`, unwanted media and any remaining `.clipdock-work` folders in your destinations.
+Failed, cancelled and interrupted items can be removed from the list one at a time with × (“Remove from list”), together with their unfinished work files. This does not delete completed media or login information. Uninstalling leaves settings, history, the login profile and saved files. To remove all app data, close the app and delete `%LOCALAPPDATA%\ClipDock`, unwanted media and any remaining `.clipdock-work` folders in your destinations.
 
 ## Differences on Mac
 
@@ -349,7 +351,7 @@ The Mac version handles the same information for the same purposes and connects 
 
 - Settings, history and the download engine are stored in `~/Library/Application Support/ClipDock`. History is not encrypted; access to the folder and files is limited to the current user.
 - The Login window uses the WebKit engine built into macOS. Cookies and browsing data are kept in WebKit data that belongs to the app (such as `~/Library/WebKit/app.clipdock.ClipDock`) and are not shared with Safari or other browsers.
-- “Delete login information” removes the cookies of every site in ClipDock.
+- “Delete login data” removes the cookies of every site in ClipDock.
 - There is no optional browser tab. The Mac version does not read other apps' windows or address bars.
 - Moving the app to the Trash leaves settings, history, login data and saved files in place.
 
