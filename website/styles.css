@@ -142,7 +142,7 @@ h3 {
 .hero {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
-  gap: 80px;
+  gap: 44px 80px;
   align-items: center;
   padding-top: 62px;
   padding-bottom: 54px;
@@ -165,8 +165,37 @@ h3 {
   line-height: 1.9;
 }
 
+/* Every platform gets an equal button in one row under the hero; a further platform adds a column. */
 .download-block {
-  margin-top: 28px;
+  grid-column: 1 / -1;
+}
+
+.download-heading {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.download-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.download-grid .button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 13px 18px;
+}
+
+.button small {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  opacity: 0.9;
 }
 
 .button {
@@ -187,21 +216,6 @@ h3 {
   text-decoration: none;
 }
 
-.button-secondary {
-  background: #fff;
-  color: var(--green);
-}
-
-.button-secondary:hover {
-  background: var(--pale);
-}
-
-.download-option + .download-option {
-  margin-top: 28px;
-  padding-top: 26px;
-  border-top: 1px solid var(--line);
-}
-
 .version {
   font-size: 13px;
   color: var(--muted);
@@ -218,7 +232,7 @@ h3 {
   color: var(--muted);
   line-height: 1.8;
   margin-top: 17px;
-  max-width: 520px;
+  max-width: 760px;
 }
 
 .download-note a {
@@ -378,10 +392,6 @@ h3 {
 }
 
 .bottom-download {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
   padding-block: 35px;
   border-top: 1px solid var(--line);
 }
@@ -389,13 +399,7 @@ h3 {
 .bottom-download p {
   font-size: 15px;
   color: var(--muted);
-}
-
-.download-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .site-footer {
@@ -633,6 +637,9 @@ section[id] {
     padding-top: 35px;
     padding-bottom: 35px;
   }
+  .download-block {
+    margin-top: 30px;
+  }
   .hero h1 {
     font-size: 32px;
   }
@@ -691,11 +698,7 @@ section[id] {
     padding-left: 34px;
   }
   .bottom-download {
-    display: block;
     padding-block: 28px;
-  }
-  .bottom-download .download-buttons {
-    margin-top: 17px;
   }
   .footer-inner {
     gap: 17px;
