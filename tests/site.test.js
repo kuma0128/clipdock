@@ -66,6 +66,20 @@ test("download links name the current release and are served by the download fun
   }
 });
 
+// Each language shows (and shares) a screenshot of the app in that language.
+test("every home page shows its own language's app screenshot, also as the page image of its language", () => {
+  const screenshots = new Set();
+  for (const prefix of Object.keys(languages)) {
+    const figure = byUrl.get(`/${prefix}`).html.match(/<figure class="app-screen">[\s\S]*?<\/figure>/);
+    assert.ok(figure, `/${prefix} has no app screenshot`);
+    const image = tags(figure[0], "img")[0];
+    screenshots.add(image.src);
+    for (const name of ["", "help", "privacy"])
+      assert.equal(tags(byUrl.get(`/${prefix}${name}`).html, "meta").find(t => t.property === "og:image")?.content, origin + image.src, `/${prefix}${name}`);
+  }
+  assert.equal(screenshots.size, Object.keys(languages).length, "two languages share one screenshot");
+});
+
 // The checksums are printed on each home page for copying instead of being linked as .sha256 downloads.
 test("every home page shows one SHA-256 per release file, the same in every language", () => {
   let reference;

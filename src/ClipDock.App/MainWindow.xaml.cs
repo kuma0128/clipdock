@@ -63,6 +63,7 @@ public partial class MainWindow : Window
         Localization.Initialize(Localization.ReadPreference(settingsFile));
         foreach (var resource in Localization.Resources) System.Windows.Application.Current.Resources[resource.Key] = resource.Value;
         InitializeComponent();
+        FontFamily = UiFont.For(Localization.Language);
         trayIcon = new TrayIcon(ShowFromTray, RequestExit);
         VersionLabel.Text = $"ClipDock  {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)}  /  Windows";
         Directory.CreateDirectory(AppPaths.Data);

@@ -18,6 +18,7 @@ public partial class SessionBrowserWindow : Window
     internal SessionBrowserWindow(BrowserSession session, Func<bool> hasActiveDownloads, Action<string> receiveUrl)
     {
         InitializeComponent();
+        FontFamily = UiFont.For(ClipDock.Core.Localization.Language);
         this.session = session; this.hasActiveDownloads = hasActiveDownloads; this.receiveUrl = receiveUrl;
         Closed += (_, _) => { closed = true; Web.Dispose(); };
     }
