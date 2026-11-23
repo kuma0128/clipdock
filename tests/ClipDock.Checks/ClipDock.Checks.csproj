@@ -9,5 +9,7 @@
     <Compile Include="../../src/ClipDock.App/DownloadLibrary.cs" Link="App/DownloadLibrary.cs" />
     <Compile Include="../../src/ClipDock.App/BrowserUrlCandidate.cs" Link="App/BrowserUrlCandidate.cs" />
     <Compile Include="../../src/ClipDock.App/StartupRegistration.cs" Link="App/StartupRegistration.cs" />
+    <!-- The Mac login item writes a plain file, so it is checked on every system. -->
+    <Compile Include="../../src/ClipDock.Mac/LoginItem.cs" Link="Mac/LoginItem.cs" />
   </ItemGroup>
 </Project>

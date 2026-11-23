@@ -4,8 +4,9 @@
 #   scripts/test-mac.sh [arm64|x64]
 #
 # Always: signature, version, architecture, disk image contents and checksum.
-# When the bundle matches this Mac's architecture: the real engine (install, then save synthetic MP4 and MP3)
-# and the windows (main window, sign-in window loading a page). Logs and a screenshot go to artifacts/mac-checks.
+# When the bundle matches this Mac's architecture: the real engine (install, then save synthetic MP4 and MP3),
+# the login item (written to a scratch folder, never to ~/Library/LaunchAgents) and the windows (main window,
+# sign-in window loading a page, closing to the menu bar, Quit). Logs and a screenshot go to artifacts/mac-checks.
 set -euo pipefail
 
 arch="${1:-arm64}"
@@ -43,12 +44,29 @@ fi
 
 "$binary" --engine-check "$work/engine"
 
+# The login item, written to a scratch folder: a valid LaunchAgent that starts this very executable hidden.
+"$binary" --login-item-check "$work/LaunchAgents" >/dev/null
+agent="$work/LaunchAgents/app.clipdock.ClipDock.plist"
+plutil -lint "$agent" >/dev/null
+[ "$(/usr/libexec/PlistBuddy -c 'Print :Label' "$agent")" = "app.clipdock.ClipDock" ]
+[ "$(/usr/libexec/PlistBuddy -c 'Print :ProgramArguments:0' "$agent")" = "$(cd "$(dirname "$binary")" && pwd -P)/ClipDock" ]
+[ "$(/usr/libexec/PlistBuddy -c 'Print :ProgramArguments:1' "$agent")" = "--background" ]
+[ "$(/usr/libexec/PlistBuddy -c 'Print :RunAtLoad' "$agent")" = "true" ]
+[ "$(stat -f %Lp "$agent")" = "644" ]
+pass "login item: a valid LaunchAgent that opens this bundle in the menu bar"
+
+# Runs with --data-dir must leave the user's own login item as it was.
+real_agent="$HOME/Library/LaunchAgents/app.clipdock.ClipDock.plist"
+real_before="$(cat "$real_agent" 2>/dev/null || true)"
+
 for language in ja en zh-CN es; do
 result="$logs/window-check-$language.json"
 mkdir -p "$work/data-$language"
 printf '{"language":"%s"}\n' "$language" > "$work/data-$language/settings.json"
 rm -f "$result"
-"$binary" --data-dir "$work/data-$language" --smoke "$result" > "$logs/window-$language.log" 2>&1 &
+# English starts as the login item does: hidden, with only the menu bar icon, until the check opens the window.
+case "$language" in en) background="--background" ;; *) background="" ;; esac
+"$binary" --data-dir "$work/data-$language" $background --smoke "$result" > "$logs/window-$language.log" 2>&1 &
 pid=$!
 for _ in $(seq 1 240); do
   [ -f "$result" ] && break
@@ -57,15 +75,25 @@ for _ in $(seq 1 240); do
 done
 sleep 3
 screencapture -x "$logs/window-check-$language.png" 2>/dev/null || echo "No screenshot: screen capture is unavailable in this session."
+# The check ends with the menu bar icon's Quit, which must end the process (closing the window alone does not).
+for _ in $(seq 1 120); do
+  kill -0 "$pid" 2>/dev/null || break
+  sleep 0.5
+done
+if kill -0 "$pid" 2>/dev/null; then
+  kill "$pid"; echo "FAIL ClipDock was still running after Quit" >&2; cat "$logs/window-$language.log" >&2; exit 1
+fi
 wait "$pid" || true
 [ -f "$result" ] || { echo "FAIL the app did not report a window check result" >&2; cat "$logs/window-$language.log" >&2; exit 1; }
 cat "$result"; echo
 grep -q '"passed": true' "$result" || { echo "FAIL window check" >&2; cat "$logs/window-$language.log" >&2; exit 1; }
-pass "main window, sign-in session and sign-in window"
+pass "main window, sign-in session and sign-in window; closing keeps the menu bar icon, Quit ends ClipDock${background:+ (started with $background)}"
 
 [ "$(stat -f %Lp "$work/data-$language")" = "700" ] && [ "$(stat -f %Lp "$work/data-$language/history.dat")" = "600" ] && [ "$(stat -f %Lp "$work/data-$language/settings.json")" = "600" ]
 pass "settings and history are readable by the current user only ($language)"
 done
+[ "$(cat "$real_agent" 2>/dev/null || true)" = "$real_before" ]
+pass "runs with --data-dir left ~/Library/LaunchAgents unchanged"
 # Where WebKit keeps the app's sign-in session (recorded for the privacy documentation).
 ls -d "$HOME/Library/WebKit/app.clipdock.ClipDock" "$HOME/Library/HTTPStorages/app.clipdock.ClipDock"* "$HOME/Library/Caches/app.clipdock.ClipDock" 2>/dev/null | sed 's/^/session data: /' || true
 echo "macOS checks passed."

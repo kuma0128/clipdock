@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -30,10 +31,24 @@ public partial class MainWindow : Window
     private bool allowClose;
     private bool loaded;
     private readonly BrowserSession browserSession;
+    // Closing the window keeps ClipDock in the menu bar; only the icon's menu or Quit (⌘Q) ends it.
+    private readonly MenuBarIcon menuBarIcon;
+    private readonly LoginItem loginItem = new();
+    private bool startAtLogin = true;
+    private bool trayNoticeShown;
+    private bool exitRequested;
+    private bool changingLoginItem;
+    private bool statusRead;
+    // Launch checks the engine for updates. ClipDock can then wait in the menu bar for days,
+    // so it checks again once a day while nothing is being saved, and retries sooner after a failure.
+    private static readonly TimeSpan EngineRecheck = TimeSpan.FromHours(24);
+    private readonly DispatcherTimer engineTimer = new() { Interval = TimeSpan.FromMinutes(5) };
+    private DateTime nextEngineCheck = DateTime.MaxValue;
 
     public MainWindow()
     {
         InitializeComponent();
+        menuBarIcon = new MenuBarIcon(ShowFromMenuBar, RequestExit);
         VersionLabel.Text = $"ClipDock  {App.Version}  /  {(OperatingSystem.IsMacOS() ? "macOS" : "Avalonia")}";
         HistoryFile.PrepareDataDirectory();
         var oldSessions = Path.Combine(AppPaths.Data, "sessions");
@@ -44,6 +59,7 @@ public partial class MainWindow : Window
         library.StateChanged += RefreshSummary;
         library.Settled += _ => DownloadSettled();
         LoadState();
+        ApplyLoginItemAtLaunch();
         foreach (var language in LanguageBox.Items.OfType<ComboBoxItem>())
             if ((string?)language.Tag == Localization.Language) LanguageBox.SelectedItem = language;
         LanguageBox.SelectionChanged += Language_Changed;
@@ -58,16 +74,134 @@ public partial class MainWindow : Window
         QualityBox.SelectionChanged += (_, _) => SaveState();
         FormatBox.SelectionChanged += (_, _) => { UpdateFormat(); SaveState(); };
         UseLoginBox.IsCheckedChanged += LoginPreference_Changed;
+        StartAtLoginBox.IsCheckedChanged += StartAtLogin_Changed;
+        // Not tied to Opened: at login the window stays closed, and the engine is still checked at launch.
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (App.SmokeResultFile is { } result) { _ = RunSmokeAsync(result); return; }
+            installTask = InstallEngineAsync();
+        }, DispatcherPriority.Background);
+        // The sign-in session lives in this window, so it is read the first time the window opens.
         Opened += async (_, _) =>
         {
-            if (App.SmokeResultFile is { } result) { await RunSmokeAsync(result); return; }
-            installTask = InstallEngineAsync();
+            if (statusRead || App.SmokeResultFile is not null) return;
+            statusRead = true;
             try { await browserSession.RefreshStatusAsync(); }
             catch (Exception ex) { LoginStatus.Text = ex.Message; }
         };
+        engineTimer.Tick += (_, _) =>
+        {
+            if (DateTime.UtcNow < nextEngineCheck || installing || shuttingDown || library.ActiveOperations > 0) return;
+            installTask = InstallEngineAsync();
+        };
+        engineTimer.Start();
         UpdateFormat();
         Closing += OnClosing;
-        Closed += (_, _) => browserSession.Close();
+        // The menu bar icon is removed by the lifetime when the process ends.
+        Closed += (_, _) => { engineTimer.Stop(); browserSession.Close(); };
+    }
+
+    internal void ShowFromMenuBar()
+    {
+        if (shuttingDown) return;
+        MacApp.ShowInDock(true);
+        Show();
+        if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+        Activate();
+        MacApp.Activate();
+    }
+    private async void HideToMenuBar()
+    {
+        if (!trayNoticeShown && App.SmokeResultFile is null)
+        {
+            // Said once, the first time the window disappears into the menu bar.
+            trayNoticeShown = true;
+            SaveState();
+            await ConfirmDialog.ShowAsync(this, "ClipDock", Localization.Text("ClipDockはメニューバーで動作しています") + "\n" +
+                Localization.Text("ウィンドウを閉じても、保存中の動画はそのまま続きます。メニューバーのClipDockアイコンから、ウィンドウを開いたりClipDockを終了したりできます。"),
+                Localization.Text("OK"));
+            if (shuttingDown || !IsVisible) return;
+        }
+        // Hiding would also hide the sign-in window and leave it without an owner; it is opened again from 「ログイン」.
+        browserSession.Close();
+        Hide();
+        MacApp.ShowInDock(false);
+    }
+    // The menu bar icon's Quit, and macOS's own Quit when there is something to ask about.
+    private void RequestExit()
+    {
+        if (shuttingDown) return;
+        exitRequested = true;
+        // A question about unfinished work is asked over the window, so bring it back first.
+        if (installing && !updatingQuietly || library.HasUnfinished) ShowFromMenuBar();
+        Close();
+    }
+    // ⌘Q, Quit in the Dock, or macOS logging out, restarting or shutting down.
+    internal void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
+    {
+        if (allowClose) return;
+        var hasWork = installing && !updatingQuietly || library.HasUnfinished;
+        // Unfinished work is asked about over the window, as from the menu bar (a log out waits for the answer).
+        if (shuttingDown || hasWork)
+        {
+            e.Cancel = true;
+            Dispatcher.UIThread.Post(RequestExit);
+            return;
+        }
+        // Nothing to lose: macOS may end ClipDock now, without holding up a log out. The installed engine stays
+        // usable when a quiet update is cut short.
+        shuttingDown = true;
+        engineTimer.Stop();
+        installCancellation?.Cancel();
+        SaveState();
+        allowClose = true;
+    }
+
+    private void ApplyLoginItemAtLaunch()
+    {
+        changingLoginItem = true;
+        try
+        {
+            // Development builds (no app bundle) and --data-dir runs never change the login items.
+            if (!OperatingSystem.IsMacOS() || LoginItem.BundleExecutable(Environment.ProcessPath) is not { } executable || AppPaths.UsesCustomDataDirectory)
+            { StartAtLoginBox.IsChecked = startAtLogin; return; }
+            // A copy opened from the disk image registers nothing; the choice applies once ClipDock runs from Applications.
+            if (LoginItem.IsTemporary(executable)) { StartAtLoginBox.IsChecked = false; return; }
+            // Keeps the agent pointing at this copy, for example after a move. A choice to turn it off stays off.
+            if (startAtLogin) loginItem.Enable(executable);
+            StartAtLoginBox.IsChecked = startAtLogin && loginItem.Targets(executable);
+            MacApp.RelaunchOnLogin(StartAtLoginBox.IsChecked != true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { StartAtLoginBox.IsChecked = startAtLogin; }
+        finally { changingLoginItem = false; }
+    }
+    private void StartAtLogin_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (changingLoginItem || shuttingDown) return;
+        var enable = StartAtLoginBox.IsChecked == true;
+        void Revert(string message)
+        {
+            changingLoginItem = true;
+            StartAtLoginBox.IsChecked = !enable;
+            changingLoginItem = false;
+            Notice.Text = message;
+        }
+        try
+        {
+            if (OperatingSystem.IsMacOS() && LoginItem.BundleExecutable(Environment.ProcessPath) is { } executable && !AppPaths.UsesCustomDataDirectory)
+            {
+                if (enable && LoginItem.IsTemporary(executable))
+                { Revert(Localization.Text("ログイン時に開くには、ClipDockを「アプリケーション」フォルダーに移してから開いてください。")); return; }
+                if (enable) loginItem.Enable(executable);
+                else loginItem.Disable();
+                MacApp.RelaunchOnLogin(!enable);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        { Revert(Localization.Text("ログイン時の起動設定を変更できませんでした: ") + ex.Message); return; }
+        startAtLogin = enable;
+        SaveState();
+        Notice.Text = enable ? Localization.Text("Macへのログイン時に、ClipDockをメニューバーで開始します。") : Localization.Text("Macへのログイン時にはClipDockを開始しません。");
     }
 
     private void Language_Changed(object? sender, SelectionChangedEventArgs e)
@@ -168,6 +302,7 @@ public partial class MainWindow : Window
         }
         CountLabel.Text = library.CountText(filter, shown.Count);
         QueueStatus.Text = library.QueueText();
+        menuBarIcon.Text = library.Jobs.Any(j => j.IsBusy || j.State == "queued") ? "ClipDock\n" + QueueStatus.Text : "ClipDock";
         EmptyState.IsVisible = shown.Count == 0;
     }
     private async void ChooseOutput_Click(object? sender, RoutedEventArgs e)
@@ -240,6 +375,7 @@ public partial class MainWindow : Window
         // Downloads wait for this task, so a quiet update gives up once the network stops answering.
         var patience = TimeSpan.FromSeconds(45);
         if (quiet) cancellation.CancelAfter(patience);
+        var checkedEngine = false;
         try
         {
             await ToolInstaller.InstallAsync(AppPaths.Tools, new Progress<string>(message =>
@@ -248,13 +384,19 @@ public partial class MainWindow : Window
                 if (quiet) { EngineStatus.Text = message; cancellation.CancelAfter(patience); }
                 else Notice.Text = ClipDock.Core.Localization.Text("初期セットアップ中: ") + message;
             }), cancellation.Token);
+            checkedEngine = true;
         }
         catch (OperationCanceledException) when (quiet) { }
         catch (OperationCanceledException) { Notice.Text = shuttingDown ? ClipDock.Core.Localization.Text("エンジンの準備を中止しました。") : ClipDock.Core.Localization.Text("エンジンの取得が時間内に終わりませんでした。通信環境を確認して「保存エンジンを準備」を押してください。"); }
         // The installed engine keeps working when an update cannot be fetched.
         catch (Exception) when (quiet) { }
         catch (Exception ex) { Notice.Text = ClipDock.Core.Localization.Text("エンジンの取得に失敗しました: ") + ex.Message; }
-        finally { installCancellation = null; installing = false; updatingQuietly = false; EngineButton.IsEnabled = !shuttingDown; UpdateEngineStatus(); StartQueue(); }
+        finally
+        {
+            // At login the network may not be ready yet: a missing engine is retried within minutes, a failed update within half an hour.
+            nextEngineCheck = DateTime.UtcNow + (checkedEngine ? EngineRecheck : quiet ? TimeSpan.FromMinutes(30) : TimeSpan.FromMinutes(5));
+            installCancellation = null; installing = false; updatingQuietly = false; EngineButton.IsEnabled = !shuttingDown; UpdateEngineStatus(); StartQueue();
+        }
         if (!quiet && ToolInstaller.IsReady(ToolInstaller.FindTools())) Notice.Text = ClipDock.Core.Localization.Text("初期セットアップが完了しました。URLを貼り付けて「保存」を押してください。");
     }
     private void UpdateEngineStatus()
@@ -287,6 +429,8 @@ public partial class MainWindow : Window
                 Select(QualityBox, settings.Quality);
                 Select(FormatBox, settings.Format);
                 UseLoginBox.IsChecked = settings.UseLogin;
+                startAtLogin = settings.StartAtLogin;
+                trayNoticeShown = settings.TrayNoticeShown;
                 library.MaxConcurrency = Math.Clamp(settings.MaxConcurrentDownloads, 1, DownloadScheduler.MaximumConcurrency);
                 Select(ConcurrencyBox, library.MaxConcurrency.ToString());
             }
@@ -306,7 +450,7 @@ public partial class MainWindow : Window
         try
         {
             // The browser overlay is a Windows feature; its setting is carried through unchanged.
-            HistoryFile.Write(settingsFile, JsonSerializer.SerializeToUtf8Bytes(new AppSettings(outputDirectory, Quality, library.MaxConcurrency, Format, false, UseLogin, SelectedLanguage), Json.Options), plain: true);
+            HistoryFile.Write(settingsFile, JsonSerializer.SerializeToUtf8Bytes(new AppSettings(outputDirectory, Quality, library.MaxConcurrency, Format, false, UseLogin, SelectedLanguage, startAtLogin, trayNoticeShown), Json.Options), plain: true);
             HistoryFile.Write(historyFile, JsonSerializer.SerializeToUtf8Bytes(library.Snapshot(), Json.Options));
             return true;
         }
@@ -315,15 +459,27 @@ public partial class MainWindow : Window
     private async void OnClosing(object? sender, WindowClosingEventArgs e)
     {
         if (allowClose) return;
+        // The close button (and ⌘W) hides the window; downloads and the daily engine check go on in the menu bar.
+        var exiting = exitRequested || e.CloseReason is WindowCloseReason.ApplicationShutdown or WindowCloseReason.OSShutdown;
+        exitRequested = false;
+        if (!exiting && !shuttingDown) { e.Cancel = true; HideToMenuBar(); return; }
+        // A shutdown started by the lifetime ends the process itself; one started here ends it through App.Quit.
+        var quitHere = e.CloseReason is not (WindowCloseReason.ApplicationShutdown or WindowCloseReason.OSShutdown);
         var hasWork = installing && !updatingQuietly || library.HasUnfinished;
-        if (!hasWork && !installing && library.ActiveOperations == 0) { SaveState(); return; }
+        if (!hasWork && !installing && library.ActiveOperations == 0)
+        {
+            shuttingDown = true; engineTimer.Stop(); SaveState(); allowClose = true;
+            if (quitHere) App.Quit();
+            return;
+        }
         e.Cancel = true;
         if (shuttingDown) return;
         // The engine download can take many minutes on a slow line; it is cancellable like any other work.
-        var question = installing ? ClipDock.Core.Localization.Text("エンジンの準備を中止して終了しますか？\n続ける場合は、このウィンドウをしまってください。")
-            : ClipDock.Core.Localization.Text("ダウンロードを中断して終了しますか？\n続ける場合は、このウィンドウをしまってください。");
+        var question = installing ? ClipDock.Core.Localization.Text("エンジンの準備を中止して終了しますか？\n終了しない場合、準備はメニューバーで続きます。")
+            : ClipDock.Core.Localization.Text("ダウンロードを中断して終了しますか？\n終了しない場合、保存はメニューバーで続きます。");
         if (hasWork && !await ConfirmDialog.ShowAsync(this, "ClipDock", question, ClipDock.Core.Localization.Text("終了する"), ClipDock.Core.Localization.Text("続ける"))) return;
         shuttingDown = true;
+        engineTimer.Stop();
         installCancellation?.Cancel();
         var stopDownloads = library.StopAsync();
         try
@@ -332,16 +488,22 @@ public partial class MainWindow : Window
             await stopDownloads;
         }
         catch (Exception) { /* The window closes either way; the state below is still saved. */ }
-        SaveState(); allowClose = true; Close();
+        SaveState(); allowClose = true; Close(); App.Quit();
     }
 
     // Automated window check (--smoke): proves on a real desktop that the window opens, the sign-in session
-    // exists, a page loads in the sign-in window and its address can be read back. Stays open briefly for a screenshot.
+    // exists, a page loads in the sign-in window and its address can be read back, and that closing the window
+    // keeps ClipDock in the menu bar. Stays open briefly for a screenshot, then quits as the menu bar icon's Quit does.
     private async Task RunSmokeAsync(string resultFile)
     {
         var result = new Dictionary<string, object?> { ["version"] = App.Version, ["language"] = Localization.Language, ["passed"] = false };
         try
         {
+            // With --background (the login item) only the menu bar icon is there until its menu opens the window.
+            result["background"] = App.StartHidden;
+            result["startedHidden"] = !IsVisible;
+            result["menuBarIcon"] = menuBarIcon.IsVisible;
+            if (App.StartHidden) ShowFromMenuBar();
             await browserSession.WhenReadyAsync().WaitAsync(TimeSpan.FromSeconds(30));
             result["sessionStore"] = SessionStore.AdapterInfo?.ToString();
             result["status"] = await browserSession.RefreshStatusAsync("https://example.com/");
@@ -356,13 +518,22 @@ public partial class MainWindow : Window
             result["cookieFile"] = cookies is not null;
             result["localizedControls"] = (string?)AllFilter.Content == Localization.Text("↓    すべてのダウンロード") &&
                 login.Title == Localization.Text("ClipDock — サイトにログイン") && SelectedLanguage == Localization.Language;
-            result["passed"] = page.Success && (string?)result["scriptUrl"] == "https://example.com/" && result["localizedControls"] is true;
+            // The close button only hides the window (and the sign-in window); the menu bar icon brings it back.
+            Close();
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            result["hidesToMenuBar"] = !IsVisible && !login.IsVisible && !shuttingDown && menuBarIcon.IsVisible;
+            ShowFromMenuBar();
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            result["reopensFromMenuBar"] = IsVisible;
+            result["passed"] = page.Success && (string?)result["scriptUrl"] == "https://example.com/" && result["localizedControls"] is true &&
+                (bool)result["startedHidden"]! == App.StartHidden && result["menuBarIcon"] is true &&
+                result["hidesToMenuBar"] is true && result["reopensFromMenuBar"] is true;
         }
         catch (Exception ex) { result["error"] = ex.ToString(); }
         SaveState();
         await File.WriteAllTextAsync(resultFile, JsonSerializer.Serialize(result, Json.Options));
         await Task.Delay(TimeSpan.FromSeconds(12));
-        allowClose = true;
-        Close();
+        // Nothing is unfinished, so this ends the process without a question; scripts/test-mac.sh waits for that.
+        RequestExit();
     }
 }

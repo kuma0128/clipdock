@@ -22,6 +22,7 @@
             <ComboBoxItem Content="日本語" Tag="ja" /><ComboBoxItem Content="English" Tag="en" />
             <ComboBoxItem Content="简体中文" Tag="zh-CN" /><ComboBoxItem Content="Español" Tag="es" />
           </ComboBox>
+          <CheckBox x:Name="StartAtLoginBox" Margin="0,0,0,16" ToolTip.Tip="{DynamicResource L761CB756BD82ED11}" AutomationProperties.Name="{DynamicResource L42FF1836ECFA8EA2}" AutomationProperties.HelpText="{DynamicResource L761CB756BD82ED11}"><TextBlock Text="{DynamicResource L42FF1836ECFA8EA2}" TextWrapping="Wrap" FontSize="12" /></CheckBox>
           <Button x:Name="EngineButton" Content="{DynamicResource L6AD4BA2E2D7A2BAB}" HorizontalAlignment="Stretch" ToolTip.Tip="{DynamicResource L45BAC65D26CA7228}" Click="InstallEngine_Click" Margin="0,0,0,8" />
           <TextBlock x:Name="EngineStatus" Foreground="{StaticResource Muted}" FontSize="10" TextWrapping="Wrap" Margin="4,4,0,15" />
           <TextBlock x:Name="VersionLabel" Foreground="#5C7163" FontSize="10" Margin="4,0,0,0" />

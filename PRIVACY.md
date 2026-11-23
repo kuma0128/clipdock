@@ -59,7 +59,9 @@ macOS版も、取り扱う情報・目的・通信先はWindows版と同じで�
 
 | 保存場所 | 内容と保持期間 |
 | --- | --- |
-| `~/Library/Application Support/ClipDock/settings.json` | 表示言語・保存先・形式・画質・同時保存数・ログイン情報の利用設定。変更またはファイル削除まで保持します |
+| `~/Library/Application Support/ClipDock/settings.json` | 表示言語・保存先・形式・画質・同時保存数・ログイン情報の利用設定、ログイン時の起動設定、メニューバーの案内を表示済みかどうか。変更またはファイル削除まで保持します |
+| `~/Library/LaunchAgents/app.clipdock.ClipDock.plist` | ログイン時にメニューバーで起動するための `ClipDock.app` 内の実行ファイルのパス。「ログイン時に開く」をOFFにすると削除します。アプリをゴミ箱へ移しても残るため、不要なら削除してください |
+| `~/Library/Application Support/ClipDock/instance.lock` | ClipDockを二重に起動しないための空のファイル。内容はありません |
 | `~/Library/Application Support/ClipDock/history.dat` | Windows版と同じ内容の保存履歴（最大300件）。macOSにはDPAPIがないため暗号化していません。フォルダーとファイルのアクセス権を現在のユーザーに限定します |
 | アプリ専用のWebKitデータ（`~/Library/WebKit/app.clipdock.ClipDock` など） | 専用ログイン画面のCookie、サイトの保存データ、閲覧データ。macOSのWebKitが管理します。Safariや他のブラウザーとは共有しません |
 | `~/Library/Application Support/ClipDock/sessions` | 保存処理中の一時Cookieファイル。暗号化されていません。フォルダーのアクセス権を現在のユーザーに限定します |
@@ -67,13 +69,13 @@ macOS版も、取り扱う情報・目的・通信先はWindows版と同じで�
 - ログイン画面はMicrosoft Edge WebView2ではなく、macOS標準のWebKitで表示します。
 - 「ログイン情報を削除」は、ClipDock内の全サイトのCookieを削除します。キャッシュなどCookie以外の閲覧データは、上記のWebKitデータを削除すると消去できます。
 - 「ブラウザー上部の保存タブ」はmacOS版にありません。他のアプリのウィンドウやアドレスバーを読み取る処理は含みません。
-- アプリをゴミ箱へ移しても、設定・履歴・ログイン用のデータ・保存ファイルは残ります。すべて消すには、アプリを閉じて上記のフォルダーと不要な保存ファイルを削除してください。
+- アプリをゴミ箱へ移しても、設定・履歴・ログイン用のデータ・ログイン時の起動設定・保存ファイルは残ります。すべて消すには、メニューバーのアイコンから「ClipDockを終了」を選んでから、上記のフォルダー・ファイルと不要な保存ファイルを削除してください。
 
 ## 通信先と情報の利用
 
 保存処理では、動画の配信元とページ解析に必要なサイトへ、URL、参照元、保存エンジンのUser-Agentなど取得に必要な情報を送ります。ログイン情報の利用がONの場合は、対応するサイトへの認証にCookieも使います。これらのサイトは通信元のIPアドレスを受け取ります。
 
-保存エンジンの準備・更新はアプリの起動時に自動で行い（Windows版は通知領域で起動中も1日に1回確認します）、GitHubから配布ファイルとライセンス情報を取得します。専用ログイン画面は、ユーザーが開いたHTTPSサイトと認証に必要なページへ接続します。ログイン画面はWindows版でMicrosoft Edge WebView2 Runtime、Mac版でmacOS標準のWebKitを使用します。
+保存エンジンの準備・更新はアプリの起動時に自動で行い（Windows版は通知領域、Mac版はメニューバーで起動中も1日に1回確認します）、GitHubから配布ファイルとライセンス情報を取得します。専用ログイン画面は、ユーザーが開いたHTTPSサイトと認証に必要なページへ接続します。ログイン画面はWindows版でMicrosoft Edge WebView2 Runtime、Mac版でmacOS標準のWebKitを使用します。
 
 ユーザーデータを販売せず、広告、信用評価、動画・音声の保存と無関係な分析には使用しません。開発者がアプリの保存履歴やCookieを取得する仕組みはありません。
 

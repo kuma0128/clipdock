@@ -125,6 +125,50 @@ Check("sign-in startup points at this copy, follows a move and respects Windows'
         finally { Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree(root, false); }
     }
 });
+Check("the Mac login item starts this bundle hidden, follows a move and is never written from a disk image", () =>
+{
+    var folder = Path.Combine(Path.GetTempPath(), "clipdock-agents-" + Guid.NewGuid().ToString("N"));
+    var item = new ClipDock.Mac.LoginItem(Path.Combine(folder, "LaunchAgents"));
+    var installed = "/Applications/ClipDock.app/Contents/MacOS/ClipDock";
+    var moved = "/Users/test user/Apps & Tools/ClipDock <新>.app/Contents/MacOS/ClipDock";
+    try
+    {
+        Assert(ClipDock.Mac.LoginItem.BundleExecutable(installed) == installed && ClipDock.Mac.LoginItem.BundleExecutable(moved) == moved);
+        foreach (var path in new string?[] { null, "", "ClipDock.app/Contents/MacOS/ClipDock", "/usr/local/bin/ClipDock", "/x/ClipDock/Contents/MacOS/ClipDock", "/x/ClipDock.app/MacOS/ClipDock" })
+            Assert(ClipDock.Mac.LoginItem.BundleExecutable(path) is null);
+        Assert(ClipDock.Mac.LoginItem.IsTemporary("/Volumes/ClipDock/ClipDock.app/Contents/MacOS/ClipDock") &&
+            ClipDock.Mac.LoginItem.IsTemporary("/private/var/folders/x/AppTranslocation/1234/d/ClipDock.app/Contents/MacOS/ClipDock") &&
+            !ClipDock.Mac.LoginItem.IsTemporary(installed) && !ClipDock.Mac.LoginItem.IsTemporary(moved));
+
+        Assert(!item.Targets(installed));
+        item.Enable(installed);
+        var plist = File.ReadAllText(item.AgentFile);
+        Assert(Path.GetFileName(item.AgentFile) == "app.clipdock.ClipDock.plist" && item.Targets(installed) && !item.Targets(moved));
+        Assert(plist.Contains("<string>" + installed + "</string>") && plist.Contains("<string>--background</string>") &&
+            plist.Contains("<key>RunAtLoad</key>") && plist.Contains("<string>Aqua</string>") && plist.Contains("<string>Interactive</string>"));
+        if (!OperatingSystem.IsWindows())
+            Assert(File.GetUnixFileMode(item.AgentFile) == (UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.GroupRead | UnixFileMode.OtherRead));
+        // Unchanged files are left alone (macOS announces every new background item); a moved copy rewrites the target.
+        var written = File.GetLastWriteTimeUtc(item.AgentFile);
+        File.SetLastWriteTimeUtc(item.AgentFile, written.AddHours(-1));
+        item.Enable(installed);
+        Assert(File.GetLastWriteTimeUtc(item.AgentFile) == written.AddHours(-1));
+        item.Enable(moved);
+        Assert(item.Targets(moved) && !item.Targets(installed) && File.ReadAllText(item.AgentFile).Contains("Apps &amp; Tools/ClipDock &lt;新&gt;.app"));
+        Assert(ClipDock.Mac.LoginItem.Target(ClipDock.Mac.LoginItem.Plist(moved)) == moved);
+
+        foreach (var other in new string?[] { null, "", "not xml", "<plist><dict/></plist>",
+            ClipDock.Mac.LoginItem.Plist(installed).Replace("app.clipdock.ClipDock</string>\n    <key>ProgramArguments", "com.example.Other</string>\n    <key>ProgramArguments"),
+            ClipDock.Mac.LoginItem.Plist(installed).Replace("<string>--background</string>", ""),
+            ClipDock.Mac.LoginItem.Plist("relative/ClipDock") })
+            Assert(ClipDock.Mac.LoginItem.Target(other) is null);
+
+        item.Disable();
+        Assert(!File.Exists(item.AgentFile) && !item.Targets(moved));
+        item.Disable();
+    }
+    finally { if (Directory.Exists(folder)) Directory.Delete(folder, true); }
+});
 Check("only absolute HTTP(S) URLs are accepted", () =>
 {
     foreach (var url in new[] { "file:///C:/secret", "javascript:alert(1)", "ftp://a.com/file", "--exec=calc", "https://u:p@example.com/v", "https://example.com/\n--exec", "", "https://" })

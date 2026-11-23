@@ -274,11 +274,6 @@
     "引擎下载失败：",
     "Falló la descarga del motor: "
   ],
-  "エンジンの準備を中止して終了しますか？\n続ける場合は、このウィンドウをしまってください。": [
-    "Cancel engine setup and quit?\nMinimize this window to continue.",
-    "取消引擎准备并退出？\n如需继续，请最小化此窗口。",
-    "¿Cancelar la preparación del motor y salir?\nMinimiza esta ventana para continuar."
-  ],
   "エンジンの準備を中止して終了しますか？\n続ける場合は、このウィンドウを最小化してください。": [
     "Cancel engine setup and quit?\nMinimize this window to continue.",
     "取消引擎准备并退出？\n如需继续，请最小化此窗口。",
@@ -358,11 +353,6 @@
     "The engine is up to date. No download is needed.",
     "引擎已是最新版本，无需重新下载。",
     "El motor está actualizado. No es necesario descargarlo de nuevo."
-  ],
-  "ダウンロードを中断して終了しますか？\n続ける場合は、このウィンドウをしまってください。": [
-    "Stop downloads and quit?\nMinimize this window to continue.",
-    "中断下载并退出？\n如需继续，请最小化此窗口。",
-    "¿Detener las descargas y salir?\nMinimiza esta ventana para continuar."
   ],
   "ダウンロードを中断して終了しますか？\n続ける場合は、このウィンドウを最小化してください。": [
     "Stop downloads and quit?\nMinimize this window to continue.",
@@ -953,5 +943,60 @@
     "Cancel engine setup and quit?\nIf you do not quit, setup continues in the notification area.",
     "取消引擎准备并退出？\n如果不退出，准备将在通知区域继续。",
     "¿Cancelar la preparación del motor y salir?\nSi no sales, la preparación continúa en el área de notificación."
+  ],
+  "ログイン時に開く": [
+    "Open at login",
+    "登录时打开",
+    "Abrir al iniciar sesión"
+  ],
+  "Macへのログイン時にメニューバーで開始します。ウィンドウを閉じても、メニューバーのアイコンから開けます。": [
+    "Starts in the menu bar when you log in to your Mac. After you close the window, open ClipDock from its menu bar icon.",
+    "登录 Mac 时在菜单栏中启动。关闭窗口后，可从菜单栏图标再次打开。",
+    "Se inicia en la barra de menús al iniciar sesión en el Mac. Después de cerrar la ventana, ábrelo desde su icono en la barra de menús."
+  ],
+  "ClipDockはメニューバーで動作しています": [
+    "ClipDock is still running in the menu bar",
+    "ClipDock 仍在菜单栏中运行",
+    "ClipDock sigue en ejecución en la barra de menús"
+  ],
+  "ウィンドウを閉じても、保存中の動画はそのまま続きます。メニューバーのClipDockアイコンから、ウィンドウを開いたりClipDockを終了したりできます。": [
+    "Downloads in progress continue after you close the window. Use the ClipDock icon in the menu bar to open the window or quit ClipDock.",
+    "关闭窗口后，正在进行的下载会继续。可通过菜单栏中的 ClipDock 图标打开窗口或退出 ClipDock。",
+    "Las descargas en curso continúan después de cerrar la ventana. Usa el icono de ClipDock en la barra de menús para abrir la ventana o salir de ClipDock."
+  ],
+  "ログイン時に開くには、ClipDockを「アプリケーション」フォルダーに移してから開いてください。": [
+    "To open ClipDock at login, move it to the Applications folder and open it from there.",
+    "要在登录时打开 ClipDock，请将其移到“应用程序”文件夹，然后从那里打开。",
+    "Para abrir ClipDock al iniciar sesión, muévelo a la carpeta Aplicaciones y ábrelo desde allí."
+  ],
+  "ログイン時の起動設定を変更できませんでした: ": [
+    "Could not change the login setting: ",
+    "无法更改登录时打开设置：",
+    "No se pudo cambiar la apertura al iniciar sesión: "
+  ],
+  "Macへのログイン時に、ClipDockをメニューバーで開始します。": [
+    "ClipDock will start in the menu bar when you log in to your Mac.",
+    "登录 Mac 时，ClipDock 将在菜单栏中启动。",
+    "ClipDock se iniciará en la barra de menús cuando inicies sesión en el Mac."
+  ],
+  "Macへのログイン時にはClipDockを開始しません。": [
+    "ClipDock will not start when you log in to your Mac.",
+    "登录 Mac 时不会启动 ClipDock。",
+    "ClipDock no se iniciará cuando inicies sesión en el Mac."
+  ],
+  "ダウンロードを中断して終了しますか？\n終了しない場合、保存はメニューバーで続きます。": [
+    "Stop downloads and quit?\nIf you do not quit, downloads continue in the menu bar.",
+    "中断下载并退出？\n如果不退出，下载将在菜单栏中继续。",
+    "¿Detener las descargas y salir?\nSi no sales, las descargas continúan en la barra de menús."
+  ],
+  "エンジンの準備を中止して終了しますか？\n終了しない場合、準備はメニューバーで続きます。": [
+    "Cancel engine setup and quit?\nIf you do not quit, setup continues in the menu bar.",
+    "取消引擎准备并退出？\n如果不退出，准备将在菜单栏中继续。",
+    "¿Cancelar la preparación del motor y salir?\nSi no sales, la preparación continúa en la barra de menús."
+  ],
+  "OK": [
+    "OK",
+    "好",
+    "Aceptar"
   ]
 }

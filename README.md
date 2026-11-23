@@ -35,10 +35,22 @@ Windows版は初期設定で、Windowsへのサインイン時に通知領域で
 macOS版は同じ保存処理を使う別ビルドです。[公式サイト](https://clipdock-d6z.pages.dev/)から、Appleシリコン用（`arm64`）またはIntel用（`x64`）のディスクイメージ（.dmg）を取得できます。
 
 1. お使いのMacに合うディスクイメージを開きます。Appleシリコンは `arm64`、Intelは `x64` です。
-2. `ClipDock` を「アプリケーション」フォルダーへドラッグし、そこから起動します。
+2. `ClipDock` を「アプリケーション」フォルダーへドラッグし、そこから起動します。更新するときは、先にメニューバーのClipDockアイコンから「ClipDockを終了」を選びます。
 3. 初回の起動時に保存エンジンを自動で取得します。インターネット接続が必要です。以降の使い方はWindows版と同じです。
 
 **未署名版について:** macOS版にはApple Developer IDの署名と公証がありません。初回の起動時に、macOSが開発元を確認できないという警告を表示します。入手元を確認したうえで開く場合は、いったん警告を閉じ、「システム設定」→「プライバシーとセキュリティ」の「このまま開く」を選びます。この項目が出ない場合や入手元を確認できない場合は中止してください。Gatekeeperを無効にする必要はありません。
+
+### メニューバーとログイン時の起動（macOS）
+
+Mac版は初期設定で、Macへのログイン時にメニューバーで起動します。ウィンドウもDockのアイコンも開かず、保存エンジンの更新確認だけを行います。メニューバーで起動したままの間も、保存中でなければ1日に1回確認します。
+
+- メニューバーのClipDockアイコン（トレイに向かう矢印）をクリックし、「ClipDockを開く」を選ぶとウィンドウが開きます。Finder・Launchpad・SpotlightからClipDockを開いても同じです。
+- ウィンドウの閉じるボタン（⌘W）を押しても終了しません。ウィンドウとDockのアイコンが消え、保存中の動画はメニューバーで続きます。初めて閉じたときだけ、その旨を表示します。
+- 終了するには、アイコンのメニューから「ClipDockを終了」を選ぶか、ウィンドウを開いて⌘Qを押します。保存中やエンジンの初回取得中は中断確認が出ます。
+- 自動起動は左下の「ログイン時に開く」で切り替えます。現在のユーザーのLaunchAgent（`~/Library/LaunchAgents/app.clipdock.ClipDock.plist`）を作成し、`ClipDock.app` を `--background` 付きで起動します。管理者権限は不要です。作成したとき、macOSが「バックグラウンド項目が追加されました」と通知します。ClipDockを別の場所へ移した場合は、次の起動時に登録先を更新します。
+- ディスクイメージから直接開いたClipDockは登録しません。「アプリケーション」フォルダーへ移してから開いてください。
+- 「システム設定」→「一般」→「ログイン項目」（macOS 15以降は「ログイン項目と機能拡張」）の「バックグラウンドでの実行を許可」でOFFにした場合は、その設定を優先します。ClipDockはmacOS側の設定を変更しないため、ClipDock側の「ログイン時に開く」がONのままでも起動しません。もう一度使うときは、同じ画面でONにします。
+- 「ログイン時に開く」がONの間は、ログアウト時の「再ログイン時にウインドウを再度開く」でClipDockのウィンドウが開くことはありません。
 
 Windows版との違い:
 
@@ -63,7 +75,7 @@ MP4の画質は最高画質／2160p／1080p／720p／480pから選べます。4K
 
 MP4はコンテナ形式で、元の映像コーデックを保持することがあります。画質は解像度を優先し、同じ解像度ならH.264 / AACを優先します。4Kや最高画質ではVP9やAV1になる場合があります。再生できない機器向けには1080p以下も試してください。
 
-キャンセル後の「再試行」は取得済みの断片からの再開を試みます。サイトや期限付きURLによっては最初から取得し直すため、新しいURLの追加が必要になることもあります。Windows版はウィンドウを閉じても保存を続けます。処理中にアプリを終了すると中断確認が出ます。再起動後に中断された項目が勝手に再開されることはありません。
+キャンセル後の「再試行」は取得済みの断片からの再開を試みます。サイトや期限付きURLによっては最初から取得し直すため、新しいURLの追加が必要になることもあります。Windows版・Mac版とも、ウィンドウを閉じても保存を続けます。処理中にアプリを終了すると中断確認が出ます。再起動後に中断された項目が勝手に再開されることはありません。
 
 ## ブラウザー上部の保存タブ
 
@@ -144,10 +156,10 @@ bash scripts/build-mac.sh arm64   # または x64
 bash scripts/test-mac.sh arm64    # 署名・ディスクイメージ・実エンジンでの保存・画面の自動確認
 ```
 
-生成先は `artifacts/mac-<arch>/ClipDock.app` と `artifacts/mac/ClipDock-<version>-mac-<arch>-unsigned.dmg` です。画面はAvalonia製でWindowsでも起動できるため、`dotnet run --project src/ClipDock.Mac -- --data-dir <作業用フォルダー>` で見た目と操作を確認できます。
+生成先は `artifacts/mac-<arch>/ClipDock.app` と `artifacts/mac/ClipDock-<version>-mac-<arch>-unsigned.dmg` です。画面はAvalonia製でWindowsでも起動できるため、`dotnet run --project src/ClipDock.Mac -- --data-dir <作業用フォルダー>` で見た目と操作を確認できます。`--data-dir` を付けた実行や `.app` に入っていない開発用ビルドは、ログイン時の起動設定（LaunchAgent）を変更しません。
 
 構成は `ClipDock.App`（Windows用のWPFアプリ）、`ClipDock.Mac`（macOS用のAvaloniaアプリ）、`ClipDock.Core`（ダウンロード処理・設定・エンジン取得）です。UIに依存しない `ClipDock.App` の `DownloadItem.cs`・`DownloadEngine.cs`・`DownloadFailure.cs`・`DownloadLibrary.cs` はMac版とチェックでも共有します。保存一覧の振る舞いを変えるときは、両方の画面ではなく `DownloadLibrary` を変更します。実機での確認は [手動確認手順](docs/manual-checks.md) を使います。
 
-macOS版では、設定・履歴・エンジンを `~/Library/Application Support/ClipDock` に保存します。macOSにはDPAPIがないため、履歴は暗号化せず、現在のユーザーだけが読み書きできるファイル（フォルダー700、ファイル600）として保存します。ログイン用のCookieはアプリ専用のWebKitデータに保持し、Safariとは共有しません。アンインストールは「アプリケーション」フォルダーの `ClipDock` をゴミ箱へ移します。設定・履歴・保存ファイルは残ります。
+macOS版では、設定・履歴・エンジンを `~/Library/Application Support/ClipDock` に保存します。macOSにはDPAPIがないため、履歴は暗号化せず、現在のユーザーだけが読み書きできるファイル（フォルダー700、ファイル600）として保存します。ログイン用のCookieはアプリ専用のWebKitデータに保持し、Safariとは共有しません。アンインストールは、左下の「ログイン時に開く」をOFFにし、メニューバーのアイコンから「ClipDockを終了」を選んでから、「アプリケーション」フォルダーの `ClipDock` をゴミ箱へ移します。先にゴミ箱へ移した場合は `~/Library/LaunchAgents/app.clipdock.ClipDock.plist` も削除してください。設定・履歴・保存ファイルは残ります。
 
 同梱ソフトウェアのライセンスは [THIRD-PARTY.md](THIRD-PARTY.md) を参照してください。
