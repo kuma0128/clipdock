@@ -16,6 +16,10 @@ public static class AppUpdate
 {
     public static readonly Uri ManifestUrl = new("https://clipdock-d6z.pages.dev/updates/latest.json");
     private const long MaximumSize = 512L * 1024 * 1024;
+
+    // Static initializers run in source order: Current must be set before the client that names it in its User-Agent.
+    // (1.0.5 had them the other way round, so the first update check failed while initializing this class.)
+    public static Version Current { get; } = Normalize(typeof(AppUpdate).Assembly.GetName().Version ?? new Version(0, 0, 0));
     private static readonly HttpClient Client = CreateClient();
 
     private static HttpClient CreateClient()
@@ -25,7 +29,8 @@ public static class AppUpdate
         return client;
     }
 
-    public static Version Current { get; } = Normalize(typeof(AppUpdate).Assembly.GetName().Version ?? new Version(0, 0, 0));
+    // The User-Agent the update check sends; reading it also initializes everything the real check uses.
+    internal static string UserAgent => Client.DefaultRequestHeaders.UserAgent.ToString();
 
     // The manifest key for this build: win-x64, mac-arm64 or mac-x64 (Rosetta processes take the Intel build).
     public static string Platform => OperatingSystem.IsWindows() ? "win-x64"

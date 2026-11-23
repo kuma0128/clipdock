@@ -28,6 +28,12 @@ internal static class UpdateChecks
     public static void Run(Action<string, Action> check)
     {
         var current = new Version(1, 0, 4);
+        // The real check uses the class's own HTTP client; 1.0.5 failed while creating it, before any request.
+        check("the app's own update client starts and names this version in its User-Agent", () =>
+        {
+            Assert(AppUpdate.Current == AppUpdate.Normalize(typeof(AppUpdate).Assembly.GetName().Version!));
+            Assert(AppUpdate.UserAgent == $"ClipDock/{AppUpdate.Current.ToString(3)}");
+        });
         check("only a newer release with a checksum and a download on the official site is offered", () =>
         {
             var offer = AppUpdate.Parse(Json(), current, "win-x64", Manifest)!;

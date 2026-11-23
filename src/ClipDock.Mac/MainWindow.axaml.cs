@@ -286,9 +286,9 @@ public partial class MainWindow : Window
             }
             nextUpdateCheck = DateTime.UtcNow + TimeSpan.FromHours(24);
         }
-        // Offline, a moved site or a bad download: keep the current version and try again later.
-        catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidDataException or JsonException or OperationCanceledException or UnauthorizedAccessException)
-        { nextUpdateCheck = DateTime.UtcNow + TimeSpan.FromHours(1); }
+        // Offline, a moved site, a bad download or a fault in this check itself: keep the current version and try again
+        // later. Nothing may end the checks for good, as a failure while setting up the client did in 1.0.5.
+        catch (Exception) { nextUpdateCheck = DateTime.UtcNow + TimeSpan.FromHours(1); }
         finally { checkingUpdate = false; }
         TryApplyUpdate(updateRequested);
     }
