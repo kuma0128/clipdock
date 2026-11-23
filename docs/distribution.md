@@ -28,7 +28,7 @@ Cloudflareへログイン済みの環境で実行します。サイトは `websi
 npm run site:metadata
 ```
 
-ページの本文やFAQを変えたとき、`Directory.Build.props` の版数を上げたときに実行します。出力が変わったページだけ、`sitemap.xml` の更新日と構造化データの `dateModified` が実行した日になります。変わらないページの日付はそのままなので、検索エンジンは更新したページを見分けられます。対応する言語のページがない利用者には英語のページを案内します（`hreflang="x-default"`）。ホームのスクリーンショットの `alt` は、スクリプトの `imageAlt`（共有時の画像の説明）と同じ文にします。
+ページの本文やFAQを変えたとき、`Directory.Build.props` の版数を上げたときに実行します。内容（本文・`<head>`）が変わったページだけ、`sitemap.xml` の更新日と構造化データの `dateModified` が実行した日になります。変わらないページの日付はそのままなので、検索エンジンは更新したページを見分けられます。各ページの日付と内容の指紋（SHA-256）は `scripts/site-dates.json` に記録します。ページを変えてこのスクリプトを実行し忘れると、`npm test` が失敗します。対応する言語のページがない利用者には英語のページを案内します（`hreflang="x-default"`）。ホームのスクリーンショットの `alt` は、スクリプトの `imageAlt`（共有時の画像の説明）と同じ文にします。
 
 `npm test` は、生成結果が最新であること、タイトル・説明文がページごとに異なること、FAQの構造化データが表示内容と一致すること、`sitemap.xml` の日付とページの `dateModified` が一致すること、`llms-full.txt` が英語のFAQをすべて含むこと、`robots.txt` が検索エンジンとAIのクローラーを止めていないこと、`favicon.ico` がアプリのアイコン（`src/ClipDock.App/app.ico`）と同じことを確認します。
 

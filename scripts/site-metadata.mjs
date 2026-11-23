@@ -3,8 +3,9 @@
 // engines and AI answers, /llms.txt (a short factual summary) and /llms-full.txt (the English pages as Markdown).
 // The FAQ data is read from the visible FAQ, so the two never disagree.
 //
-//   node scripts/site-metadata.mjs            rewrite the generated files; a page whose output changes is dated today
+//   node scripts/site-metadata.mjs            rewrite the generated files; a page whose content changed is dated today
 //   node scripts/site-metadata.mjs --check    exit 1 when a generated file is out of date (used by npm test)
+import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
@@ -350,31 +351,36 @@ function llmsFull(read) {
 ${english.join("\n---\n\n")}`;
 }
 
-// The dates in the current sitemap, by URL.
-function sitemapDates() {
-  let sitemapText = "";
-  try { sitemapText = readFileSync(join(root, "sitemap.xml"), "utf8"); } catch { /* first run */ }
-  return Object.fromEntries([...sitemapText.matchAll(/<loc>([^<]+)<\/loc>\s*<lastmod>([^<]+)<\/lastmod>/g)].map(([, loc, date]) => [loc, date]));
+// Each page's last-modified date and a fingerprint of everything it shows, by URL. A page's date (its sitemap lastmod
+// and dateModified) moves only when the fingerprint does, whether the body, the head or the generator changed.
+const datesFile = fileURLToPath(new URL("site-dates.json", import.meta.url));
+function storedDates() {
+  try { return JSON.parse(readFileSync(datesFile, "utf8")); } catch { return {}; }
 }
+const fingerprint = html => createHash("sha256").update(html.replaceAll("\r\n", "\n")).digest("hex");
 
-// Every generated file as it should be: { path: contents }. Each page keeps its sitemap date (also its dateModified)
-// until its output changes; then it gets `today`. Without `today` (the check), every page keeps the date it has.
+// Every generated file as it should be: { path: contents }. A page whose fingerprint changed gets `today`; without
+// `today` (the check), every page keeps its date, and a page changed since the last run makes site-dates.json stale.
 export function render(today) {
-  const previous = sitemapDates();
+  const stored = storedDates();
   const files = {};
   const dates = {};
+  const record = {};
   const sources = new Map();
   for (const language of languages) for (const page of pageNames) {
     const file = pageFile(language, page);
     const html = readFileSync(file, "utf8");
     const loc = url(language, page);
-    let date = previous[loc] ?? "missing";
-    let output = withHead(language, page, html, date);
-    if (today && (date === "missing" || !same(html, output))) output = withHead(language, page, html, date = today);
-    files[file] = output;
+    const content = fingerprint(withHead(language, page, html, "0000-00-00"));
+    let date = stored[loc]?.date;
+    if (today && (!date || stored[loc].content !== content)) date = today;
+    date ??= "missing";
+    files[file] = withHead(language, page, html, date);
     dates[loc] = date;
+    record[loc] = { date, content };
     sources.set(file, html);
   }
+  files[datesFile] = JSON.stringify(record, null, 2) + "\n";
   files[join(root, "sitemap.xml")] = sitemap(dates);
   files[join(root, "llms.txt")] = llms();
   files[join(root, "llms-full.txt")] = llmsFull((language, page) => sources.get(pageFile(language, page)));
