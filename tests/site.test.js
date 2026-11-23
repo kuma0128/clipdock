@@ -160,6 +160,8 @@ test("the sitemap lists every indexable page exactly once", () => {
 test("pages stay within the Content-Security-Policy in _headers", () => {
   const headers = readFileSync(join(root, "_headers"), "utf8");
   assert.match(headers, /Content-Security-Policy: default-src 'self'; style-src 'self'; img-src 'self';/);
+  // Cloudflare Web Analytics adds its beacon to every page at deployment; nothing else may run scripts.
+  assert.match(headers, /; script-src https:\/\/static\.cloudflareinsights\.com; connect-src 'self' https:\/\/cloudflareinsights\.com;/);
   for (const page of pages) {
     assert.ok(!/<style\b/i.test(page.html) && !/\sstyle="/i.test(page.html), `${page.path}: inline styles are blocked by style-src 'self'`);
     assert.ok(!/\son[a-z]+="/i.test(page.html), `${page.path}: inline event handlers are blocked`);
