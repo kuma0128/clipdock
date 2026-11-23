@@ -4,6 +4,9 @@ User-agent: *
 Allow: /
 Disallow: /downloads/
 Disallow: /updates/
+# Content Signals (contentsignals.org): the pages may be used for search results, for AI answers that cite them,
+# and for training AI models.
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 
 # AI search and answer crawlers, named so that a general AI-crawler block elsewhere does not apply to this site.
 User-agent: GPTBot
@@ -15,7 +18,12 @@ User-agent: Claude-User
 User-agent: PerplexityBot
 User-agent: Perplexity-User
 User-agent: Google-Extended
+User-agent: Applebot
 User-agent: Applebot-Extended
+User-agent: Amazonbot
+User-agent: DuckAssistBot
+User-agent: Meta-ExternalAgent
+User-agent: MistralAI-User
 User-agent: CCBot
 Allow: /
 Disallow: /downloads/

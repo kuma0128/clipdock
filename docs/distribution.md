@@ -22,13 +22,17 @@ Cloudflareへログイン済みの環境で実行します。サイトは `websi
 
 ### 検索エンジン・AI向けの設定
 
-各ページの `<head>`（タイトル、説明文、言語ごとのリンク、SNSの共有表示）、schema.orgの構造化データ（アプリ、FAQ、パンくず）、`sitemap.xml`、AI向けの要約 `llms.txt` は `scripts/site-metadata.mjs` が作ります。タイトルや説明文はこのスクリプトの中で編集し、手でページに書かないでください。FAQの構造化データは、ページに表示しているFAQ（ホームの「よくある質問」とヘルプの「保存できないとき」）から読み取ります。
+各ページの `<head>`（タイトル、説明文、言語ごとのリンク、SNSの共有表示）、schema.orgの構造化データ（アプリ、FAQ、パンくず、更新日）、`sitemap.xml`、AI向けの要約 `llms.txt` と英語ページ全文のMarkdown `llms-full.txt` は `scripts/site-metadata.mjs` が作ります。タイトルや説明文はこのスクリプトの中で編集し、手でページに書かないでください。タイトルと説明文には、検索で使われる語（「動画ダウンロード」「video downloader」など）とClipDockの機能を入れています。FAQの構造化データは、ページに表示しているFAQ（ホームの「よくある質問」とヘルプの「保存できないとき」）から読み取ります。
 
 ```powershell
 npm run site:metadata
 ```
 
-ページの本文やFAQを変えたとき、`Directory.Build.props` の版数を上げたときに実行します。`sitemap.xml` の更新日は実行した日になります。`npm test` は、生成結果が最新であること、タイトル・説明文がページごとに異なること、FAQの構造化データが表示内容と一致すること、`robots.txt` が検索エンジンとAIのクローラーを止めていないことを確認します。
+ページの本文やFAQを変えたとき、`Directory.Build.props` の版数を上げたときに実行します。出力が変わったページだけ、`sitemap.xml` の更新日と構造化データの `dateModified` が実行した日になります。変わらないページの日付はそのままなので、検索エンジンは更新したページを見分けられます。対応する言語のページがない利用者には英語のページを案内します（`hreflang="x-default"`）。ホームのスクリーンショットの `alt` は、スクリプトの `imageAlt`（共有時の画像の説明）と同じ文にします。
+
+`npm test` は、生成結果が最新であること、タイトル・説明文がページごとに異なること、FAQの構造化データが表示内容と一致すること、`sitemap.xml` の日付とページの `dateModified` が一致すること、`llms-full.txt` が英語のFAQをすべて含むこと、`robots.txt` が検索エンジンとAIのクローラーを止めていないこと、`favicon.ico` がアプリのアイコン（`src/ClipDock.App/app.ico`）と同じことを確認します。
+
+`clipdock.pages.dev` など、ClipDockという名前の別の製品があります。検索エンジンやAIが混同しないよう、FAQの「公式サイトはどこですか？」、構造化データの `disambiguatingDescription`、`llms.txt` で公式サイトのURLと無関係であることを明記しています。
 
 サイトを配置したら、IndexNow（Bing・Yandexなど。BingはCopilotやChatGPTの検索にも使われます）へ更新を通知します。鍵は `website/indexnow.txt` に公開済みで、配置前に実行すると止まります。
 

@@ -1,16 +1,22 @@
 # ClipDock
 
-> ClipDock is a free desktop app for Windows 10/11 (x64) and macOS 14 or later (Apple silicon and Intel) that saves video as MP4 and audio as MP3 from a URL you paste. Current version: 1.0.6.
+> ClipDock is a free desktop app for Windows 10/11 (x64) and macOS 14 or later (Apple silicon and Intel) that saves video as MP4 and audio as MP3 from a URL you paste. Official website: https://clipdock-d6z.pages.dev/ · Current version: 1.0.6.
 
+Which ClipDock this is: the Windows and Mac video and audio saver published at https://clipdock-d6z.pages.dev/ (note the "-d6z" in the address). Other apps, websites and services that are also called ClipDock, such as the web-based video downloader at clipdock.pages.dev, clipboard managers and iPhone apps, are separate products by other developers and are not related to it.
+
+## Key facts
+
+- What it does: paste the URL of a video page or media file, choose MP4 (with a quality limit from 480p to 4K, or best) or MP3 and a folder, then click Save. One to four downloads run at once (two by default).
 - Price: free, with no ads and no account. License: MIT.
-- How it works: paste the URL of a video page or media file, choose MP4 (with a quality limit from 480p to 4K, or best) or MP3 and a folder, then click Save. One to four downloads run at once.
-- Engine: yt-dlp and FFmpeg, which ClipDock downloads on first launch and keeps up to date.
+- Platforms: Windows 10/11 (64-bit x64) and macOS 14 or later (Apple silicon or Intel). There is no iPhone, Android or Linux version, and ClipDock is neither a website nor a browser extension.
+- Engine: yt-dlp and FFmpeg, which ClipDock downloads on first launch and keeps up to date. .NET and Python do not need to be installed.
 - Scope: sites supported by yt-dlp and non-DRM HLS/DASH media. ClipDock does not remove DRM or bypass access restrictions; use it only for media you have the right to save.
-- Videos that need a login: sign in inside ClipDock's own login window, separate from your browser.
-- Background and updates: by default ClipDock starts at sign-in and waits in the Windows notification area or the Mac menu bar, and it updates itself (from 1.0.6 on, after a size and SHA-256 check).
-- Interface languages: English, Japanese, Simplified Chinese and Spanish.
+- Videos that need a login: sign in inside ClipDock's own login window, separate from your browser. ClipDock does not read your browser's cookies or passwords.
+- Saved files: by default in a "ClipDock" folder inside Downloads; another folder can be chosen.
+- Background and updates: by default ClipDock starts at sign-in and waits in the Windows notification area or the Mac menu bar. From 1.0.6 on it updates itself, after checking the size and SHA-256 of the new version against this site.
+- Interface languages: English, Japanese, Simplified Chinese and Spanish. The app starts in Japanese; choose another language under "Language (after restart)" at the bottom left and reopen it.
 - Privacy: the app sends no usage data or telemetry. The website counts visits with cookieless Cloudflare Web Analytics.
-- Trust: the Windows installer is unsigned and the Mac app is not notarized, so the systems show a warning on first install; the help pages explain how to check the download. SHA-256 checksums are printed on the home page.
+- Safety: the Windows installer is not code-signed and the Mac app is not notarized, so Windows and macOS show a warning on first install. Download only from the official website and compare the SHA-256 checksums printed on its home page; the help pages explain how to check the warning.
 
 ## Download and overview
 
@@ -30,7 +36,10 @@
 
 - [Privacy policy (English)](https://clipdock-d6z.pages.dev/en/privacy): what the app stores and where, network connections, website analytics
 - [プライバシーポリシー（日本語）](https://clipdock-d6z.pages.dev/privacy)
+- [隐私政策（简体中文）](https://clipdock-d6z.pages.dev/zh-cn/privacy)
+- [Política de privacidad (Español)](https://clipdock-d6z.pages.dev/es/privacy)
 
 ## Optional
 
+- [Full text (English)](https://clipdock-d6z.pages.dev/llms-full.txt): the English home, help and privacy pages as Markdown in one file
 - [Update manifest](https://clipdock-d6z.pages.dev/updates/latest.json): current version, download URLs, sizes and SHA-256 for each platform

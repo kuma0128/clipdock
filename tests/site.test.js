@@ -6,7 +6,7 @@ import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { onRequest } from "../functions/downloads/[[file]].js";
-import { render, currentLastmod, visibleQuestions } from "../scripts/site-metadata.mjs";
+import { render, visibleQuestions } from "../scripts/site-metadata.mjs";
 
 const root = fileURLToPath(new URL("../website/", import.meta.url));
 const origin = "https://clipdock-d6z.pages.dev";
@@ -49,6 +49,11 @@ test("the site has the expected pages in every language", () => {
   assert.ok(byUrl.has("/404") && !byUrl.get("/404").indexed);
 });
 
+// Browsers, feed readers and crawlers ask for /favicon.ico without reading the page; it is the app's own icon.
+test("the site serves the app icon as /favicon.ico", () => {
+  assert.deepEqual(readFileSync(join(root, "favicon.ico")), readFileSync(new URL("../src/ClipDock.App/app.ico", import.meta.url)));
+});
+
 test("download links name the current release and are served by the download function", async () => {
   const bucket = {
     async head() { return { size: 1, uploaded: new Date(), etag: "e", httpEtag: '"e"' }; },
@@ -78,8 +83,12 @@ test("every home page shows its own language's app screenshot, also as the page 
     assert.ok(figure, `/${prefix} has no app screenshot`);
     const image = tags(figure[0], "img")[0];
     screenshots.add(image.src);
-    for (const name of ["", "help", "privacy"])
-      assert.equal(tags(byUrl.get(`/${prefix}${name}`).html, "meta").find(t => t.property === "og:image")?.content, origin + image.src, `/${prefix}${name}`);
+    for (const name of ["", "help", "privacy"]) {
+      const meta = tags(byUrl.get(`/${prefix}${name}`).html, "meta");
+      assert.equal(meta.find(t => t.property === "og:image")?.content, origin + image.src, `/${prefix}${name}`);
+      // Shared previews describe the image with the same words as the page.
+      assert.equal(meta.find(t => t.property === "og:image:alt")?.content, image.alt, `/${prefix}${name}: og:image:alt and the screenshot's alt differ`);
+    }
   }
   assert.equal(screenshots.size, Object.keys(languages).length, "two languages share one screenshot");
 });
@@ -125,8 +134,8 @@ test("version numbers outside the screenshot and its caption are the current rel
 });
 
 // Search engines and AI answers read the generated heads, structured data, sitemap and llms.txt.
-test("page heads, structured data, the sitemap and llms.txt are generated and current", () => {
-  const files = render(currentLastmod());
+test("page heads, structured data, the sitemap, llms.txt and llms-full.txt are generated and current", () => {
+  const files = render();
   for (const [file, contents] of Object.entries(files))
     // Line endings may differ by checkout (CRLF on Windows); only the content matters.
     assert.equal(readFileSync(file, "utf8").replaceAll("\r\n", "\n"), contents.replaceAll("\r\n", "\n"),
@@ -196,7 +205,8 @@ test("each page declares its language, canonical URL and every translation", () 
     const name = page.url.slice(1 + page.prefix.length);
     const alternates = Object.fromEntries(tags(page.html, "link").filter(t => t.rel === "alternate").map(t => [t.hreflang, t.href]));
     const expected = Object.fromEntries(Object.entries(languages).map(([prefix, language]) => [language, `${origin}/${prefix}${name}`]));
-    assert.deepEqual(alternates, { ...expected, "x-default": `${origin}/${name}` }, page.path);
+    // People whose language has no translation get the English page.
+    assert.deepEqual(alternates, { ...expected, "x-default": `${origin}/en/${name}` }, page.path);
     const current = tags(page.html, "a").filter(t => "aria-current" in t);
     assert.ok(current.length > 0 && current.every(t => t.href === page.url), `${page.path}: aria-current must mark links to this page only`);
     assert.ok(current.some(t => t.hreflang === languages[page.prefix]), `${page.path}: the language menu does not mark this language`);
@@ -205,11 +215,32 @@ test("each page declares its language, canonical URL and every translation", () 
   }
 });
 
-test("the sitemap lists every indexable page exactly once", () => {
+test("the sitemap lists every indexable page exactly once, dated as the page dates itself", () => {
   const sitemap = readFileSync(join(root, "sitemap.xml"), "utf8");
   const listed = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]);
   assert.equal(new Set(listed).size, listed.length, "duplicate sitemap entries");
   assert.deepEqual(listed.sort(), pages.filter(p => p.indexed).map(p => origin + p.url).sort());
+  const dates = Object.fromEntries([...sitemap.matchAll(/<loc>([^<]+)<\/loc>\s*<lastmod>([^<]+)<\/lastmod>/g)].map(([, loc, date]) => [loc, date]));
+  for (const page of pages.filter(p => p.indexed)) {
+    assert.match(dates[origin + page.url], /^\d{4}-\d{2}-\d{2}$/, page.path);
+    assert.equal(structured(page).find(node => node["@type"] === "WebPage").dateModified, dates[origin + page.url], page.path);
+  }
+});
+
+// AI assistants that read /llms-full.txt get the English pages as text: every FAQ answer, and no leftover markup.
+test("llms-full.txt carries the English pages as Markdown", () => {
+  const full = readFileSync(join(root, "llms-full.txt"), "utf8");
+  for (const name of ["", "help", "privacy"]) {
+    const page = byUrl.get(`/en/${name}`);
+    assert.ok(full.includes(`Source: ${origin}${page.url}\n`), page.path);
+    assert.ok(full.includes(`# ${page.html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/)[1].replace(/<br>/g, " ")}\n`), `${page.path}: heading`);
+  }
+  const linkTexts = full.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
+  for (const [question, answer] of visibleQuestions(byUrl.get("/en/").html, "index")) {
+    assert.ok(full.includes(`**${question}**`), question);
+    assert.ok(linkTexts.includes(answer), question);
+  }
+  assert.ok(!/<\/?[a-z][^>]*>/i.test(full.replace(/`[^`]*`/g, "")), "HTML left in llms-full.txt");
 });
 
 test("pages stay within the Content-Security-Policy in _headers", () => {
