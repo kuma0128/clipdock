@@ -32,6 +32,9 @@ jobs:
   macos:
     runs-on: macos-latest
     timeout-minutes: 30
+    # A release tag attaches the checked disk images to its GitHub release (artifacts are size-limited).
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-dotnet@v6.1.0
@@ -49,8 +52,18 @@ jobs:
         run: |
           bash scripts/test-mac.sh x64
           bash scripts/test-mac.sh arm64
+      - name: Attach the disk images to the release (release tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --draft --verify-tag --title "ClipDock ${tag#v}" --notes "ClipDock ${tag#v}"
+          gh release upload "$tag" artifacts/mac/*.dmg artifacts/mac/*.dmg.sha256 --clobber
+      # Logs and packages are conveniences: a full artifact quota must not hide the checks' result.
       - name: Upload macOS check logs
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v7.0.2
         with:
           name: mac-check-logs
@@ -58,6 +71,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v7.0.2
+        continue-on-error: true
         with:
           name: ClipDock-mac
           path: artifacts/mac
@@ -112,6 +126,7 @@ jobs:
         run: ./scripts/test-installer.ps1
       - name: Upload installer lifecycle logs
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v7.0.2
         with:
           name: installer-lifecycle-logs
@@ -119,6 +134,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v7.0.2
+        continue-on-error: true
         with:
           name: ClipDock-win-x64
           path: artifacts/ClipDock-win-x64.zip

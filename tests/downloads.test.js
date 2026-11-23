@@ -42,7 +42,7 @@ test("only release filenames can read the bucket, and only GET/HEAD are allowed"
 
 test("macOS disk images and their checksums are release files from 1.0.3 on", async () => {
   const f = fixture();
-  for (const version of ["1.0.3", "1.0.4"]) for (const arch of ["arm64", "x64"]) {
+  for (const version of ["1.0.3", "1.0.4", "1.0.5"]) for (const arch of ["arm64", "x64"]) {
     const image = `ClipDock-${version}-mac-${arch}-unsigned.dmg`;
     const response = await f.request({}, "GET", image);
     assert.equal(response.status, 200);

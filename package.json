@@ -1,6 +1,6 @@
 {
   "name": "clipdock",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "type": "module",
   "scripts": { "test": "node --test tests/*.test.js", "test:app": "dotnet run --project tests/ClipDock.Checks -c Release", "test:all": "npm test && npm run check && npm run test:app", "check": "node --check scripts/check-package.mjs && node --check scripts/smoke-downloads.mjs && node --check functions/downloads/[[file]].js", "deploy:site": "wrangler pages deploy --branch main" },
