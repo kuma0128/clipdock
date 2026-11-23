@@ -12,6 +12,8 @@ export const origin = "https://clipdock-d6z.pages.dev";
 const root = fileURLToPath(new URL("../website/", import.meta.url));
 const version = readFileSync(new URL("../Directory.Build.props", import.meta.url), "utf8").match(/<Version>(\d+\.\d+\.\d+)<\/Version>/)[1];
 const screenshot = { width: 1186, height: 813 };
+// Ownership proofs for webmaster tools. They are public by design; removing one ends that tool's access.
+const verification = [["google-site-verification", "FQT_edwaiw8ZB0ohzxScJlazAQRKzzdjQ_XNJiiWWQk"]];
 
 const languages = [
   { prefix: "", lang: "ja", locale: "ja_JP", image: "/assets/clipdock-desktop.jpg" },
@@ -144,6 +146,7 @@ function head(language, page, html) {
     `<title>${attribute(title)}</title>`,
     `<meta name="description" content="${attribute(description)}">`,
     '<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">',
+    ...verification.map(([name, content]) => `<meta name="${name}" content="${content}">`),
     `<link rel="canonical" href="${canonical}">`,
     ...languages.map(l => `<link rel="alternate" hreflang="${l.lang}" href="${url(l, page)}">`),
     `<link rel="alternate" hreflang="x-default" href="${url(languages[0], page)}">`,
