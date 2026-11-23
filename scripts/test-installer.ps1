@@ -234,6 +234,8 @@ try {
     Write-Output 'PASS ZIP installation and owned-file uninstall preserve user data and modified documents'
     # Automatic update, as the app runs it: the new installer is started silently with the app's process id, the
     # app quits, and setup waits for it, installs and opens ClipDock again in the notification area.
+    # The README edited for the ZIP check was retained there; installing again replaces it by design.
+    $preserved.Remove($editedReadme)
     Invoke-Setup $InstallerPath '07-install-for-update'
     Assert-Installed
     $installedApp = Join-Path $installRoot 'ClipDock.exe'
