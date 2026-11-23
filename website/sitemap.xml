@@ -1,15 +1,115 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://clipdock-d6z.pages.dev/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://clipdock-d6z.pages.dev/help</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://clipdock-d6z.pages.dev/privacy</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://clipdock-d6z.pages.dev/en/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://clipdock-d6z.pages.dev/en/help</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://clipdock-d6z.pages.dev/en/privacy</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://clipdock-d6z.pages.dev/zh-cn/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://clipdock-d6z.pages.dev/zh-cn/help</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://clipdock-d6z.pages.dev/zh-cn/privacy</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://clipdock-d6z.pages.dev/es/</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://clipdock-d6z.pages.dev/es/help</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://clipdock-d6z.pages.dev/es/privacy</loc><lastmod>2026-11-16</lastmod></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://clipdock-d6z.pages.dev/</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://clipdock-d6z.pages.dev/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clipdock-d6z.pages.dev/en/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://clipdock-d6z.pages.dev/zh-cn/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://clipdock-d6z.pages.dev/es/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://clipdock-d6z.pages.dev/"/>
+    <image:image><image:loc>https://clipdock-d6z.pages.dev/assets/clipdock-desktop.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://clipdock-d6z.pages.dev/help</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://clipdock-d6z.pages.dev/help"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clipdock-d6z.pages.dev/en/help"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://clipdock-d6z.pages.dev/zh-cn/help"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://clipdock-d6z.pages.dev/es/help"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://clipdock-d6z.pages.dev/help"/>
+  </url>
+  <url>
+    <loc>https://clipdock-d6z.pages.dev/privacy</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://clipdock-d6z.pages.dev/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clipdock-d6z.pages.dev/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://clipdock-d6z.pages.dev/zh-cn/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://clipdock-d6z.pages.dev/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://clipdock-d6z.pages.dev/privacy"/>
+  </url>
+  <url>
+    <loc>https://clipdock-d6z.pages.dev/en/</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://clipdock-d6z.pages.dev/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clipdock-d6z.pages.dev/en/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://clipdock-d6z.pages.dev/zh-cn/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://clipdock-d6z.pages.dev/es/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://clipdock-d6z.pages.dev/"/>
+    <image:image><image:loc>https://clipdock-d6z.pages.dev/assets/clipdock-desktop-en.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://clipdock-d6z.pages.dev/en/help</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://clipdock-d6z.pages.dev/help"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clipdock-d6z.pages.dev/en/help"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://clipdock-d6z.pages.dev/zh-cn/help"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://clipdock-d6z.pages.dev/es/help"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://clipdock-d6z.pages.dev/help"/>
+  </url>
+  <url>
+    <loc>https://clipdock-d6z.pages.dev/en/privacy</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://clipdock-d6z.pages.dev/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clipdock-d6z.pages.dev/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://clipdock-d6z.pages.dev/zh-cn/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://clipdock-d6z.pages.dev/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://clipdock-d6z.pages.dev/privacy"/>
+  </url>
+  <url>
+    <loc>https://clipdock-d6z.pages.dev/zh-cn/</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://clipdock-d6z.pages.dev/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clipdock-d6z.pages.dev/en/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://clipdock-d6z.pages.dev/zh-cn/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://clipdock-d6z.pages.dev/es/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://clipdock-d6z.pages.dev/"/>
+    <image:image><image:loc>https://clipdock-d6z.pages.dev/assets/clipdock-desktop-zh-cn.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://clipdock-d6z.pages.dev/zh-cn/help</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://clipdock-d6z.pages.dev/help"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clipdock-d6z.pages.dev/en/help"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://clipdock-d6z.pages.dev/zh-cn/help"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://clipdock-d6z.pages.dev/es/help"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://clipdock-d6z.pages.dev/help"/>
+  </url>
+  <url>
+    <loc>https://clipdock-d6z.pages.dev/zh-cn/privacy</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://clipdock-d6z.pages.dev/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clipdock-d6z.pages.dev/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://clipdock-d6z.pages.dev/zh-cn/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://clipdock-d6z.pages.dev/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://clipdock-d6z.pages.dev/privacy"/>
+  </url>
+  <url>
+    <loc>https://clipdock-d6z.pages.dev/es/</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://clipdock-d6z.pages.dev/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clipdock-d6z.pages.dev/en/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://clipdock-d6z.pages.dev/zh-cn/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://clipdock-d6z.pages.dev/es/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://clipdock-d6z.pages.dev/"/>
+    <image:image><image:loc>https://clipdock-d6z.pages.dev/assets/clipdock-desktop-es.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://clipdock-d6z.pages.dev/es/help</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://clipdock-d6z.pages.dev/help"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clipdock-d6z.pages.dev/en/help"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://clipdock-d6z.pages.dev/zh-cn/help"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://clipdock-d6z.pages.dev/es/help"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://clipdock-d6z.pages.dev/help"/>
+  </url>
+  <url>
+    <loc>https://clipdock-d6z.pages.dev/es/privacy</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://clipdock-d6z.pages.dev/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://clipdock-d6z.pages.dev/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://clipdock-d6z.pages.dev/zh-cn/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://clipdock-d6z.pages.dev/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://clipdock-d6z.pages.dev/privacy"/>
+  </url>
 </urlset>

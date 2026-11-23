@@ -4,24 +4,37 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#ffffff">
-<title>使用帮助 — ClipDock</title>
-<meta name="description" content="ClipDock 的 Windows 与 Mac 版安装、语言切换、MP4 与 MP3 保存、保存位置、可选浏览器标签，以及 Windows 警告和下载失败的处理方法。">
+<title>ClipDock 帮助 — 安装、保存 MP4 或 MP3、自动更新</title>
+<meta name="description" content="介绍 ClipDock 的安装方法、Windows 和 Mac 显示警告时如何确认、从网址保存 MP4 或 MP3 的步骤、画质与格式、需要登录的视频、后台运行与自动更新，以及无法保存时的处理方法。">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <link rel="canonical" href="https://clipdock-d6z.pages.dev/zh-cn/help">
 <link rel="alternate" hreflang="ja" href="https://clipdock-d6z.pages.dev/help">
 <link rel="alternate" hreflang="en" href="https://clipdock-d6z.pages.dev/en/help">
 <link rel="alternate" hreflang="zh-Hans" href="https://clipdock-d6z.pages.dev/zh-cn/help">
 <link rel="alternate" hreflang="es" href="https://clipdock-d6z.pages.dev/es/help">
 <link rel="alternate" hreflang="x-default" href="https://clipdock-d6z.pages.dev/help">
-<link rel="icon" href="/assets/favicon.png" type="image/png">
+<link rel="icon" href="/assets/favicon.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/clipdock-icon.png">
 <link rel="stylesheet" href="/styles.css">
 <meta property="og:type" content="website">
-<meta property="og:title" content="使用帮助 — ClipDock">
-<meta property="og:description" content="ClipDock 安装、MP4 与 MP3 保存、保存位置、可选浏览器标签，以及 Windows 警告和下载失败的处理方法。">
+<meta property="og:site_name" content="ClipDock">
+<meta property="og:title" content="ClipDock 帮助 — 安装、保存 MP4 或 MP3、自动更新">
+<meta property="og:description" content="介绍 ClipDock 的安装方法、Windows 和 Mac 显示警告时如何确认、从网址保存 MP4 或 MP3 的步骤、画质与格式、需要登录的视频、后台运行与自动更新，以及无法保存时的处理方法。">
 <meta property="og:url" content="https://clipdock-d6z.pages.dev/zh-cn/help">
 <meta property="og:image" content="https://clipdock-d6z.pages.dev/assets/clipdock-desktop-zh-cn.jpg">
+<meta property="og:image:width" content="1186">
+<meta property="og:image:height" content="813">
+<meta property="og:image:alt" content="ClipDock Windows 应用界面（简体中文）">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="es_ES">
 <meta name="twitter:card" content="summary_large_image">
-
+<meta name="twitter:title" content="ClipDock 帮助 — 安装、保存 MP4 或 MP3、自动更新">
+<meta name="twitter:description" content="介绍 ClipDock 的安装方法、Windows 和 Mac 显示警告时如何确认、从网址保存 MP4 或 MP3 的步骤、画质与格式、需要登录的视频、后台运行与自动更新，以及无法保存时的处理方法。">
+<meta name="twitter:image" content="https://clipdock-d6z.pages.dev/assets/clipdock-desktop-zh-cn.jpg">
+<meta name="twitter:image:alt" content="ClipDock Windows 应用界面（简体中文）">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://clipdock-d6z.pages.dev/#organization","name":"ClipDock","url":"https://clipdock-d6z.pages.dev/","logo":{"@type":"ImageObject","url":"https://clipdock-d6z.pages.dev/assets/clipdock-icon.png","width":128,"height":128}},{"@type":"WebSite","@id":"https://clipdock-d6z.pages.dev/#website","url":"https://clipdock-d6z.pages.dev/","name":"ClipDock","inLanguage":["ja","en","zh-Hans","es"],"publisher":{"@id":"https://clipdock-d6z.pages.dev/#organization"}},{"@type":"WebPage","@id":"https://clipdock-d6z.pages.dev/zh-cn/help#webpage","url":"https://clipdock-d6z.pages.dev/zh-cn/help","name":"ClipDock 帮助 — 安装、保存 MP4 或 MP3、自动更新","description":"介绍 ClipDock 的安装方法、Windows 和 Mac 显示警告时如何确认、从网址保存 MP4 或 MP3 的步骤、画质与格式、需要登录的视频、后台运行与自动更新，以及无法保存时的处理方法。","inLanguage":"zh-Hans","isPartOf":{"@id":"https://clipdock-d6z.pages.dev/#website"},"breadcrumb":{"@id":"https://clipdock-d6z.pages.dev/zh-cn/help#breadcrumb"}},{"@type":"BreadcrumbList","@id":"https://clipdock-d6z.pages.dev/zh-cn/help#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://clipdock-d6z.pages.dev/zh-cn/"},{"@type":"ListItem","position":2,"name":"帮助","item":"https://clipdock-d6z.pages.dev/zh-cn/help"}]},{"@type":"FAQPage","@id":"https://clipdock-d6z.pages.dev/zh-cn/help#faq","url":"https://clipdock-d6z.pages.dev/zh-cn/help","inLanguage":"zh-Hans","isPartOf":{"@id":"https://clipdock-d6z.pages.dev/zh-cn/help#webpage"},"mainEntity":[{"@type":"Question","name":"403、要求登录，或在 X 上找不到视频","acceptedAnswer":{"@type":"Answer","text":"检查网址和公开状态。如有需要，先通过应用的「ログイン」窗口登录您要保存内容的网站，再重试。不会导入现有浏览器会话。网站限制仍可能导致无法保存。"}},{"@type":"Question","name":"任务一直等待","acceptedAnswer":{"@type":"Answer","text":"引擎安装期间，任务队列会等待。如果显示「保存エンジンを準備」（准备下载引擎），请检查网络后点击。"}},{"@type":"Question","name":"支持的网站仍下载失败","acceptedAnswer":{"@type":"Answer","text":"ClipDock 会在启动时和每天检查一次引擎更新。若要立即检查，请退出 ClipDock 后重新打开。网站变化或限制仍可能导致失败。"}},{"@type":"Question","name":"取消后仍有文件","acceptedAnswer":{"@type":"Answer","text":"下载和转换文件集中存放在保存位置的隐藏文件夹 .clipdock-work/<job-id>/。成功后删除该工作文件夹；取消、失败或退出应用时保留，以便重试。清除历史记录也会删除对应任务未完成的工作文件，但保留已完成的媒体。"}}]}]}</script>
 </head>
 <body>
 <a class="skip-link" href="#main">跳到正文</a>

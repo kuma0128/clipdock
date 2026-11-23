@@ -1,0 +1,36 @@
+# ClipDock
+
+> ClipDock is a free desktop app for Windows 10/11 (x64) and macOS 14 or later (Apple silicon and Intel) that saves video as MP4 and audio as MP3 from a URL you paste. Current version: 1.0.6.
+
+- Price: free, with no ads and no account. License: MIT.
+- How it works: paste the URL of a video page or media file, choose MP4 (with a quality limit from 480p to 4K, or best) or MP3 and a folder, then click Save. One to four downloads run at once.
+- Engine: yt-dlp and FFmpeg, which ClipDock downloads on first launch and keeps up to date.
+- Scope: sites supported by yt-dlp and non-DRM HLS/DASH media. ClipDock does not remove DRM or bypass access restrictions; use it only for media you have the right to save.
+- Videos that need a login: sign in inside ClipDock's own login window, separate from your browser.
+- Background and updates: by default ClipDock starts at sign-in and waits in the Windows notification area or the Mac menu bar, and it updates itself (from 1.0.6 on, after a size and SHA-256 check).
+- Interface languages: English, Japanese, Simplified Chinese and Spanish.
+- Privacy: the app sends no usage data or telemetry. The website counts visits with cookieless Cloudflare Web Analytics.
+- Trust: the Windows installer is unsigned and the Mac app is not notarized, so the systems show a warning on first install; the help pages explain how to check the download. SHA-256 checksums are printed on the home page.
+
+## Download and overview
+
+- [ClipDock (English)](https://clipdock-d6z.pages.dev/en/): downloads for Windows and Mac, SHA-256 checksums and FAQ
+- [ClipDock（日本語）](https://clipdock-d6z.pages.dev/)
+- [ClipDock（简体中文）](https://clipdock-d6z.pages.dev/zh-cn/)
+- [ClipDock (Español)](https://clipdock-d6z.pages.dev/es/)
+
+## Help
+
+- [Help (English)](https://clipdock-d6z.pages.dev/en/help): installation, system warnings, saving from a URL, quality and formats, login, running in the background, automatic updates, troubleshooting and uninstalling
+- [使い方・ヘルプ（日本語）](https://clipdock-d6z.pages.dev/help)
+- [帮助（简体中文）](https://clipdock-d6z.pages.dev/zh-cn/help)
+- [Ayuda (Español)](https://clipdock-d6z.pages.dev/es/help)
+
+## Policies
+
+- [Privacy policy (English)](https://clipdock-d6z.pages.dev/en/privacy): what the app stores and where, network connections, website analytics
+- [プライバシーポリシー（日本語）](https://clipdock-d6z.pages.dev/privacy)
+
+## Optional
+
+- [Update manifest](https://clipdock-d6z.pages.dev/updates/latest.json): current version, download URLs, sizes and SHA-256 for each platform

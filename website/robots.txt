@@ -1,4 +1,24 @@
+# ClipDock official site. Search engines and AI assistants may read every page.
+# Installers and the update manifest are for the app and download links, not for crawling.
 User-agent: *
 Allow: /
+Disallow: /downloads/
+Disallow: /updates/
+
+# AI search and answer crawlers, named so that a general AI-crawler block elsewhere does not apply to this site.
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: CCBot
+Allow: /
+Disallow: /downloads/
+Disallow: /updates/
 
 Sitemap: https://clipdock-d6z.pages.dev/sitemap.xml

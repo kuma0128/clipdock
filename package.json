@@ -3,7 +3,7 @@
   "version": "1.0.6",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test tests/*.test.js", "test:app": "dotnet run --project tests/ClipDock.Checks -c Release", "test:all": "npm test && npm run check && npm run test:app", "check": "node --check scripts/check-package.mjs && node --check scripts/smoke-downloads.mjs && node --check functions/downloads/[[file]].js", "deploy:site": "wrangler pages deploy --branch main" },
+  "scripts": { "test": "node --test tests/*.test.js", "test:app": "dotnet run --project tests/ClipDock.Checks -c Release", "test:all": "npm test && npm run check && npm run test:app", "check": "node --check scripts/check-package.mjs && node --check scripts/smoke-downloads.mjs && node --check functions/downloads/[[file]].js && node --check scripts/site-metadata.mjs && node --check scripts/indexnow.mjs", "site:metadata": "node scripts/site-metadata.mjs", "deploy:site": "wrangler pages deploy --branch main", "notify:search": "node scripts/indexnow.mjs" },
   "devDependencies": { "wrangler": "4.162.0" },
   "engines": { "node": ">=22" }
 }

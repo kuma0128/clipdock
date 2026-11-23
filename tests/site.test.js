@@ -6,6 +6,7 @@ import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { onRequest } from "../functions/downloads/[[file]].js";
+import { render, currentLastmod, visibleQuestions } from "../scripts/site-metadata.mjs";
 
 const root = fileURLToPath(new URL("../website/", import.meta.url));
 const origin = "https://clipdock-d6z.pages.dev";
@@ -33,6 +34,9 @@ function tags(html, name) {
 }
 const links = page => [...tags(page.html, "a"), ...tags(page.html, "link")].map(t => t.href).filter(Boolean);
 const ids = page => new Set([...page.html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]));
+// The page's schema.org nodes: every @graph of its JSON-LD scripts.
+const structured = page => [...page.html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+  .flatMap(([, json]) => { const data = JSON.parse(json); return data["@graph"] ?? [data]; });
 
 function target(url) {
   const { pathname, hash } = new URL(url, origin);
@@ -113,12 +117,49 @@ test("version numbers outside the screenshot and its caption are the current rel
   for (const page of pages) {
     const text = page.html.replace(/<figure\b[\s\S]*?<\/figure>/g, "").replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g, "");
     for (const [found] of text.matchAll(/\b\d+\.\d+\.\d+\b/g)) assert.equal(found, version, `${page.path} mentions ${found}`);
-    for (const [, json] of page.html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
-      const data = JSON.parse(json);
-      assert.equal(data.softwareVersion, version, page.path);
-      assert.ok(data.downloadUrl.includes(`ClipDock-${version}-`), page.path);
+    for (const software of structured(page).filter(node => node["@type"] === "SoftwareApplication")) {
+      assert.equal(software.softwareVersion, version, page.path);
+      assert.ok(software.downloadUrl.length === 3 && software.downloadUrl.every(link => link.includes(`/downloads/ClipDock-${version}-`)), page.path);
     }
   }
+});
+
+// Search engines and AI answers read the generated heads, structured data, sitemap and llms.txt.
+test("page heads, structured data, the sitemap and llms.txt are generated and current", () => {
+  const files = render(currentLastmod());
+  for (const [file, contents] of Object.entries(files))
+    // Line endings may differ by checkout (CRLF on Windows); only the content matters.
+    assert.equal(readFileSync(file, "utf8").replaceAll("\r\n", "\n"), contents.replaceAll("\r\n", "\n"),
+      `${relative(root, file)} is out of date; run node scripts/site-metadata.mjs`);
+});
+
+test("every indexable page has its own title and description and describes itself as structured data", () => {
+  const indexed = pages.filter(p => p.indexed);
+  const titles = indexed.map(p => p.html.match(/<title>([^<]*)<\/title>/)[1]);
+  const descriptions = indexed.map(p => tags(p.html, "meta").find(t => t.name === "description").content);
+  assert.equal(new Set(titles).size, indexed.length, "two pages share a title");
+  assert.equal(new Set(descriptions).size, indexed.length, "two pages share a description");
+  for (const [index, page] of indexed.entries()) {
+    assert.ok(descriptions[index].length >= 50 && descriptions[index].length <= 320, `${page.path}: description length ${descriptions[index].length}`);
+    const graph = structured(page);
+    const webpage = graph.find(node => node["@type"] === "WebPage");
+    assert.equal(webpage?.url, origin + page.url, `${page.path}: WebPage`);
+    assert.equal(webpage.inLanguage, languages[page.prefix], page.path);
+    const kinds = graph.map(node => node["@type"]);
+    assert.ok(kinds.includes(page.url.endsWith("/") ? "SoftwareApplication" : "BreadcrumbList"), `${page.path}: ${kinds}`);
+    // FAQ data must say exactly what the page shows; the generator reads it from the visible list.
+    const faq = graph.find(node => node["@type"] === "FAQPage");
+    const kind = page.url.endsWith("/") ? "index" : page.url.endsWith("help") ? "help" : "privacy";
+    assert.deepEqual(faq?.mainEntity.map(q => [q.name, q.acceptedAnswer.text]) ?? [], visibleQuestions(page.html, kind), `${page.path}: FAQ`);
+  }
+});
+
+test("robots.txt lets search engines and AI crawlers read the pages and names the sitemap", () => {
+  const robots = readFileSync(join(root, "robots.txt"), "utf8");
+  assert.ok(!/^Disallow:\s*\/\s*$/m.test(robots), "a crawler is blocked from the whole site");
+  for (const agent of ["*", "GPTBot", "OAI-SearchBot", "ClaudeBot", "PerplexityBot", "Google-Extended"])
+    assert.match(robots, new RegExp(`^User-agent: ${agent.replace("*", "\\*")}$`, "m"), agent);
+  assert.match(robots, new RegExp(`^Sitemap: ${origin}/sitemap.xml$`, "m"));
 });
 
 test("internal links, assets and #fragments resolve to existing pages and ids", () => {

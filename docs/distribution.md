@@ -20,6 +20,24 @@ Cloudflareへログイン済みの環境で実行します。サイトは `websi
 
 既定のビルドは公開CAのコード署名証明書を要求します。未署名で正式配布する場合は `-AllowUnsignedRelease` を明示します。署名に失敗しても未署名へ自動切り替えはしません。
 
+### 検索エンジン・AI向けの設定
+
+各ページの `<head>`（タイトル、説明文、言語ごとのリンク、SNSの共有表示）、schema.orgの構造化データ（アプリ、FAQ、パンくず）、`sitemap.xml`、AI向けの要約 `llms.txt` は `scripts/site-metadata.mjs` が作ります。タイトルや説明文はこのスクリプトの中で編集し、手でページに書かないでください。FAQの構造化データは、ページに表示しているFAQ（ホームの「よくある質問」とヘルプの「保存できないとき」）から読み取ります。
+
+```powershell
+npm run site:metadata
+```
+
+ページの本文やFAQを変えたとき、`Directory.Build.props` の版数を上げたときに実行します。`sitemap.xml` の更新日は実行した日になります。`npm test` は、生成結果が最新であること、タイトル・説明文がページごとに異なること、FAQの構造化データが表示内容と一致すること、`robots.txt` が検索エンジンとAIのクローラーを止めていないことを確認します。
+
+サイトを配置したら、IndexNow（Bing・Yandexなど。BingはCopilotやChatGPTの検索にも使われます）へ更新を通知します。鍵は `website/indexnow.txt` に公開済みで、配置前に実行すると止まります。
+
+```powershell
+npm run notify:search
+```
+
+Google Search ConsoleとBing Webmaster Toolsへの登録はアカウントが必要なため、手動で行います。所有権の確認にはHTMLタグ（`google-site-verification` など）を使い、`scripts/site-metadata.mjs` の `<head>` に追加してからサイトを配置し、`sitemap.xml` を送信します。
+
 ## 必要なもの
 
 - Windows、PowerShell 7、.NET 10 SDK、Node.js 22以降。
