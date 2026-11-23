@@ -216,17 +216,6 @@ h3 {
   text-decoration: none;
 }
 
-.version {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 12px;
-}
-
-/* Short links such as "SHA-256" must not break at their hyphen. */
-.version a {
-  white-space: nowrap;
-}
-
 .download-note {
   font-size: 13px;
   color: var(--muted);
@@ -237,6 +226,52 @@ h3 {
 
 .download-note a {
   display: inline-block;
+}
+
+/* Checksums are shown as text: one click selects a whole value for copying, without any script. */
+.checksums {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.checksums-title {
+  font-weight: 600;
+}
+
+.checksum-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.checksum-list div {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+}
+
+.checksums code {
+  font-family: Consolas, "SFMono-Regular", Menlo, monospace;
+  font-size: 12.5px;
+  color: #26362b;
+  background: var(--pale);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.checksums code.sha256 {
+  user-select: all;
+  -webkit-user-select: all;
+  overflow-wrap: anywhere;
+  padding: 3px 7px;
+}
+
+.checksum-howto {
+  margin-top: 10px;
+  max-width: 760px;
+  line-height: 1.8;
 }
 
 .format-summary {
@@ -639,6 +674,10 @@ section[id] {
   }
   .download-block {
     margin-top: 30px;
+  }
+  .checksum-list div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
   }
   .hero h1 {
     font-size: 32px;

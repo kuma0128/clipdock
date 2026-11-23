@@ -11,6 +11,7 @@ const root = fileURLToPath(new URL("../website/", import.meta.url));
 const origin = "https://clipdock-d6z.pages.dev";
 const version = readFileSync(new URL("../Directory.Build.props", import.meta.url), "utf8").match(/<Version>(\d+\.\d+\.\d+)<\/Version>/)[1];
 const languages = { "": "ja", "en/": "en", "zh-cn/": "zh-Hans", "es/": "es" };
+const releaseFiles = [`ClipDock-${version}-win-x64-unsigned-setup.exe`, `ClipDock-${version}-mac-arm64-unsigned.dmg`, `ClipDock-${version}-mac-x64-unsigned.dmg`];
 
 function htmlFiles(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry =>
@@ -58,11 +59,23 @@ test("download links name the current release and are served by the download fun
     assert.match(file, new RegExp(`^ClipDock-${version.replaceAll(".", "\\.")}-`), `${page.path} links an old release: ${file}`);
     files.add(file);
   }
-  for (const file of [`ClipDock-${version}-win-x64-unsigned-setup.exe`, `ClipDock-${version}-mac-arm64-unsigned.dmg`, `ClipDock-${version}-mac-x64-unsigned.dmg`])
-    for (const name of [file, `${file}.sha256`]) assert.ok(files.has(name), `the site never links ${name}`);
+  for (const file of releaseFiles) assert.ok(files.has(file), `the site never links ${file}`);
   for (const file of files) {
     const response = await onRequest({ request: new Request(`${origin}/downloads/${file}`, { method: "HEAD" }), env: { CLIPDOCK_RELEASES: bucket } });
     assert.equal(response.status, 200, `the download function does not serve ${file}`);
+  }
+});
+
+// The checksums are printed on each home page for copying instead of being linked as .sha256 downloads.
+test("every home page shows one SHA-256 per release file, the same in every language", () => {
+  let reference;
+  for (const prefix of Object.keys(languages)) {
+    const page = byUrl.get(`/${prefix}`);
+    const shown = Object.fromEntries([...page.html.matchAll(/<code class="sha256" data-file="([^"]+)">([^<]*)<\/code>/g)].map(([, file, hash]) => [file, hash]));
+    assert.deepEqual(Object.keys(shown).sort(), [...releaseFiles].sort(), `${page.path} shows checksums for ${Object.keys(shown).join(", ")}`);
+    for (const [file, hash] of Object.entries(shown)) assert.match(hash, /^[0-9a-f]{64}$/, `${page.path}: ${file}`);
+    reference ??= shown;
+    assert.deepEqual(shown, reference, `${page.path} shows different checksums than the Japanese page`);
   }
 });
 
