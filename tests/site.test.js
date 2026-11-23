@@ -79,6 +79,22 @@ test("every home page shows one SHA-256 per release file, the same in every lang
   }
 });
 
+// The apps update themselves from /updates/latest.json; it must announce the release the site offers.
+test("the update manifest names the current release with the checksums shown on the home pages", async () => {
+  const manifest = JSON.parse(readFileSync(join(root, "updates", "latest.json"), "utf8"));
+  assert.equal(manifest.version, version, "updates/latest.json announces a different version");
+  const shown = Object.fromEntries([...byUrl.get("/").html.matchAll(/<code class="sha256" data-file="([^"]+)">([^<]*)<\/code>/g)].map(([, file, hash]) => [file, hash]));
+  const platforms = { "win-x64": releaseFiles[0], "mac-arm64": releaseFiles[1], "mac-x64": releaseFiles[2] };
+  assert.deepEqual(Object.keys(manifest.files).sort(), Object.keys(platforms).sort());
+  for (const [platform, file] of Object.entries(platforms)) {
+    const entry = manifest.files[platform];
+    assert.equal(entry.url, `/downloads/${file}`, platform);
+    assert.equal(entry.sha256, shown[file], `${platform}: the manifest and the home page show different checksums`);
+    assert.ok(Number.isSafeInteger(entry.size) && entry.size > 0, `${platform}: size`);
+  }
+  assert.match(readFileSync(join(root, "_headers"), "utf8"), /\/updates\/\*\r?\n\s+Cache-Control: no-cache/, "the manifest must not be cached");
+});
+
 test("version numbers outside the screenshot and its caption are the current release", () => {
   for (const page of pages) {
     const text = page.html.replace(/<figure\b[\s\S]*?<\/figure>/g, "").replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g, "");

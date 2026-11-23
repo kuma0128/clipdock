@@ -232,6 +232,47 @@ try {
         (Get-FileHash -LiteralPath $registeredManifest).Hash -eq $otherManifestHash) 'ZIP uninstall changed a foreign native registration.'
     Assert-Preserved 'ZIP install/uninstall'
     Write-Output 'PASS ZIP installation and owned-file uninstall preserve user data and modified documents'
+    # Automatic update, as the app runs it: the new installer is started silently with the app's process id, the
+    # app quits, and setup waits for it, installs and opens ClipDock again in the notification area.
+    Invoke-Setup $InstallerPath '07-install-for-update'
+    Assert-Installed
+    $installedApp = Join-Path $installRoot 'ClipDock.exe'
+    $running = Start-Process -FilePath $installedApp -ArgumentList '--background' -PassThru
+    try {
+        $deadline = [DateTime]::UtcNow.AddSeconds(30)
+        while ((Read-StartupEntry) -ne "`"$installedApp`" --background") {
+            if ([DateTime]::UtcNow -ge $deadline) { throw 'The installed app did not register sign-in startup on its first launch.' }
+            Start-Sleep -Milliseconds 250
+        }
+        Write-Output 'PASS the installed app registers sign-in startup on its first launch'
+        $updateArguments = @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/LOG=`"$(Join-Path $logs '08-update-relaunch.log')`"",
+            '/RELAUNCH=background', "/WAITPID=$($running.Id)")
+        $update = Start-Process -FilePath $InstallerPath -ArgumentList $updateArguments -PassThru -WindowStyle Hidden
+        try {
+            Start-Sleep -Seconds 5
+            Assert-True (-not $update.HasExited) 'Setup did not wait for the running app before installing.'
+            Stop-Process -Id $running.Id -Force
+            if (-not $update.WaitForExit(180000)) { throw 'The update installer timed out; see its log.' }
+            Assert-True ($update.ExitCode -eq 0) "The update installer failed (exit $($update.ExitCode)); see its log."
+        }
+        finally { $update.Dispose() }
+        $relaunched = @()
+        $deadline = [DateTime]::UtcNow.AddSeconds(30)
+        while ($relaunched.Count -eq 0 -and [DateTime]::UtcNow -lt $deadline) {
+            $relaunched = @(Get-Process -Name ClipDock -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $installedApp })
+            if ($relaunched.Count -eq 0) { Start-Sleep -Milliseconds 250 }
+        }
+        Assert-True ($relaunched.Count -eq 1) 'Setup did not open ClipDock again after the automatic update.'
+        Write-Output 'PASS automatic update waits for the app, installs silently and opens ClipDock again'
+    }
+    finally {
+        $running.Dispose()
+        Get-Process -Name ClipDock -ErrorAction SilentlyContinue | Stop-Process -Force
+        Start-Sleep -Seconds 1
+    }
+    Invoke-Uninstall '09-uninstall-after-update'
+    Assert-True ($null -eq (Read-StartupEntry)) 'Uninstall left the sign-in startup entry the app wrote itself.'
+    Write-Output 'PASS uninstall removes the sign-in startup entry the app wrote itself'
     Write-Output 'Installer lifecycle checks passed on the disposable GitHub-hosted runner.'
 }
 finally { $registry.Dispose(); $machineRegistry.Dispose() }

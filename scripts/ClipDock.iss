@@ -93,6 +93,8 @@ Name: "{userdesktop}\ClipDock"; Filename: "{app}\ClipDock.exe"; WorkingDir: "{ap
 
 [Run]
 Filename: "{app}\ClipDock.exe"; WorkingDir: "{app}"; Description: "{cm:LaunchClipDock}"; Flags: nowait postinstall skipifsilent
+; Automatic update started by the app: reopen ClipDock the way it was running.
+Filename: "{app}\ClipDock.exe"; Parameters: "{code:RelaunchParameters}"; WorkingDir: "{app}"; Flags: nowait; Check: RelaunchRequested
 
 [Code]
 const
@@ -137,8 +139,51 @@ begin
   end;
 end;
 
+// The app updates itself by running this installer with /VERYSILENT /RELAUNCH=background|window /WAITPID=<its process>
+// and then quitting. Setup waits for that process, installs, and starts ClipDock again.
+var
+  UpdateInstalled: Boolean;
+
+function RelaunchMode: String;
+begin
+  Result := Lowercase(ExpandConstant('{param:relaunch|}'));
+end;
+
+function RelaunchRequested: Boolean;
+begin
+  Result := WizardSilent and ((RelaunchMode = 'background') or (RelaunchMode = 'window'));
+end;
+
+function RelaunchParameters(Param: String): String;
+begin
+  if RelaunchMode = 'background' then Result := '--background' else Result := '';
+end;
+
+procedure WaitForUpdatingApp;
+var
+  Locator, Services, Processes: Variant;
+  ProcessId, Waited: Integer;
+begin
+  ProcessId := StrToIntDef(ExpandConstant('{param:waitpid|0}'), 0);
+  if ProcessId <= 0 then Exit;
+  try
+    Locator := CreateOleObject('WbemScripting.SWbemLocator');
+    Services := Locator.ConnectServer('.', 'root\CIMV2');
+    Waited := 0;
+    while Waited < 60000 do begin
+      Processes := Services.ExecQuery('SELECT ProcessId FROM Win32_Process WHERE Name = ''ClipDock.exe'' AND ProcessId = ' + IntToStr(ProcessId));
+      if Processes.Count = 0 then Exit;
+      Sleep(250);
+      Waited := Waited + 250;
+    end;
+  except
+    Log('Could not wait for ClipDock: ' + GetExceptionMessage);
+  end;
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
+  WaitForUpdatingApp;
   if CompareText(RemoveBackslashUnlessRoot(ExpandFileName(ExpandConstant('{app}'))),
     ExpandConstant('{localappdata}\Programs\ClipDock')) <> 0 then
     Result := CustomMessage('InvalidInstallDirectory')
@@ -278,8 +323,18 @@ begin
   RemoveDir(ExpandConstant('{app}\extension'));
 end;
 
+// An automatic update that did not install must not leave the user without ClipDock: start the existing copy again.
+procedure DeinitializeSetup;
+var
+  ResultCode: Integer;
+begin
+  if RelaunchRequested and not UpdateInstalled and FileExists(ExpandConstant('{app}\ClipDock.exe')) then
+    Exec(ExpandConstant('{app}\ClipDock.exe'), RelaunchParameters(''), ExpandConstant('{app}'), SW_SHOWNORMAL, ewNoWait, ResultCode);
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
+  if CurStep = ssPostInstall then UpdateInstalled := True;
   if CurStep <> ssDone then Exit;
   RemoveOwnedNativeRegistration;
   RemoveRetiredFiles;

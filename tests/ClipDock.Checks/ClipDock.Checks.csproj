@@ -11,5 +11,7 @@
     <Compile Include="../../src/ClipDock.App/StartupRegistration.cs" Link="App/StartupRegistration.cs" />
     <!-- The Mac login item writes a plain file, so it is checked on every system. -->
     <Compile Include="../../src/ClipDock.Mac/LoginItem.cs" Link="Mac/LoginItem.cs" />
+    <!-- The update script runs on the macOS job against a real disk image. -->
+    <Compile Include="../../src/ClipDock.Mac/MacUpdater.cs" Link="Mac/MacUpdater.cs" />
   </ItemGroup>
 </Project>

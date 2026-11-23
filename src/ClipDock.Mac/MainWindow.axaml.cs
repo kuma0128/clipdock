@@ -44,6 +44,17 @@ public partial class MainWindow : Window
     private static readonly TimeSpan EngineRecheck = TimeSpan.FromHours(24);
     private readonly DispatcherTimer engineTimer = new() { Interval = TimeSpan.FromMinutes(5) };
     private DateTime nextEngineCheck = DateTime.MaxValue;
+    // Self-update: checked at launch and once a day, downloaded in the background and verified against the
+    // official site's manifest, then installed while ClipDock waits in the menu bar with nothing to save.
+    private readonly string updateDirectory = Path.Combine(AppPaths.Data, "updates");
+    private readonly string updateMarker = Path.Combine(AppPaths.Data, "update-installing.txt");
+    private readonly CancellationTokenSource updateCancellation = new();
+    private DateTime nextUpdateCheck = DateTime.MaxValue;
+    private bool checkingUpdate;
+    private bool updateRequested;
+    private bool applyingUpdate;
+    private UpdateOffer? updateOffer;
+    private string? updateFile;
 
     public MainWindow()
     {
@@ -60,6 +71,7 @@ public partial class MainWindow : Window
         library.Settled += _ => DownloadSettled();
         LoadState();
         ApplyLoginItemAtLaunch();
+        ReportFinishedUpdate();
         foreach (var language in LanguageBox.Items.OfType<ComboBoxItem>())
             if ((string?)language.Tag == Localization.Language) LanguageBox.SelectedItem = language;
         LanguageBox.SelectionChanged += Language_Changed;
@@ -80,6 +92,7 @@ public partial class MainWindow : Window
         {
             if (App.SmokeResultFile is { } result) { _ = RunSmokeAsync(result); return; }
             installTask = InstallEngineAsync();
+            _ = CheckForUpdateAsync();
         }, DispatcherPriority.Background);
         // The sign-in session lives in this window, so it is read the first time the window opens.
         Opened += async (_, _) =>
@@ -91,6 +104,8 @@ public partial class MainWindow : Window
         };
         engineTimer.Tick += (_, _) =>
         {
+            if (DateTime.UtcNow >= nextUpdateCheck) _ = CheckForUpdateAsync();
+            TryApplyUpdate(updateRequested);
             if (DateTime.UtcNow < nextEngineCheck || installing || shuttingDown || library.ActiveOperations > 0) return;
             installTask = InstallEngineAsync();
         };
@@ -98,7 +113,7 @@ public partial class MainWindow : Window
         UpdateFormat();
         Closing += OnClosing;
         // The menu bar icon is removed by the lifetime when the process ends.
-        Closed += (_, _) => { engineTimer.Stop(); browserSession.Close(); };
+        Closed += (_, _) => { engineTimer.Stop(); updateCancellation.Cancel(); browserSession.Close(); };
     }
 
     internal void ShowFromMenuBar()
@@ -126,6 +141,8 @@ public partial class MainWindow : Window
         browserSession.Close();
         Hide();
         MacApp.ShowInDock(false);
+        // A downloaded update is installed as soon as the window goes away and nothing is being saved.
+        TryApplyUpdate(updateRequested);
     }
     // The menu bar icon's Quit, and macOS's own Quit when there is something to ask about.
     private void RequestExit()
@@ -249,6 +266,81 @@ public partial class MainWindow : Window
         EngineButton.IsEnabled = !shuttingDown && !installing && library.ActiveOperations == 0;
         if (!shuttingDown) SaveState();
         RefreshSummary();
+        TryApplyUpdate(updateRequested);
+    }
+
+    private async Task CheckForUpdateAsync()
+    {
+        if (checkingUpdate || shuttingDown || updateFile is not null || MacUpdater.UpdatableBundle(Environment.ProcessPath) is null) return;
+        checkingUpdate = true;
+        try
+        {
+            var offer = await AppUpdate.CheckAsync(updateCancellation.Token);
+            if (offer is not null)
+            {
+                updateFile = await AppUpdate.DownloadAsync(offer, updateDirectory, updateCancellation.Token);
+                updateOffer = offer;
+                UpdateButton.Content = ClipDock.Core.Localization.Format($"再起動して ClipDock {offer.Version.ToString(3)} に更新");
+                ToolTip.SetTip(UpdateButton, ClipDock.Core.Localization.Text("保存中の動画がなく、ClipDockがメニューバーにあるときは自動で更新します。"));
+                UpdateButton.IsVisible = true;
+            }
+            nextUpdateCheck = DateTime.UtcNow + TimeSpan.FromHours(24);
+        }
+        // Offline, a moved site or a bad download: keep the current version and try again later.
+        catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidDataException or JsonException or OperationCanceledException or UnauthorizedAccessException)
+        { nextUpdateCheck = DateTime.UtcNow + TimeSpan.FromHours(1); }
+        finally { checkingUpdate = false; }
+        TryApplyUpdate(updateRequested);
+    }
+
+    // Hands the verified disk image to the update script and quits; the script reopens ClipDock when it is done.
+    private bool TryApplyUpdate(bool userRequested)
+    {
+        if (updateFile is null || updateOffer is null || applyingUpdate || shuttingDown || installing || checkingUpdate ||
+            library.ActiveOperations > 0 || library.HasUnfinished) return false;
+        if (!userRequested && IsVisible) return false;
+        if (MacUpdater.UpdatableBundle(Environment.ProcessPath) is not { } bundle) return false;
+        try
+        {
+            File.WriteAllText(updateMarker, updateOffer.Version.ToString(3));
+            MacUpdater.Start(bundle, updateFile, updateOffer.Version, IsVisible, Path.Combine(AppPaths.Data, "update-install.log"));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            try { File.Delete(updateMarker); } catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException) { }
+            updateFile = null; updateOffer = null; updateRequested = false;
+            UpdateButton.IsVisible = false;
+            nextUpdateCheck = DateTime.UtcNow + TimeSpan.FromHours(1);
+            Notice.Text = ClipDock.Core.Localization.Text("更新を開始できませんでした: ") + ex.Message;
+            return false;
+        }
+        applyingUpdate = true;
+        exitRequested = true;
+        // Queued: this can run inside the window's own Closing event.
+        Dispatcher.UIThread.Post(Close, DispatcherPriority.Background);
+        return true;
+    }
+
+    private void Update_Click(object? sender, RoutedEventArgs e)
+    {
+        updateRequested = true;
+        if (!TryApplyUpdate(true)) Notice.Text = ClipDock.Core.Localization.Text("保存中の動画が終わると、ClipDockを再起動して更新します。");
+    }
+
+    // After the update script reopened ClipDock: say once that the update is done, or that it will be tried again.
+    private void ReportFinishedUpdate()
+    {
+        if (!File.Exists(updateMarker)) return;
+        try
+        {
+            var text = File.ReadAllText(updateMarker).Trim();
+            File.Delete(updateMarker);
+            if (!Version.TryParse(text, out var target)) return;
+            Notice.Text = AppUpdate.Current >= AppUpdate.Normalize(target)
+                ? ClipDock.Core.Localization.Format($"ClipDock {AppUpdate.Current.ToString(3)} に更新しました")
+                : ClipDock.Core.Localization.Text("前回の更新を完了できませんでした。後でもう一度試します。");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 
     private void Concurrency_Changed(object? sender, SelectionChangedEventArgs e)

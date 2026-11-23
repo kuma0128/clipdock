@@ -393,6 +393,7 @@ EngineChecks.Run(Check);
 BrowserOverlayChecks.Run(Check);
 ToolInstallerChecks.Run(Check);
 SessionChecks.Run(Check);
+UpdateChecks.Run(Check);
 var platform = OperatingSystem.IsWindows() ? "Windows" : OperatingSystem.IsMacOS() ? "macOS" : OperatingSystem.IsLinux() ? "Linux" : "this OS";
 var result = $"{passed} passed; {failed} failed; {skipped} skipped on {platform} in {clock.Elapsed.TotalSeconds:0.0}s.";
 Console.WriteLine(result);

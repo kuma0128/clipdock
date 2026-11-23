@@ -46,6 +46,17 @@ public partial class MainWindow : Window
     private static readonly TimeSpan EngineRecheck = TimeSpan.FromHours(24);
     private readonly DispatcherTimer engineTimer = new() { Interval = TimeSpan.FromMinutes(5) };
     private DateTime nextEngineCheck = DateTime.MaxValue;
+    // Self-update: checked at launch and once a day, downloaded in the background and verified against the
+    // official site's manifest, then installed while ClipDock waits in the notification area with nothing to save.
+    private readonly string updateDirectory = Path.Combine(AppPaths.Data, "updates");
+    private readonly string updateMarker = Path.Combine(AppPaths.Data, "update-installing.txt");
+    private readonly CancellationTokenSource updateCancellation = new();
+    private DateTime nextUpdateCheck = DateTime.MaxValue;
+    private bool checkingUpdate;
+    private bool updateRequested;
+    private bool applyingUpdate;
+    private UpdateOffer? updateOffer;
+    private string? updateFile;
 
     public MainWindow(EventWaitHandle activation)
     {
@@ -66,6 +77,7 @@ public partial class MainWindow : Window
         library.Settled += _ => DownloadSettled();
         LoadState();
         ApplyStartupAtLaunch();
+        ReportFinishedUpdate();
         foreach (ComboBoxItem language in LanguageBox.Items)
             if ((string?)language.Tag == Localization.Language) LanguageBox.SelectedItem = language;
         LanguageBox.SelectionChanged += Language_Changed;
@@ -85,6 +97,8 @@ public partial class MainWindow : Window
         activationTimer.Start();
         engineTimer.Tick += (_, _) =>
         {
+            if (DateTime.UtcNow >= nextUpdateCheck) _ = CheckForUpdateAsync();
+            TryApplyUpdate(updateRequested);
             if (DateTime.UtcNow < nextEngineCheck || installing || shuttingDown || library.ActiveOperations > 0) return;
             installTask = InstallEngineAsync();
         };
@@ -108,12 +122,13 @@ public partial class MainWindow : Window
         _ = Dispatcher.InvokeAsync(async () =>
         {
             installTask = InstallEngineAsync();
+            _ = CheckForUpdateAsync();
             try { await browserSession.RefreshStatusAsync(); }
             catch (Exception ex) { LoginStatus.Text = ex.Message; }
         }, DispatcherPriority.Background);
         UpdateFormat();
         Closing += OnClosing;
-        Closed += (_, _) => { engineTimer.Stop(); trayIcon.Dispose(); browserOverlay.Dispose(); browserSession.Dispose(); };
+        Closed += (_, _) => { engineTimer.Stop(); updateCancellation.Cancel(); trayIcon.Dispose(); browserOverlay.Dispose(); browserSession.Dispose(); };
     }
 
     private void ShowFromTray()
@@ -126,7 +141,8 @@ public partial class MainWindow : Window
     private void HideToTray()
     {
         Hide();
-        if (trayNoticeShown) return;
+        // A downloaded update is installed as soon as the window goes away and nothing is being saved.
+        if (TryApplyUpdate(updateRequested) || trayNoticeShown) return;
         // Said once, the first time the window disappears into the notification area.
         trayNoticeShown = true;
         trayIcon.Notify(Localization.Text("ClipDockは通知領域で動作しています"),
@@ -250,6 +266,90 @@ public partial class MainWindow : Window
         EngineButton.IsEnabled = !shuttingDown && !installing && library.ActiveOperations == 0;
         if (!shuttingDown) SaveState();
         RefreshSummary();
+        TryApplyUpdate(updateRequested);
+    }
+
+    // Only the installed copy updates itself; portable, development and --data-dir runs never do.
+    private static bool SelfUpdateAvailable => !AppPaths.UsesCustomDataDirectory && Environment.ProcessPath is { } path &&
+        string.Equals(Path.GetFullPath(path), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "ClipDock", "ClipDock.exe"),
+            StringComparison.OrdinalIgnoreCase);
+
+    private async Task CheckForUpdateAsync()
+    {
+        if (checkingUpdate || shuttingDown || updateFile is not null || !SelfUpdateAvailable) return;
+        checkingUpdate = true;
+        try
+        {
+            var offer = await AppUpdate.CheckAsync(updateCancellation.Token);
+            if (offer is not null)
+            {
+                updateFile = await AppUpdate.DownloadAsync(offer, updateDirectory, updateCancellation.Token);
+                updateOffer = offer;
+                UpdateButton.Content = Localization.Format($"再起動して ClipDock {offer.Version.ToString(3)} に更新");
+                UpdateButton.ToolTip = Localization.Text("保存中の動画がなく、ClipDockが通知領域にあるときは自動で更新します。");
+                UpdateButton.Visibility = Visibility.Visible;
+            }
+            nextUpdateCheck = DateTime.UtcNow + TimeSpan.FromHours(24);
+        }
+        // Offline, a moved site or a bad download: keep the current version and try again later.
+        catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or IOException or InvalidDataException or JsonException or OperationCanceledException or UnauthorizedAccessException)
+        { nextUpdateCheck = DateTime.UtcNow + TimeSpan.FromHours(1); }
+        finally { checkingUpdate = false; }
+        TryApplyUpdate(updateRequested);
+    }
+
+    // Runs the verified installer silently and quits; setup waits for this process, then starts ClipDock again.
+    private bool TryApplyUpdate(bool userRequested)
+    {
+        if (updateFile is null || updateOffer is null || applyingUpdate || shuttingDown || installing || checkingUpdate ||
+            library.ActiveOperations > 0 || library.HasUnfinished) return false;
+        if (!userRequested && IsVisible) return false;
+        try
+        {
+            File.WriteAllText(updateMarker, updateOffer.Version.ToString(3));
+            var start = new ProcessStartInfo(updateFile) { UseShellExecute = false, WorkingDirectory = updateDirectory };
+            foreach (var argument in new[] { "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/RELAUNCH=" + (IsVisible ? "window" : "background"),
+                "/WAITPID=" + Environment.ProcessId, "/LOG=" + Path.Combine(AppPaths.Data, "update-install.log") })
+                start.ArgumentList.Add(argument);
+            Process.Start(start)?.Dispose();
+        }
+        catch (Exception ex) when (ex is Win32Exception or IOException or UnauthorizedAccessException)
+        {
+            try { File.Delete(updateMarker); } catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException) { }
+            updateFile = null; updateOffer = null; updateRequested = false;
+            UpdateButton.Visibility = Visibility.Collapsed;
+            nextUpdateCheck = DateTime.UtcNow + TimeSpan.FromHours(1);
+            Notice.Text = Localization.Text("更新を開始できませんでした: ") + ex.Message;
+            return false;
+        }
+        applyingUpdate = true;
+        exitRequested = true;
+        new System.Windows.Interop.WindowInteropHelper(this).EnsureHandle();
+        // Queued: this can run inside the window's own Closing event, where Close is not allowed.
+        Dispatcher.BeginInvoke(new Action(Close), DispatcherPriority.Background);
+        return true;
+    }
+
+    private void Update_Click(object sender, RoutedEventArgs e)
+    {
+        updateRequested = true;
+        if (!TryApplyUpdate(true)) Notice.Text = Localization.Text("保存中の動画が終わると、ClipDockを再起動して更新します。");
+    }
+
+    // After setup restarted ClipDock: say once that the update is done, or that it will be tried again.
+    private void ReportFinishedUpdate()
+    {
+        if (!File.Exists(updateMarker)) return;
+        try
+        {
+            var text = File.ReadAllText(updateMarker).Trim();
+            File.Delete(updateMarker);
+            if (!Version.TryParse(text, out var target)) return;
+            if (AppUpdate.Current >= AppUpdate.Normalize(target))
+                trayIcon.Notify(Localization.Format($"ClipDock {AppUpdate.Current.ToString(3)} に更新しました"), Localization.Text("通知領域のアイコンから開けます。"));
+            else Notice.Text = Localization.Text("前回の更新を完了できませんでした。後でもう一度試します。");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 
     private void Concurrency_Changed(object sender, SelectionChangedEventArgs e)

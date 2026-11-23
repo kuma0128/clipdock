@@ -998,5 +998,45 @@
     "OK",
     "好",
     "Aceptar"
+  ],
+  "再起動して ClipDock {0} に更新": [
+    "Restart to update to ClipDock {0}",
+    "重启并更新到 ClipDock {0}",
+    "Reiniciar y actualizar a ClipDock {0}"
+  ],
+  "保存中の動画がなく、ClipDockが通知領域にあるときは自動で更新します。": [
+    "Updates automatically when nothing is being saved and ClipDock is in the notification area.",
+    "没有正在保存的视频且 ClipDock 位于通知区域时，会自动更新。",
+    "Se actualiza automáticamente cuando no se está guardando nada y ClipDock está en el área de notificación."
+  ],
+  "更新を開始できませんでした: ": [
+    "Could not start the update: ",
+    "无法开始更新：",
+    "No se pudo iniciar la actualización: "
+  ],
+  "保存中の動画が終わると、ClipDockを再起動して更新します。": [
+    "ClipDock will restart and update when the current downloads finish.",
+    "当前下载完成后，ClipDock 将重启并更新。",
+    "ClipDock se reiniciará y se actualizará cuando terminen las descargas actuales."
+  ],
+  "ClipDock {0} に更新しました": [
+    "ClipDock was updated to {0}",
+    "ClipDock 已更新到 {0}",
+    "ClipDock se actualizó a {0}"
+  ],
+  "通知領域のアイコンから開けます。": [
+    "Open it from its notification-area icon.",
+    "可从通知区域图标打开。",
+    "Ábrelo desde su icono en el área de notificación."
+  ],
+  "前回の更新を完了できませんでした。後でもう一度試します。": [
+    "The last update could not be completed. ClipDock will try again later.",
+    "上次更新未能完成，稍后将再次尝试。",
+    "No se pudo completar la última actualización. ClipDock lo intentará de nuevo más tarde."
+  ],
+  "保存中の動画がなく、ClipDockがメニューバーにあるときは自動で更新します。": [
+    "Updates automatically when nothing is being saved and ClipDock is in the menu bar.",
+    "没有正在保存的视频且 ClipDock 位于菜单栏时，会自动更新。",
+    "Se actualiza automáticamente cuando no se está guardando nada y ClipDock está en la barra de menús."
   ]
 }

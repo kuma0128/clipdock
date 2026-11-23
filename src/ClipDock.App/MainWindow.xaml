@@ -23,6 +23,7 @@
           <CheckBox x:Name="StartupBox" Foreground="#20352B" Margin="0,0,0,16" ToolTip="{DynamicResource LBA9C954406AEAABB}" AutomationProperties.Name="{DynamicResource L41A8AE57B90410C4}" AutomationProperties.HelpText="{DynamicResource LBA9C954406AEAABB}"><TextBlock Text="{DynamicResource L41A8AE57B90410C4}" TextWrapping="Wrap" FontSize="12" /></CheckBox>
 
 
+          <Button x:Name="UpdateButton" Visibility="Collapsed" Click="Update_Click" Background="#C6EBCF" Foreground="#132B1D" FontWeight="SemiBold" Margin="0,0,0,8" />
           <Button x:Name="EngineButton" Content="{DynamicResource L6AD4BA2E2D7A2BAB}" ToolTip="{DynamicResource L45BAC65D26CA7228}" Click="InstallEngine_Click" Margin="0,0,0,8" />
           <TextBlock x:Name="EngineStatus" Foreground="{StaticResource Muted}" FontSize="10" TextWrapping="Wrap" Margin="4,4,0,15" />
           <TextBlock x:Name="VersionLabel" Foreground="#5C7163" FontSize="10" Margin="4,0,0,0" />
