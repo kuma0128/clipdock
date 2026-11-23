@@ -1,4 +1,4 @@
-const releases = new Set(["1.0.2", "1.0.3", "1.0.4", "1.0.5", "1.0.6", "1.0.7"].flatMap(version => {
+const releases = new Set(["1.0.2", "1.0.3", "1.0.4", "1.0.5", "1.0.6", "1.0.7", "1.0.8"].flatMap(version => {
   const installer = `ClipDock-${version}-win-x64-unsigned-setup.exe`;
   // The macOS disk images exist from 1.0.3 on, one per processor architecture.
   const images = version === "1.0.2" ? [] : ["arm64", "x64"].map(arch => `ClipDock-${version}-mac-${arch}-unsigned.dmg`);
