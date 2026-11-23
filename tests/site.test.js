@@ -229,7 +229,8 @@ test("the sitemap lists every indexable page exactly once, dated as the page dat
 
 // AI assistants that read /llms-full.txt get the English pages as text: every FAQ answer, and no leftover markup.
 test("llms-full.txt carries the English pages as Markdown", () => {
-  const full = readFileSync(join(root, "llms-full.txt"), "utf8");
+  // A Windows checkout may turn the file's line endings into CRLF.
+  const full = readFileSync(join(root, "llms-full.txt"), "utf8").replaceAll("\r\n", "\n");
   for (const name of ["", "help", "privacy"]) {
     const page = byUrl.get(`/en/${name}`);
     assert.ok(full.includes(`Source: ${origin}${page.url}\n`), page.path);
