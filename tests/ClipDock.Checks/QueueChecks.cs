@@ -147,12 +147,12 @@ internal static class QueueChecks
             Assert(job.State == "cancelled" && !Directory.Exists(output));
         });
 
-        check("old settings default to two saves and the selected concurrency survives serialization", () =>
+        check("settings with the removed concurrency choice still load and save without it", () =>
         {
-            var legacy = JsonSerializer.Deserialize<AppSettings>("{\"outputDirectory\":\"C:/videos\",\"quality\":\"720\"}", Json.Options)!;
-            Assert(legacy.MaxConcurrentDownloads == 2 && legacy.Quality == "720");
-            var saved = legacy with { MaxConcurrentDownloads = 4 };
-            Assert(JsonSerializer.Deserialize<AppSettings>(JsonSerializer.Serialize(saved, Json.Options), Json.Options) == saved);
+            var legacy = JsonSerializer.Deserialize<AppSettings>("{\"outputDirectory\":\"C:/videos\",\"quality\":\"720\",\"maxConcurrentDownloads\":4,\"format\":\"mp3\"}", Json.Options)!;
+            Assert(legacy.Quality == "720" && legacy.Format == "mp3" && new DownloadLibrary().MaxConcurrency == DownloadScheduler.DefaultConcurrency);
+            var json = JsonSerializer.Serialize(legacy, Json.Options);
+            Assert(!json.Contains("maxConcurrentDownloads") && JsonSerializer.Deserialize<AppSettings>(json, Json.Options) == legacy);
         });
 
         check("history keeps old active saves and shutdown entries within its 300 item limit", () =>

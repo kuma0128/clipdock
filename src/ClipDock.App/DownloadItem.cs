@@ -24,7 +24,8 @@ public sealed class DownloadItem : INotifyPropertyChanged
         {
             // Progress lines re-assign the same state many times a second; the window rebuilds its list on every State change.
             if (!Set(ref state, value)) return;
-            Notify(nameof(StateLabel)); Notify(nameof(CanCancel)); Notify(nameof(CanRetry)); Notify(nameof(IsCompleted)); Notify(nameof(IsBusy));
+            Notify(nameof(StateLabel)); Notify(nameof(CanCancel)); Notify(nameof(CanRetry)); Notify(nameof(CanRemove)); Notify(nameof(IsCompleted)); Notify(nameof(IsBusy));
+            Notify(nameof(IsFailed));
         }
     }
     public string Detail { get => detail; set => Set(ref detail, value); }
@@ -34,6 +35,11 @@ public sealed class DownloadItem : INotifyPropertyChanged
     public bool CanRetry => State is "failed" or "cancelled" or "interrupted";
     public bool IsCompleted => State == "completed";
     public bool IsBusy => State is "downloading" or "converting";
+    // Only items that are neither saved nor in progress can be taken off the list.
+    public bool CanRemove => CanRetry;
+    // Shown as an error; a cancelled or interrupted item is not one.
+    public bool IsFailed => State == "failed";
+    public bool IsAudio => Request.Format == "mp3";
     public string FormatLabel => Request.Format == "mp3" ? "MP3" : "MP4";
     public string Meta => $"{(Uri.TryCreate(Request.PageUrl, UriKind.Absolute, out var page) ? page.Host : "")}   ·   {(Request.Format == "mp3" ? ClipDock.Core.Localization.Text("音声のみ") : Request.Quality == "best" ? ClipDock.Core.Localization.Text("最高画質") : Request.Quality + ClipDock.Core.Localization.Text("p 以下"))}   ·   {CreatedAt:MM/dd HH:mm}";
     public string StateLabel => State switch

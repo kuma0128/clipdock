@@ -1,60 +1,225 @@
 <Window x:Class="ClipDock.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ClipDock" Width="1200" Height="820" MinWidth="1120" MinHeight="740" WindowStartupLocation="CenterScreen" Background="#F8FBF8" Foreground="#20352B" FontFamily="Yu Gothic UI, Segoe UI" FontSize="13">
+        Title="ClipDock" Width="980" Height="820" MinWidth="740" MinHeight="620" WindowStartupLocation="CenterScreen"
+        Background="{StaticResource Page}" Foreground="{StaticResource Ink}" FontFamily="Yu Gothic UI, Segoe UI" FontSize="13"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display" PreviewKeyDown="Window_PreviewKeyDown">
   <Window.Resources><BooleanToVisibilityConverter x:Key="BoolVisibility" /></Window.Resources>
   <Grid>
-    <Grid.ColumnDefinitions><ColumnDefinition Width="260" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-    <Border Background="#F0F7F1" BorderBrush="#D5E2D8" BorderThickness="0,0,1,0">
-      <DockPanel Margin="22,28">
-        <StackPanel DockPanel.Dock="Top">
-          <StackPanel Orientation="Horizontal"><Border Background="#C6EBCF" CornerRadius="10" Width="38" Height="38"><TextBlock Text="↓" Foreground="#14271C" FontSize="29" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><TextBlock Text="ClipDock" FontSize="23" FontWeight="SemiBold" Margin="10,2,0,0" /></StackPanel>
-          <TextBlock Text="{DynamicResource LA2C566E9CCD4D17E}" Foreground="{StaticResource Muted}" FontSize="11" Margin="8,35,0,12" />
-          <Button x:Name="AllFilter" Content="{DynamicResource LE34BC643EC3EFE5F}" HorizontalContentAlignment="Left" Click="Filter_Click" Tag="all" Margin="0,0,0,7" Background="#D9EEDF" />
-          <Button x:Name="ActiveFilter" Content="{DynamicResource L7EB9BF73FA0C244C}" HorizontalContentAlignment="Left" Click="Filter_Click" Tag="active" Margin="0,0,0,7" Background="Transparent" />
-          <Button x:Name="CompletedFilter" Content="{DynamicResource L97C0A44601C0FEEE}" HorizontalContentAlignment="Left" Click="Filter_Click" Tag="completed" Background="Transparent" />
-        </StackPanel>
-        <StackPanel DockPanel.Dock="Bottom" VerticalAlignment="Bottom">
-          <TextBlock Text="{DynamicResource LA0E52010AB570C2A}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,6" />
-          <ComboBox x:Name="LanguageBox" Margin="0,0,0,16" AutomationProperties.Name="Language">
-            <ComboBoxItem Content="日本語" Tag="ja" /><ComboBoxItem Content="English" Tag="en" />
-            <ComboBoxItem Content="简体中文" Tag="zh-CN" /><ComboBoxItem Content="Español" Tag="es" />
-          </ComboBox>
-          <Border Background="#E4F2E7" CornerRadius="10" Padding="14" Margin="0,0,0,20"><StackPanel><TextBlock Text="{DynamicResource L9642727DBB7F7FD8}" FontSize="12" Foreground="#285A3D" /><TextBlock Text="{DynamicResource LBA562776974E3B46}" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource Muted}" Margin="0,8,0,0" LineHeight="19" /></StackPanel></Border>
-          <CheckBox x:Name="BrowserOverlayBox" Foreground="#20352B" Margin="0,0,0,10" AutomationProperties.Name="{DynamicResource LF493806A7C431D23}"><TextBlock Text="{DynamicResource LF493806A7C431D23}" TextWrapping="Wrap" FontSize="12" /></CheckBox>
-          <CheckBox x:Name="StartupBox" Foreground="#20352B" Margin="0,0,0,16" ToolTip="{DynamicResource LBA9C954406AEAABB}" AutomationProperties.Name="{DynamicResource L41A8AE57B90410C4}" AutomationProperties.HelpText="{DynamicResource LBA9C954406AEAABB}"><TextBlock Text="{DynamicResource L41A8AE57B90410C4}" TextWrapping="Wrap" FontSize="12" /></CheckBox>
+    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
 
-
-          <Button x:Name="UpdateButton" Visibility="Collapsed" Click="Update_Click" Background="#C6EBCF" Foreground="#132B1D" FontWeight="SemiBold" Margin="0,0,0,8" />
-          <Button x:Name="EngineButton" Content="{DynamicResource L6AD4BA2E2D7A2BAB}" ToolTip="{DynamicResource L45BAC65D26CA7228}" Click="InstallEngine_Click" Margin="0,0,0,8" />
-          <TextBlock x:Name="EngineStatus" Foreground="{StaticResource Muted}" FontSize="10" TextWrapping="Wrap" Margin="4,4,0,15" />
-          <TextBlock x:Name="VersionLabel" Foreground="#5C7163" FontSize="10" Margin="4,0,0,0" />
+    <!-- Title bar of the page: the name, an update when one is ready, and the settings. -->
+    <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1">
+      <Grid Height="56" Margin="24,0,16,0">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Width="28" Height="28" CornerRadius="7" Background="{StaticResource Accent}">
+            <Viewbox Width="17" Height="17"><Path Style="{StaticResource Icon}" Data="{StaticResource IconDownload}" Stroke="White" StrokeThickness="2.4" /></Viewbox>
+          </Border>
+          <TextBlock Text="ClipDock" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,1" VerticalAlignment="Center" />
         </StackPanel>
-      </DockPanel>
+        <Button x:Name="UpdateButton" Grid.Column="1" Style="{StaticResource PrimaryButton}" Visibility="Collapsed" Click="Update_Click" Margin="0,0,8,0" />
+        <Button x:Name="SettingsButton" Grid.Column="2" Style="{StaticResource SubtleButton}" Click="OpenSettings_Click" AutomationProperties.Name="{DynamicResource L0D8619AAE051AE34}">
+          <StackPanel Orientation="Horizontal">
+            <Viewbox Width="18" Height="18"><Path Style="{StaticResource Icon}" Data="{StaticResource IconSettings}" /></Viewbox>
+            <TextBlock Text="{DynamicResource L0D8619AAE051AE34}" Margin="8,0,0,1" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+      </Grid>
     </Border>
-    <Grid Grid.Column="1" Margin="32,28,32,24">
-      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-      <Grid Margin="0,0,0,24"><StackPanel><TextBlock Text="ClipDock for Windows" FontSize="10" Foreground="{StaticResource Accent}" Margin="0,0,0,8" /><TextBlock Text="{DynamicResource LB85D7A94AE5775CF}" FontSize="30" FontWeight="SemiBold" /></StackPanel><Border HorizontalAlignment="Right" VerticalAlignment="Top" Background="#E6F4E9" CornerRadius="14" Padding="12,6"><TextBlock Text="MP4 / MP3" Foreground="{StaticResource Accent}" FontSize="11" /></Border></Grid>
-      <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#D5E2D8" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,18">
-        <StackPanel><TextBlock Text="{DynamicResource LECA6649EF41ACECC}" FontWeight="SemiBold" Margin="0,0,0,12" /><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="88" /><ColumnDefinition Width="112" /><ColumnDefinition Width="110" /></Grid.ColumnDefinitions><TextBox x:Name="UrlInput" ToolTip="{DynamicResource L1C79DDCBC8E263E2}" KeyDown="UrlInput_KeyDown" AutomationProperties.Name="{DynamicResource L81857751E8B7405A}" /><ComboBox x:Name="FormatBox" Grid.Column="1" SelectedIndex="0" Margin="10,0,0,0" AutomationProperties.Name="{DynamicResource LA3FDBA54BDC4A0BA}"><ComboBoxItem Content="MP4" Tag="mp4" /><ComboBoxItem Content="MP3" Tag="mp3" /></ComboBox><ComboBox x:Name="QualityBox" Grid.Column="2" SelectedIndex="2" Margin="10,0" AutomationProperties.Name="{DynamicResource L430BBAC6929DCDD9}" ToolTip="{DynamicResource L61F942DF3BC46F8C}"><ComboBoxItem Content="{DynamicResource LE4CD52B47DEF81BE}" Tag="best" /><ComboBoxItem Content="4K" Tag="2160" /><ComboBoxItem Content="1080p" Tag="1080" /><ComboBoxItem Content="720p" Tag="720" /><ComboBoxItem Content="480p" Tag="480" /></ComboBox><Button Grid.Column="3" Content="{DynamicResource LA9FB576FF2085565}" Background="#C6EBCF" Foreground="#132B1D" FontWeight="SemiBold" Click="Add_Click" /></Grid><Grid Margin="0,15,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><CheckBox x:Name="UseLoginBox" IsChecked="True" Content="{DynamicResource L7A0403953F11A527}" AutomationProperties.Name="{DynamicResource L7A0403953F11A527}"/><TextBlock x:Name="LoginStatus" Text="{DynamicResource L68633A691AE99578}" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,5,10,0" TextWrapping="Wrap"/></StackPanel><Button Grid.Column="1" Content="{DynamicResource L9BA14A4F95787046}" Click="Login_Click" VerticalAlignment="Center" ToolTip="{DynamicResource L762D86F88C7CC210}"/></Grid><TextBlock Text="{DynamicResource LE396B8587B0219F1}" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,10,0,0" /></StackPanel>
+
+    <Grid Grid.Row="1" Margin="24,20,24,24">
+      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+
+      <!-- Shown only when the engine could not be fetched: nothing can be saved until it is. -->
+      <Border x:Name="EngineBanner" Visibility="Collapsed" Background="{StaticResource WarnSoft}" BorderBrush="{StaticResource WarnLine}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
+        <DockPanel>
+          <Button x:Name="EngineButton" DockPanel.Dock="Right" Content="{DynamicResource L6AD4BA2E2D7A2BAB}" ToolTip="{DynamicResource L45BAC65D26CA7228}" Click="InstallEngine_Click" Margin="12,0,0,0" />
+          <Viewbox Width="18" Height="18" VerticalAlignment="Center"><Path Style="{StaticResource Icon}" Data="{StaticResource IconWarning}" Stroke="{StaticResource WarnInk}" /></Viewbox>
+          <TextBlock Text="{DynamicResource L4D1DDFF0D8F723FD}" Foreground="{StaticResource WarnInk}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
+        </DockPanel>
       </Border>
-      <Border Grid.Row="3" Background="#EDF5EF" CornerRadius="7" Padding="12,10" Margin="0,0,0,18"><TextBlock x:Name="Notice" Text="{DynamicResource LFD341411F2BFD178}" Foreground="#435F4D" TextWrapping="Wrap" FontSize="12" /></Border>
-      <Grid Grid.Row="4" Margin="0,0,0,12">
-        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-        <StackPanel VerticalAlignment="Center" Margin="0,0,12,0"><TextBlock x:Name="CountLabel" Text="{DynamicResource L83A36F5E84CE770A}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" /><TextBlock x:Name="QueueStatus" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,5,0,0" /></StackPanel>
-        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-          <TextBlock Text="{DynamicResource L639E1CA76CC8DC4D}" VerticalAlignment="Center" FontSize="11" Margin="0,0,8,0" />
-          <ComboBox x:Name="ConcurrencyBox" SelectedIndex="1" Width="68" AutomationProperties.Name="{DynamicResource LA01A07639E0A085C}" ToolTip="{DynamicResource L79E2DA1C44FFDC5C}"><ComboBoxItem Content="{DynamicResource L7C5C530C163593ED}" Tag="1" /><ComboBoxItem Content="{DynamicResource L70FC972FC96CD327}" Tag="2" /><ComboBoxItem Content="{DynamicResource L9A285BFDC86F63A3}" Tag="3" /><ComboBoxItem Content="{DynamicResource L842FAFA010EAF64E}" Tag="4" /></ComboBox>
-          <Button Content="{DynamicResource L86815601500BEC8E}" Margin="12,0,0,0" Background="Transparent" Foreground="{StaticResource Muted}" Padding="5" FontSize="11" Click="ClearHistory_Click" />
+
+      <!-- What to save and how. -->
+      <Border Grid.Row="1" Style="{StaticResource Card}" Padding="20,16,20,6">
+        <StackPanel>
+          <TextBlock Text="{DynamicResource LECA6649EF41ACECC}" Style="{StaticResource SectionTitle}" />
+          <Grid Margin="0,12,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <TextBox x:Name="UrlInput" MinHeight="40" KeyDown="UrlInput_KeyDown" AutomationProperties.Name="{DynamicResource L81857751E8B7405A}" />
+            <TextBlock Text="{DynamicResource L1C79DDCBC8E263E2}" Foreground="{StaticResource Faint}" Margin="13,0,12,0" VerticalAlignment="Center" IsHitTestVisible="False" TextTrimming="CharacterEllipsis">
+              <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=UrlInput}" Value=""><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+            </TextBlock>
+            <Button x:Name="SaveButton" Grid.Column="1" Style="{StaticResource PrimaryButton}" MinHeight="40" MinWidth="104" Margin="10,0,0,0" Padding="18,0" Click="Add_Click" AutomationProperties.Name="{DynamicResource LA3030BF8F16DC63C}">
+              <StackPanel Orientation="Horizontal">
+                <Viewbox Width="17" Height="17"><Path Style="{StaticResource Icon}" Data="{StaticResource IconDownload}" StrokeThickness="2.2" /></Viewbox>
+                <TextBlock Text="{DynamicResource LA3030BF8F16DC63C}" Margin="8,0,0,1" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+          </Grid>
+
+          <Border Height="1" Background="{StaticResource Line}" Margin="0,16,0,2" />
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+
+            <TextBlock Text="{DynamicResource LA3FDBA54BDC4A0BA}" Style="{StaticResource FieldLabel}" />
+            <StackPanel Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,8">
+              <Border Background="{StaticResource Track}" CornerRadius="7" Padding="3" ToolTip="{DynamicResource LE396B8587B0219F1}">
+                <StackPanel Orientation="Horizontal">
+                  <RadioButton x:Name="Mp4Option" GroupName="Format" Style="{StaticResource Segment}" Content="MP4" IsChecked="True" AutomationProperties.Name="MP4" />
+                  <RadioButton x:Name="Mp3Option" GroupName="Format" Style="{StaticResource Segment}" Content="MP3" AutomationProperties.Name="MP3" />
+                </StackPanel>
+              </Border>
+              <ComboBox x:Name="QualityBox" Width="132" SelectedIndex="2" Margin="10,0,0,0" AutomationProperties.Name="{DynamicResource L430BBAC6929DCDD9}" ToolTip="{DynamicResource L61F942DF3BC46F8C}">
+                <ComboBoxItem Content="{DynamicResource LE4CD52B47DEF81BE}" Tag="best" /><ComboBoxItem Content="4K" Tag="2160" /><ComboBoxItem Content="1080p" Tag="1080" /><ComboBoxItem Content="720p" Tag="720" /><ComboBoxItem Content="480p" Tag="480" />
+              </ComboBox>
+            </StackPanel>
+
+            <TextBlock Grid.Row="1" Text="{DynamicResource L56FC579CEECD83FE}" Style="{StaticResource FieldLabel}" />
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+              <Viewbox Width="17" Height="17"><Path Style="{StaticResource Icon}" Data="{StaticResource IconFolder}" Stroke="{StaticResource Muted}" /></Viewbox>
+              <TextBlock x:Name="OutputLabel" Margin="8,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+            </StackPanel>
+            <Button Grid.Row="1" Grid.Column="2" Content="{DynamicResource L029C5A77C78AF330}" Click="ChooseOutput_Click" Margin="0,8" />
+
+            <TextBlock Grid.Row="2" Text="{DynamicResource L216505EBB39AC4E9}" Style="{StaticResource FieldLabel}" VerticalAlignment="Top" Margin="0,10,20,0" />
+            <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,8,12,10">
+              <CheckBox x:Name="UseLoginBox" IsChecked="True" AutomationProperties.Name="{DynamicResource L7A0403953F11A527}"><TextBlock Text="{DynamicResource L7A0403953F11A527}" TextWrapping="Wrap" /></CheckBox>
+              <TextBlock x:Name="LoginStatus" Text="{DynamicResource L68633A691AE99578}" Style="{StaticResource Caption}" Margin="27,3,0,0" />
+            </StackPanel>
+            <Button Grid.Row="2" Grid.Column="2" Content="{DynamicResource L9BA14A4F95787046}" Click="Login_Click" VerticalAlignment="Top" Margin="0,8,0,10" ToolTip="{DynamicResource L762D86F88C7CC210}" />
+          </Grid>
         </StackPanel>
-      </Grid>
-      <Grid Grid.Row="5">
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><ItemsControl x:Name="JobList"><ItemsControl.ItemTemplate><DataTemplate><Border Background="#FFFFFF" BorderBrush="#D5E2D8" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,0,10"><StackPanel>
-          <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="46" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><Border Width="34" Height="38" Background="#E7F4EB" CornerRadius="6" VerticalAlignment="Top"><TextBlock Text="▶" Foreground="#28734B" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel Grid.Column="1"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}" /><TextBlock Text="{Binding Meta}" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" /></StackPanel><TextBlock Grid.Column="2" Text="{Binding FormatLabel}" Foreground="#28734B" FontSize="10" Margin="12,3,0,0" /></Grid>
-          <ProgressBar Value="{Binding Percent, Mode=OneWay}" Margin="0,16,0,12" />
-          <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{Binding StateLabel}" FontSize="11" Foreground="#316748" /><TextBlock Text="{Binding Detail}" FontSize="11" Foreground="{StaticResource Muted}" TextWrapping="Wrap" MaxHeight="72" ToolTip="{Binding Detail}" Margin="0,5,12,0" /></StackPanel><StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top"><Button Content="{DynamicResource LBCA84EA5C65FEE0E}" Padding="10,7" FontSize="11" Click="Cancel_Click" Visibility="{Binding CanCancel, Converter={StaticResource BoolVisibility}}" /><Button Content="{DynamicResource LD4CC6DB156473F80}" Padding="10,7" Margin="0,0,6,0" FontSize="11" Click="OpenPage_Click" Visibility="{Binding CanRetry, Converter={StaticResource BoolVisibility}}" ToolTip="{DynamicResource L9036793549DFECC8}" /><Button Content="{DynamicResource LFB6CC190949DA044}" Padding="10,7" FontSize="11" Click="Retry_Click" Visibility="{Binding CanRetry, Converter={StaticResource BoolVisibility}}" ToolTip="{DynamicResource L0C61D76B28E56214}" /><Button Content="{DynamicResource L3AA692FCAAE417D4}" Padding="10,7" FontSize="11" Click="OpenFile_Click" Visibility="{Binding IsCompleted, Converter={StaticResource BoolVisibility}}" /><Button Content="{DynamicResource L828D4CEC1F3C370D}" Padding="10,7" Margin="6,0,0,0" FontSize="11" Click="ShowFile_Click" Visibility="{Binding IsCompleted, Converter={StaticResource BoolVisibility}}" /></StackPanel></Grid>
-        </StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
-        <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,15"><TextBlock Text="↓" FontSize="44" Foreground="#4D8060" HorizontalAlignment="Center" /><TextBlock Text="{DynamicResource L0593D6A008472BB9}" Foreground="{StaticResource Muted}" TextAlignment="Center" Margin="0,12,0,0" /><TextBlock Text="{DynamicResource LACBD1FD2A8715DFB}" Foreground="{StaticResource Muted}" TextAlignment="Center" Margin="0,6,0,0" /></StackPanel>
-      </Grid>
-      <Border Grid.Row="2" Background="#F0F8F2" BorderBrush="#BBD7C4" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,14"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{DynamicResource L56FC579CEECD83FE}" FontSize="12" Foreground="{StaticResource Muted}" /><TextBlock x:Name="OutputLabel" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" FontSize="12" Margin="0,5,12,0" /></StackPanel><Button Grid.Column="1" Content="{DynamicResource L029C5A77C78AF330}" Click="ChooseOutput_Click" Background="#C6EBCF" Foreground="#132B1D" FontWeight="SemiBold" Padding="14,10" Margin="0,0,8,0" /><Button Grid.Column="2" Content="{DynamicResource L3AA692FCAAE417D4}" Click="OpenOutput_Click" Padding="12,8" /></Grid></Border>
+      </Border>
+
+      <!-- The latest message about what ClipDock did or needs. -->
+      <DockPanel Grid.Row="2" Margin="4,12,4,0">
+        <Viewbox Width="16" Height="16" VerticalAlignment="Top" Margin="0,1,0,0"><Path Style="{StaticResource Icon}" Data="{StaticResource IconInfo}" Stroke="{StaticResource Muted}" /></Viewbox>
+        <TextBlock x:Name="Notice" Text="{DynamicResource LFD341411F2BFD178}" Style="{StaticResource Caption}" FontSize="12.5" Margin="8,0,0,0" />
+      </DockPanel>
+
+      <!-- Saved files; work in progress and anything that failed appear at the top. -->
+      <Border Grid.Row="3" Style="{StaticResource Card}" Margin="0,16,0,0">
+        <Grid>
+          <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+          <Grid Margin="20,10,12,10">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock x:Name="ListTitle" Text="{DynamicResource L55C0442BCE02DDAF}" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
+              <Border Background="{StaticResource Track}" CornerRadius="9" Padding="8,1,8,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                <TextBlock x:Name="CountLabel" Text="0" FontSize="12" Foreground="{StaticResource Muted}" />
+              </Border>
+            </StackPanel>
+            <Button Grid.Column="1" Style="{StaticResource SubtleButton}" Click="OpenOutput_Click" AutomationProperties.Name="{DynamicResource L8BC9EABC1A1F6BCF}">
+              <StackPanel Orientation="Horizontal">
+                <Viewbox Width="17" Height="17"><Path Style="{StaticResource Icon}" Data="{StaticResource IconFolder}" /></Viewbox>
+                <TextBlock Text="{DynamicResource L8BC9EABC1A1F6BCF}" Margin="8,0,0,1" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+          </Grid>
+          <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+            <ItemsControl x:Name="JobList" Focusable="False">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border x:Name="Row" Background="Transparent" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="20,14,16,14">
+                    <Grid>
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <Border x:Name="Tile" Width="40" Height="40" CornerRadius="8" Background="{StaticResource AccentSoft}" VerticalAlignment="Top">
+                        <Viewbox Width="20" Height="20"><Path x:Name="Kind" Style="{StaticResource Icon}" Data="{StaticResource IconVideo}" Stroke="{StaticResource Accent}" /></Viewbox>
+                      </Border>
+                      <StackPanel Grid.Column="1" Margin="14,0,16,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}" />
+                        <TextBlock Text="{Binding Meta}" FontSize="12" Foreground="{StaticResource Muted}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                        <StackPanel Visibility="{Binding CanCancel, Converter={StaticResource BoolVisibility}}" Margin="0,10,0,0">
+                          <ProgressBar Value="{Binding Percent, Mode=OneWay}" />
+                          <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                            <TextBlock Text="{Binding StateLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Accent}" />
+                            <TextBlock Text="{Binding Detail}" FontSize="12" Foreground="{StaticResource Muted}" Margin="10,0,0,0" TextTrimming="CharacterEllipsis" />
+                          </StackPanel>
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding CanRetry, Converter={StaticResource BoolVisibility}}" Margin="0,8,0,0">
+                          <TextBlock x:Name="ProblemLabel" Text="{Binding StateLabel}" FontSize="12" FontWeight="SemiBold" />
+                          <TextBlock Text="{Binding Detail}" Style="{StaticResource Caption}" MaxHeight="72" Margin="0,2,0,0" ToolTip="{Binding Detail}" />
+                        </StackPanel>
+                      </StackPanel>
+                      <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource RowButton}" Content="{DynamicResource L3AA692FCAAE417D4}" Click="OpenFile_Click" Visibility="{Binding IsCompleted, Converter={StaticResource BoolVisibility}}" />
+                        <Button Style="{StaticResource RowButton}" Content="{DynamicResource L828D4CEC1F3C370D}" Click="ShowFile_Click" Visibility="{Binding IsCompleted, Converter={StaticResource BoolVisibility}}" />
+                        <Button Style="{StaticResource RowButton}" Content="{DynamicResource LBCA84EA5C65FEE0E}" Click="Cancel_Click" Visibility="{Binding CanCancel, Converter={StaticResource BoolVisibility}}" />
+                        <Button Style="{StaticResource RowButton}" Content="{DynamicResource LFB6CC190949DA044}" Click="Retry_Click" Visibility="{Binding CanRetry, Converter={StaticResource BoolVisibility}}" ToolTip="{DynamicResource L0C61D76B28E56214}" />
+                        <Button Style="{StaticResource RowButton}" Content="{DynamicResource LD4CC6DB156473F80}" Click="OpenPage_Click" Visibility="{Binding CanRetry, Converter={StaticResource BoolVisibility}}" ToolTip="{DynamicResource L9036793549DFECC8}" />
+                        <Button Style="{StaticResource IconButton}" Margin="4,0,0,0" Click="Remove_Click" Visibility="{Binding CanRemove, Converter={StaticResource BoolVisibility}}" ToolTip="{DynamicResource L08AF4BF2DB0C1D2A}" AutomationProperties.Name="{DynamicResource L08AF4BF2DB0C1D2A}">
+                          <Viewbox Width="16" Height="16"><Path Style="{StaticResource Icon}" Data="{StaticResource IconClose}" /></Viewbox>
+                        </Button>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                  <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding IsAudio}" Value="True"><Setter TargetName="Kind" Property="Data" Value="{StaticResource IconAudio}" /></DataTrigger>
+                    <DataTrigger Binding="{Binding CanRetry}" Value="True">
+                      <Setter TargetName="Tile" Property="Background" Value="{StaticResource Track}" /><Setter TargetName="Kind" Property="Stroke" Value="{StaticResource Muted}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsFailed}" Value="True">
+                      <Setter TargetName="Tile" Property="Background" Value="{StaticResource DangerSoft}" /><Setter TargetName="Kind" Property="Stroke" Value="{StaticResource Danger}" />
+                      <Setter TargetName="ProblemLabel" Property="Foreground" Value="{StaticResource Danger}" />
+                    </DataTrigger>
+                    <Trigger SourceName="Row" Property="IsMouseOver" Value="True"><Setter TargetName="Row" Property="Background" Value="#FAFBFA" /></Trigger>
+                  </DataTemplate.Triggers>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+          <StackPanel x:Name="EmptyState" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24,8,24,24">
+            <Border Width="52" Height="52" CornerRadius="26" Background="{StaticResource AccentSoft}" HorizontalAlignment="Center">
+              <Viewbox Width="24" Height="24"><Path Style="{StaticResource Icon}" Data="{StaticResource IconDownload}" Stroke="{StaticResource Accent}" /></Viewbox>
+            </Border>
+            <TextBlock Text="{DynamicResource LCBCFAFAE869EDF3E}" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,14,0,0" />
+            <TextBlock Text="{DynamicResource L0593D6A008472BB9}" Style="{StaticResource Caption}" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,6,0,0" />
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- Settings slide over the right edge; the dimmed page behind closes them. -->
+    <Grid x:Name="SettingsLayer" Grid.RowSpan="2" Visibility="Collapsed">
+      <Border Background="#401B2620" MouseLeftButtonDown="SettingsScrim_MouseLeftButtonDown" />
+      <Border HorizontalAlignment="Right" Width="380" Background="{StaticResource Surface}" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0">
+        <Border.Effect><DropShadowEffect BlurRadius="28" ShadowDepth="0" Opacity="0.18" /></Border.Effect>
+        <DockPanel>
+          <Grid DockPanel.Dock="Top" Height="56" Margin="24,0,12,0">
+            <TextBlock Text="{DynamicResource L0D8619AAE051AE34}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <Button x:Name="CloseSettingsButton" Style="{StaticResource IconButton}" HorizontalAlignment="Right" VerticalAlignment="Center" Click="CloseSettings_Click" ToolTip="{DynamicResource LF6C244F98893CD95}" AutomationProperties.Name="{DynamicResource LF6C244F98893CD95}">
+              <Viewbox Width="18" Height="18"><Path Style="{StaticResource Icon}" Data="{StaticResource IconClose}" /></Viewbox>
+            </Button>
+          </Grid>
+          <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="24,14">
+            <TextBlock x:Name="VersionLabel" FontSize="12" Foreground="{StaticResource Muted}" />
+          </Border>
+          <ScrollViewer BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" VerticalScrollBarVisibility="Auto" Focusable="False">
+            <StackPanel Margin="24,20,24,24">
+              <TextBlock Text="{DynamicResource LF8C893840A2B75F3}" Style="{StaticResource SectionTitle}" />
+              <ComboBox x:Name="LanguageBox" Margin="0,10,0,0" AutomationProperties.Name="Language">
+                <ComboBoxItem Content="日本語" Tag="ja" /><ComboBoxItem Content="English" Tag="en" />
+                <ComboBoxItem Content="简体中文" Tag="zh-CN" /><ComboBoxItem Content="Español" Tag="es" />
+              </ComboBox>
+              <TextBlock Text="{DynamicResource LE1143839B2C83678}" Style="{StaticResource Caption}" Margin="0,6,0,0" />
+
+              <Border Height="1" Background="{StaticResource Line}" Margin="0,20" />
+              <TextBlock Text="{DynamicResource L785B65759020DE19}" Style="{StaticResource SectionTitle}" />
+              <CheckBox x:Name="StartupBox" Margin="0,12,0,0" AutomationProperties.Name="{DynamicResource L41A8AE57B90410C4}" AutomationProperties.HelpText="{DynamicResource LBA9C954406AEAABB}"><TextBlock Text="{DynamicResource L41A8AE57B90410C4}" TextWrapping="Wrap" /></CheckBox>
+              <TextBlock Text="{DynamicResource LBA9C954406AEAABB}" Style="{StaticResource Caption}" Margin="27,4,0,0" />
+
+              <Border Height="1" Background="{StaticResource Line}" Margin="0,20" />
+              <TextBlock Text="{DynamicResource LEE2351E65074E8EC}" Style="{StaticResource SectionTitle}" />
+              <CheckBox x:Name="BrowserOverlayBox" Margin="0,12,0,0" AutomationProperties.Name="{DynamicResource LF493806A7C431D23}"><TextBlock Text="{DynamicResource LF493806A7C431D23}" TextWrapping="Wrap" /></CheckBox>
+              <TextBlock Text="{DynamicResource LBA562776974E3B46}" Style="{StaticResource Caption}" Margin="27,4,0,0" />
+
+              <Border Height="1" Background="{StaticResource Line}" Margin="0,20" />
+              <TextBlock Text="{DynamicResource L46775FB65FE38384}" Style="{StaticResource SectionTitle}" />
+              <TextBlock x:Name="EngineStatus" Style="{StaticResource Caption}" Margin="0,8,0,0" />
+            </StackPanel>
+          </ScrollViewer>
+        </DockPanel>
+      </Border>
     </Grid>
   </Grid>
 </Window>

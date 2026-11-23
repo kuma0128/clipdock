@@ -27,7 +27,7 @@ public static class Localization
     private static string? Supported(string? language) => Languages.FirstOrDefault(code =>
         string.Equals(code, language, StringComparison.OrdinalIgnoreCase));
 
-    // The language chosen in 「言語（次回起動から適用）」, or null when there is none: on first launch, in settings
+    // The language chosen in 「設定」→「表示言語」, or null when there is none: on first launch, in settings
     // from before the menu existed, or when the file cannot be read. The system's display language applies then.
     public static string? ReadPreference(string settingsFile)
     {

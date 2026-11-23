@@ -26,7 +26,7 @@ public static partial class DownloadEngine
             var request = item.Request;
             request.ValidateVideoPage();
             Directory.CreateDirectory(item.OutputDirectory);
-            if (!ToolInstaller.IsReady(tools)) throw new IOException(ClipDock.Core.Localization.Text("左下の「保存エンジンを準備」を押してください。"));
+            if (!ToolInstaller.IsReady(tools)) throw new IOException(ClipDock.Core.Localization.Text("画面上部の「保存エンジンを準備」を押してください。"));
             if (request.UseLogin && sessionProvider is not null) session = await sessionProvider(request, ct);
             ct.ThrowIfCancellationRequested();
             dispatch(() => item.Detail = session is null ? ClipDock.Core.Localization.Text("動画情報を解析しています…") : ClipDock.Core.Localization.Text("ログイン情報を使って動画情報を解析しています…"));

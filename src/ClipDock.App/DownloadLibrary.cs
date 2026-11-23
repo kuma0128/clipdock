@@ -107,14 +107,14 @@ public sealed class DownloadLibrary
         return scheduler.StopAsync();
     }
 
-    // Removes finished, failed and cancelled items with their work folders. Saved files stay.
-    public void ClearFinished()
+    // Takes a failed, cancelled or interrupted item off the list together with its work folder. The list keeps saved
+    // files and work in progress; anything else is dismissed one item at a time. Returns false for anything else.
+    public bool Remove(DownloadItem item)
     {
-        foreach (var job in Jobs.Where(j => !j.CanCancel && !IsScheduled(j)).ToList())
-        {
-            try { DownloadPlan.CleanWorkDirectory(job.OutputDirectory, job.Id); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
-            Jobs.Remove(job);
-        }
+        if (!item.CanRemove || IsScheduled(item) || !Jobs.Contains(item)) return false;
+        try { DownloadPlan.CleanWorkDirectory(item.OutputDirectory, item.Id); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        Jobs.Remove(item);
+        return true;
     }
 
     // Restores saved history entry by entry: one unreadable record must not discard the others.
@@ -144,17 +144,10 @@ public sealed class DownloadLibrary
 
     public List<SavedDownload> Snapshot() => DownloadHistory.Snapshot(Jobs, closing);
 
-    // filter: the tag of the window's filter buttons (all, active or completed).
-    public static bool Shows(DownloadItem item, string filter) => filter switch
-    {
-        "active" => item.CanCancel,
-        "completed" => item.IsCompleted,
-        _ => true
-    };
+    // The number beside 「保存したファイル」.
+    public int CompletedCount => Jobs.Count(j => j.IsCompleted);
 
-    public string CountText(string filter, int shown) => Localization.Format(
-        $"{(filter == "active" ? Localization.Text("ダウンロード中") : filter == "completed" ? Localization.Text("保存したファイル") : Localization.Text("ライブラリ"))}  /  {shown} 件     ·     保存完了 {Jobs.Count(j => j.IsCompleted)} 件");
-
+    // The notification area's (menu bar's) tooltip while something is being saved.
     public string QueueText() => Localization.Format($"保存中 {Jobs.Count(j => j.IsBusy)} 件  ·  待機 {Jobs.Count(j => j.State == "queued")} 件");
 
     public bool HasUnfinished => Jobs.Any(j => j.CanCancel);

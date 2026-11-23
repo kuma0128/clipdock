@@ -1,9 +1,4 @@
 {
-  "言語（次回起動から適用）": [
-    "Language (after restart)",
-    "语言（重启后生效）",
-    "Idioma (al reiniciar)"
-  ],
   "言語設定を保存しました。アプリを開き直すと適用されます。": [
     "Language saved. Reopen ClipDock to apply it.",
     "语言设置已保存，重新打开 ClipDock 后生效。",
@@ -13,11 +8,6 @@
     "\nCould not delete temporary login data. Restart ClipDock to try again.",
     "\n无法删除临时登录数据。请重启 ClipDock 后重试。",
     "\nNo se pudieron borrar los datos temporales de acceso. Reinicia ClipDock para reintentarlo."
-  ],
-  "{0}  /  {1} 件     ·     保存完了 {2} 件": [
-    "{0}  /  {1} items     ·     {2} saved",
-    "{0}  /  {1} 项     ·     已保存 {2} 项",
-    "{0}  /  {1} elementos     ·     {2} guardados"
   ],
   "{0} のSHA-256情報がありません。未検証のファイルはインストールしません。": [
     "No SHA-256 is available for {0}. Unverified files will not be installed.",
@@ -74,20 +64,10 @@
     "正在完成 {0}",
     "Finalizando {0}"
   ],
-  "↓    すべてのダウンロード": [
-    "↓    All downloads",
-    "↓    全部下载",
-    "↓    Todas las descargas"
-  ],
   "↓  ClipDockに取り込む": [
     "↓  Send to ClipDock",
     "↓  导入 ClipDock",
     "↓  Enviar a ClipDock"
-  ],
-  "↓  保存": [
-    "↓  Save",
-    "↓  保存",
-    "↓  Guardar"
   ],
   "○ 初期セットアップ中…": [
     "○ Setting up…",
@@ -103,36 +83,6 @@
     "● Engine ready",
     "● 引擎已就绪",
     "● Motor listo"
-  ],
-  "◷    ダウンロード中": [
-    "◷    Downloading",
-    "◷    正在下载",
-    "◷    Descargando"
-  ],
-  "✓    保存したファイル": [
-    "✓    Saved files",
-    "✓    已保存的文件",
-    "✓    Archivos guardados"
-  ],
-  "1件": [
-    "1",
-    "1",
-    "1"
-  ],
-  "2件": [
-    "2",
-    "2",
-    "2"
-  ],
-  "3件": [
-    "3",
-    "3",
-    "3"
-  ],
-  "4件": [
-    "4",
-    "4",
-    "4"
   ],
   "Chrome / Edgeの上中央にマウスを置くと、保存タブが表示されます。クリックしてURLを取り込んでください。": [
     "Hover over the top center of Chrome or Edge, then click the tab to import the URL.",
@@ -339,11 +289,6 @@
     "网站数据可用",
     "Datos del sitio disponibles"
   ],
-  "ダウンロード": [
-    "Downloads",
-    "下载",
-    "Descargas"
-  ],
   "ダウンロードエンジンの準備ができました。": [
     "The download engine is ready.",
     "下载引擎已就绪。",
@@ -389,11 +334,6 @@
     "无法读取浏览器网址，请从地址栏复制并粘贴到此处。",
     "No se pudo leer la URL del navegador. Cópiala de la barra de direcciones y pégala aquí."
   ],
-  "ブラウザーから取り込む。": [
-    "Import from your browser.",
-    "从浏览器导入。",
-    "Importa desde el navegador."
-  ],
   "ブラウザーで元のページを開きます。": [
     "Open the original page in your browser.",
     "在浏览器中打开原页面。",
@@ -409,11 +349,6 @@
     "显示浏览器顶部保存标签",
     "Pestaña sobre el navegador"
   ],
-  "ブラウザー上部の保存タブからも取り込めます。": [
-    "You can also import from the tab above your browser.",
-    "也可以通过浏览器顶部的保存标签导入。",
-    "También puedes importar desde la pestaña sobre el navegador."
-  ],
   "ブラウザー上部の保存タブを非表示にしました。": [
     "The browser tab is now hidden.",
     "已隐藏浏览器保存标签。",
@@ -428,16 +363,6 @@
     "Could not open the page. Check the URL and try again.",
     "无法打开页面，请确认网址后重试。",
     "No se pudo abrir la página. Comprueba la URL y reinténtalo."
-  ],
-  "ライブラリ": [
-    "Library",
-    "媒体库",
-    "Biblioteca"
-  ],
-  "ライブラリ  /  0 件": [
-    "Library  /  0 items",
-    "媒体库  /  0 项",
-    "Biblioteca  /  0 elementos"
   ],
   "ログイン": [
     "Sign in",
@@ -544,11 +469,6 @@
     "打开",
     "Abrir"
   ],
-  "完了・失敗・キャンセルの履歴を消去しました。保存した動画ファイルはそのままです。": [
-    "Cleared finished, failed and cancelled history. Saved files were kept.",
-    "已清除完成、失败和取消的历史记录，已保存的文件保留不变。",
-    "Se borró el historial finalizado, fallido y cancelado. Se conservaron los archivos guardados."
-  ],
   "結合・変換を処理中です。完了までお待ちください…": [
     "Merging or converting. Please wait…",
     "正在合并或转换，请稍候…",
@@ -568,11 +488,6 @@
     "The engine changed during the update. Try again.",
     "更新期间引擎发生变化，请重试。",
     "El motor cambió durante la actualización. Reinténtalo."
-  ],
-  "左下の「保存エンジンを準備」を押してください。": [
-    "Click Prepare engine at the bottom left.",
-    "请点击左下角的“准备下载引擎”。",
-    "Pulsa Preparar motor en la parte inferior izquierda."
   ],
   "再ダウンロードは不要": [
     "No download needed",
@@ -729,11 +644,6 @@
     "重新下载用于获取和转换媒体的工具。",
     "Descarga de nuevo las herramientas para obtener y convertir contenido."
   ],
-  "動画の取得から変換までを同時に処理する件数。変更しても進行中の保存は中断しません。": [
-    "Number of concurrent downloads, including conversion. Changing this does not stop active jobs.",
-    "同时处理的下载数量，包含转换。更改不会中断进行中的任务。",
-    "Número de descargas simultáneas, incluida la conversión. Cambiarlo no detiene las tareas activas."
-  ],
   "動画の保存先": [
     "Download destination",
     "视频保存位置",
@@ -768,21 +678,6 @@
     "Retry the same URL and format.",
     "以相同网址和格式重试。",
     "Reintentar con la misma URL y formato."
-  ],
-  "同時に保存する動画を{0}件に設定しました。進行中の保存は中断しません。": [
-    "Set to {0} simultaneous downloads. Active jobs will continue.",
-    "已设为同时下载 {0} 个视频，不会中断进行中的任务。",
-    "Se configuraron {0} descargas simultáneas. Las tareas activas continuarán."
-  ],
-  "同時保存": [
-    "Parallel",
-    "同时下载",
-    "Simultáneas"
-  ],
-  "同時保存数": [
-    "Concurrent downloads",
-    "同时下载数量",
-    "Descargas simultáneas"
   ],
   "配布情報を取得できませんでした。": [
     "Could not fetch release information.",
@@ -873,11 +768,6 @@
     "Back",
     "返回",
     "Atrás"
-  ],
-  "履歴を消去": [
-    "Clear history",
-    "清除历史",
-    "Borrar historial"
   ],
   "履歴を保存できませんでした: ": [
     "Could not save history: ",
@@ -1038,5 +928,70 @@
     "Updates automatically when nothing is being saved and ClipDock is in the menu bar.",
     "没有正在保存的视频且 ClipDock 位于菜单栏时，会自动更新。",
     "Se actualiza automáticamente cuando no se está guardando nada y ClipDock está en la barra de menús."
+  ],
+  "設定": [
+    "Settings",
+    "设置",
+    "Ajustes"
+  ],
+  "保存": [
+    "Save",
+    "保存",
+    "Guardar"
+  ],
+  "サイトのログイン": [
+    "Site sign-in",
+    "网站登录",
+    "Inicio de sesión"
+  ],
+  "保存先を開く": [
+    "Open folder",
+    "打开文件夹",
+    "Abrir carpeta"
+  ],
+  "一覧から削除": [
+    "Remove from list",
+    "从列表中移除",
+    "Quitar de la lista"
+  ],
+  "保存したファイルはまだありません": [
+    "No saved files yet",
+    "还没有已保存的文件",
+    "Aún no hay archivos guardados"
+  ],
+  "表示言語": [
+    "Language",
+    "显示语言",
+    "Idioma"
+  ],
+  "次回の起動から適用されます。": [
+    "Applies the next time ClipDock opens.",
+    "下次启动 ClipDock 时生效。",
+    "Se aplica la próxima vez que abras ClipDock."
+  ],
+  "起動": [
+    "Startup",
+    "启动",
+    "Inicio"
+  ],
+  "ブラウザーから取り込む": [
+    "Import from your browser",
+    "从浏览器导入",
+    "Importar desde el navegador"
+  ],
+  "保存エンジン": [
+    "Download engine",
+    "下载引擎",
+    "Motor de descarga"
+  ],
+  "保存エンジンを取得できませんでした。通信環境を確認して、もう一度準備してください。": [
+    "The download engine could not be fetched. Check your connection and prepare it again.",
+    "无法获取下载引擎。请检查网络连接后重新准备。",
+    "No se pudo obtener el motor de descarga. Comprueba la conexión y vuelve a prepararlo."
+  ],
+  "画面上部の「保存エンジンを準備」を押してください。": [
+    "Click Prepare engine at the top of the window.",
+    "请点击窗口顶部的“准备下载引擎”。",
+    "Pulsa Preparar motor en la parte superior de la ventana."
   ]
 }

@@ -14,14 +14,10 @@ namespace ClipDock.Mac;
 
 public partial class MainWindow : Window
 {
-    private static readonly IBrush SelectedFilter = new SolidColorBrush(Color.Parse("#D9EEDF"));
     private readonly DownloadLibrary library = new();
-    // What the list shows: jobs narrowed by the selected filter.
-    private readonly ObservableCollection<DownloadItem> visibleJobs = [];
     private readonly string historyFile = Path.Combine(AppPaths.Data, "history.dat");
     private readonly string settingsFile = Path.Combine(AppPaths.Data, "settings.json");
     private string outputDirectory = AppPaths.DefaultOutput;
-    private string filter = "all";
     private Task? installTask;
     private CancellationTokenSource? installCancellation;
     private bool installing;
@@ -66,7 +62,7 @@ public partial class MainWindow : Window
         if (Directory.Exists(oldSessions))
             foreach (var file in Directory.EnumerateFiles(oldSessions, "*.cookies"))
                 try { File.Delete(file); } catch (IOException) { } catch (UnauthorizedAccessException) { }
-        JobList.ItemsSource = visibleJobs;
+        JobList.ItemsSource = library.Jobs;
         library.StateChanged += RefreshSummary;
         library.Settled += _ => DownloadSettled();
         LoadState();
@@ -83,11 +79,13 @@ public partial class MainWindow : Window
         ToolTip.SetTip(OutputLabel, outputDirectory);
         RefreshSummary();
         UpdateEngineStatus();
-        ConcurrencyBox.SelectionChanged += Concurrency_Changed;
         QualityBox.SelectionChanged += (_, _) => SaveState();
-        FormatBox.SelectionChanged += (_, _) => { UpdateFormat(); SaveState(); };
+        // Choosing one format clears the other, so one handler sees every change.
+        Mp3Option.IsCheckedChanged += (_, _) => { UpdateFormat(); SaveState(); };
         UseLoginBox.IsCheckedChanged += LoginPreference_Changed;
         StartAtLoginBox.IsCheckedChanged += StartAtLogin_Changed;
+        // Esc closes the settings before any control sees it.
+        AddHandler(KeyDownEvent, Window_KeyDown, RoutingStrategies.Tunnel);
         // Not tied to Opened: at login the window stays closed, and the engine is still checked at launch.
         Dispatcher.UIThread.Post(() =>
         {
@@ -231,7 +229,7 @@ public partial class MainWindow : Window
     private string SelectedLanguage => Localization.Normalize((LanguageBox.SelectedItem as ComboBoxItem)?.Tag as string);
 
     private string Quality => (QualityBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "1080";
-    private string Format => (FormatBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "mp4";
+    private string Format => Mp3Option.IsChecked == true ? "mp3" : "mp4";
     private bool UseLogin => UseLoginBox.IsChecked == true;
     private void UpdateFormat() => QualityBox.IsEnabled = Format == "mp4";
     private void LoginPreference_Changed(object? sender, RoutedEventArgs e)
@@ -353,14 +351,6 @@ public partial class MainWindow : Window
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 
-    private void Concurrency_Changed(object? sender, SelectionChangedEventArgs e)
-    {
-        if (shuttingDown || ConcurrencyBox.SelectedItem is not ComboBoxItem choice || !int.TryParse(choice.Tag as string, out var count)) return;
-        library.MaxConcurrency = count;
-        SaveState(); StartQueue(); RefreshSummary();
-        Notice.Text = ClipDock.Core.Localization.Format($"同時に保存する動画を{count}件に設定しました。進行中の保存は中断しません。");
-    }
-
     private void Add_Click(object? sender, RoutedEventArgs e) => AddUrl();
     private void UrlInput_KeyDown(object? sender, KeyEventArgs e) { if (e.Key == Key.Enter) { AddUrl(); e.Handled = true; } }
     private void AddUrl()
@@ -386,26 +376,38 @@ public partial class MainWindow : Window
         if (!retried) return;
         SaveState(); RefreshSummary(); StartQueue();
     }
-    private void Filter_Click(object? sender, RoutedEventArgs e)
+    private void Remove_Click(object? sender, RoutedEventArgs e)
     {
-        filter = (sender as Control)?.Tag as string ?? "all";
-        foreach (var button in new[] { AllFilter, ActiveFilter, CompletedFilter })
-            button.Background = (string?)button.Tag == filter ? SelectedFilter : Brushes.Transparent;
-        RefreshSummary();
+        if (ItemOf(sender) is not { } item || !library.Remove(item)) return;
+        SaveState(); RefreshSummary();
     }
     private void RefreshSummary()
     {
-        var shown = library.Jobs.Where(item => DownloadLibrary.Shows(item, filter)).ToList();
-        // Progress updates arrive many times a second; only touch the list when its contents really changed.
-        if (!shown.SequenceEqual(visibleJobs))
-        {
-            visibleJobs.Clear();
-            foreach (var item in shown) visibleJobs.Add(item);
-        }
-        CountLabel.Text = library.CountText(filter, shown.Count);
-        QueueStatus.Text = library.QueueText();
-        menuBarIcon.Text = library.Jobs.Any(j => j.IsBusy || j.State == "queued") ? "ClipDock\n" + QueueStatus.Text : "ClipDock";
-        EmptyState.IsVisible = shown.Count == 0;
+        CountLabel.Text = library.CompletedCount.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        menuBarIcon.Text = library.HasUnfinished ? "ClipDock\n" + library.QueueText() : "ClipDock";
+        EmptyState.IsVisible = library.Jobs.Count == 0;
+    }
+
+    // Settings slide in over the page; Esc, the close button or a click on the dimmed page closes them.
+    private void OpenSettings_Click(object? sender, RoutedEventArgs e)
+    {
+        SettingsLayer.IsVisible = true;
+        CloseSettingsButton.Focus();
+    }
+    private void CloseSettings()
+    {
+        if (!SettingsLayer.IsVisible) return;
+        SettingsLayer.IsVisible = false;
+        SettingsButton.Focus();
+    }
+    private void CloseSettings_Click(object? sender, RoutedEventArgs e) => CloseSettings();
+    private void SettingsScrim_PointerPressed(object? sender, PointerPressedEventArgs e) => CloseSettings();
+    private void Window_KeyDown(object? sender, KeyEventArgs e)
+    {
+        // An open language list closes first, as it would anywhere else.
+        if (e.Key != Key.Escape || !SettingsLayer.IsVisible || LanguageBox.IsDropDownOpen) return;
+        CloseSettings();
+        e.Handled = true;
     }
     private async void ChooseOutput_Click(object? sender, RoutedEventArgs e)
     {
@@ -506,12 +508,7 @@ public partial class MainWindow : Window
         var ready = ToolInstaller.IsReady(ToolInstaller.FindTools());
         EngineStatus.Text = ready ? ClipDock.Core.Localization.Text("● エンジンの準備完了") : installing ? ClipDock.Core.Localization.Text("○ 初期セットアップ中…") : ClipDock.Core.Localization.Text("○ 保存エンジンを取得できていません");
         // Only a failed download leaves something to press; updates run by themselves at launch.
-        EngineButton.IsVisible = !ready && !installing;
-    }
-    private void ClearHistory_Click(object? sender, RoutedEventArgs e)
-    {
-        library.ClearFinished();
-        SaveState(); RefreshSummary(); Notice.Text = ClipDock.Core.Localization.Text("完了・失敗・キャンセルの履歴を消去しました。保存した動画ファイルはそのままです。");
+        EngineBanner.IsVisible = !ready && !installing;
     }
 
     private static void Select(ComboBox box, string? tag)
@@ -529,12 +526,10 @@ public partial class MainWindow : Window
             {
                 if (settings.OutputDirectory is { Length: > 0 } directory && Path.IsPathFullyQualified(directory)) outputDirectory = directory;
                 Select(QualityBox, settings.Quality);
-                Select(FormatBox, settings.Format);
+                if (settings.Format == "mp3") Mp3Option.IsChecked = true;
                 UseLoginBox.IsChecked = settings.UseLogin;
                 startAtLogin = settings.StartAtLogin;
                 trayNoticeShown = settings.TrayNoticeShown;
-                library.MaxConcurrency = Math.Clamp(settings.MaxConcurrentDownloads, 1, DownloadScheduler.MaximumConcurrency);
-                Select(ConcurrencyBox, library.MaxConcurrency.ToString());
             }
         }
         catch (Exception) { Notice.Text = ClipDock.Core.Localization.Text("以前の設定を読み込めませんでした。既定の設定で続行します。"); }
@@ -552,7 +547,7 @@ public partial class MainWindow : Window
         try
         {
             // The browser overlay is a Windows feature; its setting is carried through unchanged.
-            HistoryFile.Write(settingsFile, JsonSerializer.SerializeToUtf8Bytes(new AppSettings(outputDirectory, Quality, library.MaxConcurrency, Format, false, UseLogin, SelectedLanguage, startAtLogin, trayNoticeShown), Json.Options), plain: true);
+            HistoryFile.Write(settingsFile, JsonSerializer.SerializeToUtf8Bytes(new AppSettings(outputDirectory, Quality, Format, false, UseLogin, SelectedLanguage, startAtLogin, trayNoticeShown), Json.Options), plain: true);
             HistoryFile.Write(historyFile, JsonSerializer.SerializeToUtf8Bytes(library.Snapshot(), Json.Options));
             return true;
         }
@@ -618,7 +613,7 @@ public partial class MainWindow : Window
             result["scriptUrl"] = await login.CurrentUrlAsync();
             using var cookies = await browserSession.CreateCookieFileAsync(new DownloadRequest { Url = "https://example.com/" }.Validated(), CancellationToken.None);
             result["cookieFile"] = cookies is not null;
-            result["localizedControls"] = (string?)AllFilter.Content == Localization.Text("↓    すべてのダウンロード") &&
+            result["localizedControls"] = ListTitle.Text == Localization.Text("保存したファイル") &&
                 login.Title == Localization.Text("ClipDock — サイトにログイン") && SelectedLanguage == Localization.Language;
             // The close button only hides the window (and the sign-in window); the menu bar icon brings it back.
             Close();

@@ -67,20 +67,19 @@ internal static class LibraryChecks
             Assert(library.Jobs[3].Detail.StartsWith("Xの動画情報を取得できませんでした。", StringComparison.Ordinal));
         });
 
-        check("filters and summaries count what each list shows", () =>
+        check("the summary counts saved files and the tooltip counts work in progress", () =>
         {
             var library = new DownloadLibrary();
-            var queued = library.Add(Request("https://example.com/a"), output)!;
+            library.Add(Request("https://example.com/a"), output);
             var busy = library.Add(Request("https://example.com/b"), output)!;
             var done = library.Add(Request("https://example.com/c"), output)!;
-            busy.State = "converting"; done.State = "completed";
-            Assert(DownloadLibrary.Shows(queued, "active") && DownloadLibrary.Shows(busy, "active") && !DownloadLibrary.Shows(done, "active"));
-            Assert(DownloadLibrary.Shows(done, "completed") && !DownloadLibrary.Shows(busy, "completed") && DownloadLibrary.Shows(done, "all"));
+            var failed = library.Add(Request("https://example.com/d"), output)!;
+            busy.State = "converting"; done.State = "completed"; failed.State = "failed";
+            Assert(library.CompletedCount == 1);
             Assert(library.QueueText() == "保存中 1 件  ·  待機 1 件");
-            Assert(library.CountText("active", 2) == "ダウンロード中  /  2 件     ·     保存完了 1 件");
         });
 
-        check("clearing history removes finished items and their work folders but keeps saved files", () =>
+        check("only a failed, cancelled or interrupted item can be removed, with its work folder; saved files stay", () =>
         {
             var root = Path.Combine(Path.GetTempPath(), "ClipDock-library-" + Guid.NewGuid().ToString("N"));
             try
@@ -88,14 +87,15 @@ internal static class LibraryChecks
                 var library = new DownloadLibrary();
                 var done = library.Add(Request("https://example.com/a"), root)!;
                 var waiting = library.Add(Request("https://example.com/b"), root)!;
-                done.State = "completed";
-                DownloadPlan.PrepareWorkDirectory(root, done.Id);
-                DownloadPlan.PrepareWorkDirectory(root, waiting.Id);
+                var failed = library.Add(Request("https://example.com/c"), root)!;
+                done.State = "completed"; failed.State = "failed";
+                foreach (var item in library.Jobs) DownloadPlan.PrepareWorkDirectory(root, item.Id);
                 var saved = Path.Combine(root, "video.mp4");
                 File.WriteAllText(saved, "video");
-                library.ClearFinished();
-                Assert(library.Jobs.SequenceEqual([waiting]) && File.Exists(saved));
-                Assert(!Directory.Exists(DownloadPlan.WorkDirectory(root, done.Id)) && Directory.Exists(DownloadPlan.WorkDirectory(root, waiting.Id)));
+                Assert(!library.Remove(done) && !library.Remove(waiting) && library.Jobs.Count == 3);
+                Assert(library.Remove(failed) && !library.Remove(failed));
+                Assert(library.Jobs.SequenceEqual([waiting, done]) && File.Exists(saved));
+                Assert(!Directory.Exists(DownloadPlan.WorkDirectory(root, failed.Id)) && Directory.Exists(DownloadPlan.WorkDirectory(root, waiting.Id)));
             }
             finally { Directory.Delete(root, true); }
         });
