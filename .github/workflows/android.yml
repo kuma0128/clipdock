@@ -40,7 +40,19 @@ jobs:
           image='system-images;android-37.0;default;x86_64'
           sdkmanager "$image"
           echo no | avdmanager create avd -n ClipDockTest -k "$image" -d pixel_7
-          emulator -avd ClipDockTest -port 5554 -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          emulator -avd ClipDockTest -port 5554 -no-window -noaudio -no-boot-anim -no-snapshot -gpu software -partition-size 2048 > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          emulator_pid=$!
           trap 'adb emu kill >/dev/null || true' EXIT
-          timeout 300 bash -c 'adb wait-for-device; until adb shell getprop sys.boot_completed | grep -q 1; do sleep 2; done'
+          for _ in {1..120}; do
+            if ! kill -0 "$emulator_pid" 2>/dev/null; then
+              tail -50 "$RUNNER_TEMP/emulator.log"
+              exit 1
+            fi
+            if timeout 5 adb shell getprop sys.boot_completed 2>/dev/null | grep -q 1; then break; fi
+            sleep 4
+          done
+          if ! timeout 5 adb shell getprop sys.boot_completed | grep -q 1; then
+            tail -50 "$RUNNER_TEMP/emulator.log"
+            exit 1
+          fi
           bash scripts/android/check.sh
