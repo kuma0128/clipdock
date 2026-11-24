@@ -36,6 +36,9 @@ jobs:
           export JAVA_HOME="$JAVA_HOME_17_X64"
           tools_bin=$(dirname "$(find -L "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f -print -quit)")
           export PATH="$tools_bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+          export ANDROID_USER_HOME="$RUNNER_TEMP/clipdock-android"
+          export ANDROID_AVD_HOME="$ANDROID_USER_HOME/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
           sudo chmod a+rw /dev/kvm
           image='system-images;android-37.0;default;x86_64'
           sdkmanager "$image"
