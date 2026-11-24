@@ -27,7 +27,7 @@ ClipDockは、動画や音声のリンクを貼り付けて端末に保存する
 
 ファイルは「ダウンロード」内の `ClipDock` フォルダーに保存します。アプリの一覧でファイル名をタップすると開けます。右端の共有ボタンから他のアプリに渡せます。映像と音声がMP4とM4Aに分かれている場合は、端末上で1本のMP4にまとめます。ログインが必要なサイトやHLS配信、MP3への変換はデスクトップ版の対応範囲です。
 
-<img src="docs/images/android.png" width="320" alt="Android版ClipDockの画面。「ペースト」ボタンの下に、保存したファイルと共有ボタンが並びます。">
+<img src="docs/images/android.png" width="245" alt="日本語・ライトモードのAndroid版ClipDock"> <img src="docs/images/android-dark.png" width="245" alt="英語・ダークモードのAndroid版ClipDock">
 
 ### Windows
 
