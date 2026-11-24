@@ -17,6 +17,8 @@ ClipDockは、動画や音声のリンクを貼り付けて端末に保存する
 
 保存先は「ファイル」→「ブラウズ」→「このiPhone内」→「ClipDock」です。iPhone版は、公開ページから取得できる動画・音声とメディアの直リンクに対応します。映像と音声が別々のMP4・M4Aなら、端末内で1本のMP4にまとめます。ログインや追加のJavaScript実行環境が必要なサイト、HLSなどの分割配信、MP3への変換は対象外です。
 
+<img src="docs/images/iphone.png" width="320" alt="iPhone版ClipDockの画面。上部に「ペースト」ボタン、下に保存したファイルと各ファイルの共有ボタンがあります。">
+
 ### Windows
 
 1. [公式サイト](https://clipdock-d6z.pages.dev/)からインストーラー（.exe）を取得し、起動中のClipDockを終了してから実行します。通知領域のClipDockアイコンを右クリックし、「ClipDockを終了」を選びます。管理者権限は不要です。
