@@ -4,14 +4,14 @@ import UniformTypeIdentifiers
 
 @main
 struct ClipDockApp: App {
-    @StateObject private var downloads = Downloads()
+    @State private var downloads = Downloads()
     var body: some Scene {
         WindowGroup { ContentView(downloads: downloads) }
     }
 }
 
 private struct ContentView: View {
-    @ObservedObject var downloads: Downloads
+    let downloads: Downloads
     @Environment(\.scenePhase) private var scenePhase
     @State private var preview: URL?
 
@@ -31,16 +31,7 @@ private struct ContentView: View {
                     }
                     .padding(.vertical, 8)
                     if downloads.busy {
-                        HStack {
-                            Text(downloads.status)
-                            Spacer()
-                            Button("キャンセル", action: downloads.cancel)
-                        }
-                        if let percent = downloads.percent {
-                            ProgressView(value: Double(percent), total: 100)
-                        } else {
-                            ProgressView()
-                        }
+                        DownloadProgress(downloads: downloads)
                     }
                     if let error = downloads.error {
                         Label(error, systemImage: "exclamationmark.circle")
@@ -93,6 +84,23 @@ private struct ContentView: View {
                 let text = object as? String ?? ""
                 Task { @MainActor in downloads.paste(text) }
             }
+        }
+    }
+}
+
+private struct DownloadProgress: View {
+    let downloads: Downloads
+
+    var body: some View {
+        HStack {
+            Text(downloads.status)
+            Spacer()
+            Button("キャンセル", action: downloads.cancel)
+        }
+        if let percent = downloads.percent {
+            ProgressView(value: Double(percent), total: 100)
+        } else {
+            ProgressView()
         }
     }
 }

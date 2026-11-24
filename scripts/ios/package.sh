@@ -10,6 +10,7 @@ xcodebuild -project src/ClipDock.iOS/ClipDock.xcodeproj -scheme ClipDock \
     -derivedDataPath "$output/build" CODE_SIGNING_ALLOWED=NO build -quiet
 app="$output/build/Build/Products/Release-iphoneos/ClipDock.app"
 test "$(plutil -extract CFBundleSupportedPlatforms.0 raw "$app/Info.plist")" = iPhoneOS
+test "$(plutil -extract MinimumOSVersion raw "$app/Info.plist")" = 26.0
 test "$(plutil -extract UIFileSharingEnabled raw "$app/Info.plist")" = true
 test "$(plutil -extract LSSupportsOpeningDocumentsInPlace raw "$app/Info.plist")" = true
 test -s "$app/packages/media.py"

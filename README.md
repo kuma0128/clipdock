@@ -6,12 +6,12 @@ ClipDockは、動画や音声のリンクを貼り付けて端末に保存する
 
 ## はじめに
 
-対応環境: **Windows 10 / 11（x64）**、**macOS 14以降（Appleシリコン / Intel）**、**iOS 17以降のiPhone**。
+対応環境: **Windows 10 / 11（x64）**、**macOS 14以降（Appleシリコン / Intel）**、**iOS 26以降のiPhone**。
 
 ### iPhone
 
 1. MacまたはWindows PCにAltServerを用意し、自分のApple AccountでiPhoneにAltStore Classicをインストールします。[AltStore Classicの導入手順](https://faq.altstore.io/)
-2. iPhoneでこのリポジトリを閲覧できるGitHubアカウントにログインし、[iPhone版のリリース](https://github.com/kuma0128/clipdock/releases/tag/ios-v1.0.0)から `ClipDock-iOS.ipa` を「ファイル」にダウンロードします。
+2. iPhoneでこのリポジトリを閲覧できるGitHubアカウントにログインし、[iPhone版のリリース一覧](https://github.com/kuma0128/clipdock/releases?q=ios-v)から `ClipDock-iOS.ipa` を「ファイル」にダウンロードします。
 3. AltServerに接続した状態で、AltStore Classicの「My Apps」→「＋」からIPAを選びます。無料のApple Accountでは署名の有効期間は7日間です。AltServerに接続して「Refresh All」を押すと更新できます。[AltStoreの更新方法](https://faq.altstore.io/altstore-classic/your-altstore)
 4. Safariなどで動画ページやメディアファイルのリンクをコピーし、ClipDockで「ペースト」をタップします。保存が終わるまでアプリを開いておきます。ファイル名をタップすると再生でき、共有ボタンで他のアプリに渡せます。
 

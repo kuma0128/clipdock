@@ -16,7 +16,7 @@ jobs:
   ios:
     permissions:
       contents: write
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7.0.1
@@ -30,7 +30,7 @@ jobs:
         run: bash scripts/ios/package.sh
       - name: Check paste and save on an iPhone simulator
         run: |
-          device=$(xcrun simctl list devices available -j | jq -er '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
+          device=$(xcrun simctl list devices available -j | jq -er 'first(.devices | to_entries[] | select(.key | startswith("com.apple.CoreSimulator.SimRuntime.iOS-26-")) | .value[] | select(.name | startswith("iPhone")) | .udid)')
           xcrun simctl boot "$device"
           xcrun simctl bootstatus "$device" -b
           uv run --no-project python tests/iOS/fixture.py &
@@ -61,7 +61,8 @@ jobs:
           tag="$GITHUB_REF_NAME"
           test "$tag" = "ios-v$version"
           if ! gh release view "$tag" >/dev/null 2>&1; then
-            gh release create "$tag" --verify-tag --draft --latest=false --title "ClipDock for iPhone $version" --notes "iOS 17以降のiPhoneに対応しています。"
+            minimum=$(plutil -extract MinimumOSVersion raw artifacts/ios/build/Build/Products/Release-iphoneos/ClipDock.app/Info.plist)
+            gh release create "$tag" --verify-tag --draft --latest=false --title "ClipDock for iPhone $version" --notes "iOS ${minimum%.0}以降のiPhoneに対応しています。"
           fi
           test "$(gh release view "$tag" --json isDraft --jq .isDraft)" = true
           gh release upload "$tag" artifacts/ios/*.ipa artifacts/ios/*.sha256 artifacts/ios/simulator.png --clobber

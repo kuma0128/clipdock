@@ -18,6 +18,12 @@ final class ClipDockUITests: XCTestCase {
         pasteLink("watch", asURL: true)
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "ClipDock Sample"))
             .firstMatch.waitForExistence(timeout: 60), app.debugDescription)
+        pasteLink("slow.wav")
+        XCTAssertTrue(app.staticTexts["ダウンロード中…"].waitForExistence(timeout: 30))
+        let cancel = app.buttons["キャンセル"]
+        cancel.tap()
+        XCTAssertTrue(cancel.waitForNonExistence(timeout: 30))
+        XCTAssertFalse(app.buttons["slow.wav"].exists)
         pasteLink("tone.wav")
         let tone = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "tone.wav")).firstMatch
         XCTAssertTrue(tone.waitForExistence(timeout: 30))

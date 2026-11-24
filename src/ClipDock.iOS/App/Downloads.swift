@@ -1,6 +1,6 @@
 import AVFoundation
 import Foundation
-import SwiftUI
+import Observation
 
 private enum SaveError: LocalizedError {
     case single, format, download, storage, engine
@@ -22,22 +22,26 @@ private struct MediaResult: Decodable {
     let error: String?
 }
 
-private func fetchMedia(_ link: URL, into folder: URL, progress: Progress,
-                        onProgress: @escaping (Int) -> Void) async throws -> MediaResult {
+private func fetchMedia(_ link: URL, into folder: URL, task: Task<Void, Never>,
+                        onProgress: @escaping @MainActor @Sendable (Int) -> Void) async throws -> MediaResult {
     let json: String? = await withCheckedContinuation { continuation in
         DispatchQueue.global(qos: .userInitiated).async {
             var previous = -2
             let result = CDDownload(link.absoluteString, folder.path) { value in
+                guard !task.isCancelled else { return false }
                 if value != previous {
-                    onProgress(value)
+                    DispatchQueue.main.async {
+                        if !task.isCancelled { onProgress(value) }
+                    }
                     previous = value
                 }
-                return !progress.isCancelled
+                return true
             }
-            continuation.resume(returning: result)
+            // Deliver all queued progress updates before switching to file verification.
+            DispatchQueue.main.async { continuation.resume(returning: result) }
         }
     }
-    if progress.isCancelled { throw CancellationError() }
+    try Task.checkCancellation()
     guard let json, let media = try? JSONDecoder().decode(MediaResult.self, from: Data(json.utf8)) else {
         throw SaveError.engine
     }
@@ -49,7 +53,7 @@ private func fetchMedia(_ link: URL, into folder: URL, progress: Progress,
     }
 }
 
-private func finishedMedia(_ files: [URL], in folder: URL, progress: Progress) async throws -> URL {
+private func finishedMedia(_ files: [URL], in folder: URL) async throws -> URL {
     guard let first = files.first else { throw SaveError.format }
     if files.count == 1 {
         let asset = AVURLAsset(url: first)
@@ -71,29 +75,29 @@ private func finishedMedia(_ files: [URL], in folder: URL, progress: Progress) a
     let output = folder.appendingPathComponent("merged.mp4")
     guard let export = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetPassthrough),
           export.supportedFileTypes.contains(.mp4) else { throw SaveError.format }
-    export.outputURL = output
-    export.outputFileType = .mp4
-    progress.cancellationHandler = { export.cancelExport() }
-    defer { progress.cancellationHandler = nil }
-    if progress.isCancelled { throw CancellationError() }
-    await export.export()
-    if progress.isCancelled { throw CancellationError() }
-    guard export.status == .completed else { throw SaveError.format }
+    try Task.checkCancellation()
+    do {
+        try await export.export(to: output, as: .mp4)
+    } catch {
+        try Task.checkCancellation()
+        throw SaveError.format
+    }
     return output
 }
 
 @MainActor
-final class Downloads: ObservableObject {
-    @Published private(set) var files: [URL] = []
-    @Published private(set) var busy = false
-    @Published private(set) var status = ""
-    @Published private(set) var percent: Int?
-    @Published var error: String?
+@Observable
+final class Downloads {
+    private(set) var files: [URL] = []
+    private(set) var status = ""
+    private(set) var percent: Int?
+    private(set) var error: String?
+    var busy: Bool { transfer != nil }
 
     private let manager = FileManager.default
     private let documents = URL.documentsDirectory
     private let staging = URL.temporaryDirectory.appendingPathComponent("ClipDock")
-    private var transfer: Progress?
+    private var transfer: Task<Void, Never>?
 
     init() {
         // A force-quit can leave an unfinished transfer in the app's private temporary folder.
@@ -128,10 +132,7 @@ final class Downloads: ObservableObject {
         error = nil
         status = "リンクを確認中…"
         percent = nil
-        busy = true
-        let progress = Progress(totalUnitCount: 100)
-        transfer = progress
-        Task { await save(link, progress: progress) }
+        transfer = Task { await save(link) }
     }
 
     func cancel() {
@@ -139,31 +140,28 @@ final class Downloads: ObservableObject {
         status = "キャンセル中…"
     }
 
-    private func save(_ link: URL, progress: Progress) async {
+    private func save(_ link: URL) async {
+        guard let task = transfer else { return }
         let folder = staging.appendingPathComponent(UUID().uuidString)
         defer {
             try? manager.removeItem(at: folder)
             transfer = nil
-            busy = false
         }
         do {
             try manager.createDirectory(at: folder, withIntermediateDirectories: true)
-            let media = try await fetchMedia(link, into: folder, progress: progress) { value in
-                Task { @MainActor in
-                    guard self.transfer === progress, !progress.isCancelled else { return }
-                    self.percent = value < 0 ? nil : value
-                    if value >= 0 { self.status = "ダウンロード中…" }
-                }
+            let media = try await fetchMedia(link, into: folder, task: task) { value in
+                self.percent = value < 0 ? nil : value
+                if value >= 0 { self.status = "ダウンロード中…" }
             }
             status = "ファイルを確認中…"
             percent = nil
             let tracks = (media.files ?? []).map { folder.appendingPathComponent($0) }
-            let result = try await finishedMedia(tracks, in: folder, progress: progress)
-            if progress.isCancelled { throw CancellationError() }
+            let result = try await finishedMedia(tracks, in: folder)
+            try Task.checkCancellation()
             try store(result, title: media.title ?? "ClipDock")
             refresh()
         } catch {
-            if !progress.isCancelled {
+            if !Task.isCancelled {
                 self.error = (error as? SaveError ?? .storage).localizedDescription
             }
         }

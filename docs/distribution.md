@@ -196,7 +196,7 @@ Developer IDで配布する場合は、Apple Developer Programの証明書でバ
 
 iPhone版はGitHub Releasesで配布します。インストールと署名の更新方法は[READMEのiPhoneの項](../README.md#iphone)を参照してください。
 
-Macでビルドするには、iOS SDKを含むXcodeとXcodeGenを用意し、次をリポジトリのルートで実行します。
+Macでビルドするには、iOS 26以降のSDKを含むXcodeとXcodeGenを用意し、次をリポジトリのルートで実行します。
 
 ```bash
 bash scripts/ios/prepare.sh
@@ -206,4 +206,4 @@ bash scripts/ios/package.sh
 
 `prepare.sh` はPythonのiOSランタイム、yt-dlp、TLS検証用のcertifiを取得し、SHA-256を検証します。実機用のIPAとチェックサムは `artifacts/ios/` に出力します。Xcodeから直接実機で起動する場合は、生成したプロジェクトを開き、ClipDockターゲットの「Signing & Capabilities」で自分のTeamと一意のBundle Identifierを指定してください。
 
-GitHub Actionsの「iPhone app」はIPAの作成後、iPhoneシミュレーターでページURLと直リンクをペーストし、保存ファイルを元データと照合します。`project.yml` のバージョンに合うタグ（例 `ios-v1.0.0`）をpushすると、確認済みのIPA・チェックサム・画面写真がGitHubリリースの下書きに付きます。内容を確認して公開してください。ワークフローを手動で実行した場合は、同じファイルを1日間 `ClipDock-iOS` アーティファクトから取得できます。
+GitHub Actionsの「iPhone app」はIPAの作成後、iOS 26のiPhoneシミュレーターでページURLと直リンクをペーストし、保存ファイルを元データと照合します。`project.yml` のバージョンに合うタグ（例 `ios-v1.1.0`）をpushすると、確認済みのIPA・チェックサム・画面写真がGitHubリリースの下書きに付きます。内容を確認して公開してください。ワークフローを手動で実行した場合は、同じファイルを1日間 `ClipDock-iOS` アーティファクトから取得できます。

@@ -4,6 +4,7 @@ from io import BytesIO
 from pathlib import Path
 import math
 import struct
+import time
 import wave
 
 buffer = BytesIO()
@@ -23,6 +24,7 @@ responses = {
     "/sound.m4a": ("audio/mp4", Path(__file__).with_name("sound.m4a").read_bytes()),
     "/sample.mp4": ("video/mp4", Path(__file__).with_name("sample.mp4").read_bytes()),
     "/tone.wav": ("audio/wav", buffer.getvalue()),
+    "/slow.wav": ("audio/wav", buffer.getvalue()),
     "/watch": ("text/html", page),
     "/empty": ("text/html", b"<html><title>No media</title></html>"),
 }
@@ -38,7 +40,15 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", mime)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(body)
+        if self.path != "/slow.wav":
+            self.wfile.write(body)
+            return
+        try:
+            for offset in range(0, len(body), 512):
+                self.wfile.write(body[offset:offset + 512])
+                time.sleep(0.75)
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # The client can stop reading after probing or cancelling a download.
 
 
 if __name__ == "__main__":
