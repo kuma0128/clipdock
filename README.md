@@ -203,4 +203,6 @@ macOS版では、設定・履歴・エンジンを `~/Library/Application Suppor
 
 iPhone版は `src/ClipDock.iOS` にあります。ビルド方法とIPAの作成手順は[配布手順](docs/distribution.md#iphone版)を参照してください。
 
+Android版は `src/ClipDock.Android` にあります。APKのビルド・署名とエミュレーターでの確認方法は[Android版の配布手順](docs/distribution.md#android版)を参照してください。
+
 同梱ソフトウェアのライセンスは [THIRD-PARTY.md](THIRD-PARTY.md) を参照してください。
