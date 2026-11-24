@@ -11,6 +11,9 @@ on:
       - 'tests/iOS/*.m4a'
       - 'scripts/android/**'
       - '.github/workflows/android.yml'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

@@ -118,18 +118,21 @@ internal fun finishMedia(parts: List<File>, work: File, checkCancelled: () -> Un
                     ?: throw UnsupportedMedia()
                 reader.selectTrack(track)
                 val format = reader.getTrackFormat(track)
-                if (reader.sampleTime < 0) throw UnsupportedMedia()
+                if (reader.sampleTrackIndex < 0) throw UnsupportedMedia()
                 if (type == "video/" && format.containsKey(MediaFormat.KEY_ROTATION)) {
                     muxer.setOrientationHint(format.getInteger(MediaFormat.KEY_ROTATION))
                 }
                 muxer.addTrack(format)
             }
+            // An AAC priming packet may precede time zero. Move both tracks by the
+            // same amount so the muxer gets nonnegative timestamps and keeps sync.
+            val originUs = minOf(0L, readers.minOf { it.sampleTime })
             muxer.start()
             var buffer = ByteBuffer.allocateDirect(256 * 1024)
             val info = MediaCodec.BufferInfo()
             while (true) {
                 checkCancelled()
-                val index = readers.indices.filter { readers[it].sampleTime >= 0 }.minByOrNull { readers[it].sampleTime } ?: break
+                val index = readers.indices.filter { readers[it].sampleTrackIndex >= 0 }.minByOrNull { readers[it].sampleTime } ?: break
                 val reader = readers[index]
                 val size = reader.sampleSize
                 if (size !in 0..(64L * 1024 * 1024) || reader.sampleFlags and MediaExtractor.SAMPLE_FLAG_ENCRYPTED != 0)
@@ -139,7 +142,7 @@ internal fun finishMedia(parts: List<File>, work: File, checkCancelled: () -> Un
                 val count = reader.readSampleData(buffer, 0)
                 if (count != size.toInt()) throw UnsupportedMedia()
                 val flags = if (reader.sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC != 0) MediaCodec.BUFFER_FLAG_KEY_FRAME else 0
-                info.set(0, count, reader.sampleTime, flags)
+                info.set(0, count, reader.sampleTime - originUs, flags)
                 muxer.writeSampleData(tracks[index], buffer, info)
                 reader.advance()
             }

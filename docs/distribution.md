@@ -207,3 +207,18 @@ bash scripts/ios/package.sh
 `prepare.sh` はPythonのiOSランタイム、yt-dlp、TLS検証用のcertifiを取得し、SHA-256を検証します。実機用のIPAとチェックサムは `artifacts/ios/` に出力します。Xcodeから直接実機で起動する場合は、生成したプロジェクトを開き、ClipDockターゲットの「Signing & Capabilities」で自分のTeamと一意のBundle Identifierを指定してください。
 
 GitHub Actionsの「iPhone app」はIPAの作成後、iOS 26のiPhoneシミュレーターでページURLと直リンクをペーストし、保存ファイルを元データと照合します。`project.yml` のバージョンに合うタグ（例 `ios-v1.1.0`）をpushすると、確認済みのIPA・チェックサム・画面写真がGitHubリリースの下書きに付きます。内容を確認して公開してください。ワークフローを手動で実行した場合は、同じファイルを1日間 `ClipDock-iOS` アーティファクトから取得できます。
+
+## Android版
+
+Android 15以降のarm64-v8a・x86_64用APKをGitHub Releasesで配布します。ビルドにはJDK 17、Android SDK（Platform 37.0、Build Tools 36.0.0、Platform Tools）、uvを使います。`ANDROID_HOME` をSDKの場所に設定し、`platform-tools` をPATHに追加してください。Gradleはリポジトリ内のラッパーを使います。
+
+開発用APKは `src/ClipDock.Android/gradlew -p src/ClipDock.Android assembleDebug` で作成します。GitHub Actionsの「Android app」はAndroid 17エミュレーターでリンクの貼り付け、保存内容、分離配信の結合、エラー表示、再起動後の一覧を確認します。
+
+配布用APKは、初回リリースと同じ署名鍵（PKCS12、エイリアス `clipdock`）で署名します。`CLIPDOCK_ANDROID_KEYSTORE` にキーストアのパス、`CLIPDOCK_ANDROID_KEY_PASSWORD` にパスワードを設定して、次を実行します。
+
+```bash
+bash scripts/android/package.sh
+ANDROID_SERIAL=emulator-5554 bash scripts/android/check.sh release
+```
+
+`artifacts/android/` にAPK、SHA-256、テスト後の画面写真 `android.png` が揃います。更新時は `build.gradle.kts` の `versionCode` を増やし、`versionName` と一致するタグ（例 `android-v1.0.0`）のGitHubリリースに3ファイルを添付します。画面写真はREADMEの `docs/images/android.png` にも反映します。

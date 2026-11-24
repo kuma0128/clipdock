@@ -20,4 +20,6 @@ The macOS app bundle contains the .NET runtime license and third-party notices u
 
 The iPhone app embeds [CPython from Python Apple Support](https://github.com/beeware/Python-Apple-support/releases/tag/3.14-b14), the [yt-dlp Python package](https://pypi.org/project/yt-dlp/2026.11.23/), and [certifi](https://pypi.org/project/certifi/2026.11.20/). The bundle includes the Python license in `python/lib/python3.14/LICENSE.txt`, the wheel licenses in `packages/*.dist-info/licenses/`, the runtime notices in `RuntimeNotices.txt`, and the support package versions in `VERSIONS`.
 
+The Android app uses [Chaquopy](https://github.com/chaquo/chaquopy/tree/17.2.0) to embed CPython, yt-dlp and certifi. Its user interface uses [AndroidX and Jetpack Compose](https://developer.android.com/jetpack/androidx). The APK includes license texts under `assets/licenses/` and in the embedded Python packages.
+
 Chrome and GitHub are trademarks of their respective owners.

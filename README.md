@@ -6,7 +6,7 @@ ClipDockは、動画や音声のリンクを貼り付けて端末に保存する
 
 ## はじめに
 
-対応環境: **Windows 10 / 11（x64）**、**macOS 14以降（Appleシリコン / Intel）**、**iOS 26以降のiPhone**。
+対応環境: **Windows 10 / 11（x64）**、**macOS 14以降（Appleシリコン / Intel）**、**iOS 26以降のiPhone**、**Android 15以降の64ビット端末**。
 
 ### iPhone
 
@@ -18,6 +18,16 @@ ClipDockは、動画や音声のリンクを貼り付けて端末に保存する
 保存先は「ファイル」→「ブラウズ」→「このiPhone内」→「ClipDock」です。iPhone版は、公開ページから取得できる動画・音声とメディアの直リンクに対応します。映像と音声が別々のMP4・M4Aなら、端末内で1本のMP4にまとめます。ログインや追加のJavaScript実行環境が必要なサイト、HLSなどの分割配信、MP3への変換は対象外です。
 
 <img src="docs/images/iphone.png" width="320" alt="iPhone版ClipDockの画面。上部に「ペースト」ボタン、下に保存したファイルと各ファイルの共有ボタンがあります。">
+
+### Android
+
+1. Android端末でこのリポジトリを閲覧できるGitHubアカウントにログインし、リリースの「Assets」から `ClipDock-Android.apk` をダウンロードします。[Android版のリリース](https://github.com/kuma0128/clipdock/releases?q=android-v)
+2. ダウンロードしたAPKを開きます。「この提供元のアプリを許可」が表示されたら、APKを開いたブラウザーまたはファイルアプリに許可し、「インストール」を押します。
+3. 公開されている動画ページや音声・動画ファイルのリンクをコピーし、ClipDockで「貼り付けて保存」をタップします。ダウンロードが終わるまでアプリを開いておきます。
+
+ファイルは「ダウンロード」内の `ClipDock` フォルダーに保存します。アプリの一覧でファイル名をタップすると開けます。右端の共有ボタンから他のアプリに渡せます。映像と音声がMP4とM4Aに分かれている場合は、端末上で1本のMP4にまとめます。ログインが必要なサイトやHLS配信、MP3への変換はデスクトップ版の対応範囲です。
+
+<img src="docs/images/android.png" width="320" alt="Android版ClipDockの画面。貼り付けて保存ボタンの下に、保存したファイルと共有ボタンが並びます。">
 
 ### Windows
 
