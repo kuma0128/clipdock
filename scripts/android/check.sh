@@ -45,7 +45,9 @@ trap restore EXIT
 capture() {
     local locale=$1 night=$2 heading=$3 filename=$4
     adb shell cmd locale set-app-locales "$package" --locales "$locale" >/dev/null
-    adb shell cmd uimode night "$night" >/dev/null
+    if [[ "$(adb shell cmd uimode night | awk '{print $3}' | tr -d '\r')" != "$night" ]]; then
+        adb shell cmd uimode night "$night" >/dev/null
+    fi
     adb shell am force-stop "$package"
     adb shell input keyevent KEYCODE_WAKEUP
     adb shell wm dismiss-keyguard
@@ -62,6 +64,9 @@ capture() {
             return
         fi
     done
+    adb shell cmd locale get-app-locales "$package" >&2 || true
+    adb shell dumpsys activity activities | grep -m1 'mResumedActivity\|topResumedActivity' >&2 || true
+    adb logcat -d -b crash -t 35 >&2 || true
     echo "Missing $locale heading or saved file after restart." >&2
     return 1
 }
