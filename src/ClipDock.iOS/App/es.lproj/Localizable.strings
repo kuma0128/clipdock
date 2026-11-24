@@ -1,0 +1,17 @@
+"Save from a link" = "Guardar desde un enlace";
+"Copy a video or audio link, then tap Paste to save it." = "Copia un enlace de vídeo o audio y toca Pegar para guardarlo.";
+"Saved files" = "Archivos guardados";
+"Your saved files will appear here." = "Aquí aparecerán los archivos que guardes.";
+"Cancel" = "Cancelar";
+"Checking link…" = "Comprobando el enlace…";
+"Downloading…" = "Descargando…";
+"Cancelling…" = "Cancelando…";
+"Couldn’t download the file. Check your connection and make sure the link opens without signing in." = "No se pudo descargar el archivo. Comprueba la conexión y que el enlace se abra sin iniciar sesión.";
+"You can also open these files in Files → On My iPhone → ClipDock." = "También puedes abrirlos en Archivos → En mi iPhone → ClipDock.";
+"Share %@" = "Compartir %@";
+"Checking file…" = "Comprobando el archivo…";
+"Copy an HTTP or HTTPS link to a video page or a video or audio file." = "Copia un enlace HTTP o HTTPS a una página de vídeo o a un archivo de vídeo o audio.";
+"Choose one public video or audio link at a time." = "Elige un solo enlace público de vídeo o audio cada vez.";
+"This media format can’t be saved on iPhone." = "Este formato no se puede guardar en el iPhone.";
+"Couldn’t save the file. Check the available space on your iPhone." = "No se pudo guardar el archivo. Comprueba el espacio libre en el iPhone.";
+"Couldn’t start the downloader. Reinstall ClipDock and try again." = "No se pudo iniciar la descarga. Vuelve a instalar ClipDock e inténtalo de nuevo.";

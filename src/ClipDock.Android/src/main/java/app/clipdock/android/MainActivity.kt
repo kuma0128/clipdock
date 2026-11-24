@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,7 +38,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             val colors = if (isSystemInDarkTheme()) {
                 darkColorScheme(primary = Color(0xFF409CFF), onPrimary = Color.Black,
-                    surface = Color(0xFF1C1C1E), background = Color.Black, onSurfaceVariant = Color(0xFFAEAEB2))
+                    surface = Color(0xFF1C1C1E), background = Color.Black, onSurface = Color.White, onBackground = Color.White,
+                    outlineVariant = Color(0xFF48484A), onSurfaceVariant = Color(0xFFAEAEB2))
             } else {
                 lightColorScheme(primary = Color(0xFF007AFF), onPrimary = Color.White,
                     surface = Color.White, background = Color(0xFFF2F2F7), onSurface = Color(0xFF111114),
@@ -70,7 +72,7 @@ class MainActivity : ComponentActivity() {
         try {
             startActivity(if (share) Intent.createChooser(intent, null) else intent)
         } catch (_: ActivityNotFoundException) {
-            Toast.makeText(this, "このファイルを開けるアプリが見つかりません。", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, R.string.error_open, Toast.LENGTH_LONG).show()
         }
     }
 }
@@ -93,36 +95,36 @@ private fun DownloadScreen(downloads: Downloads, paste: () -> Unit, open: (Saved
                             verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                 Icon(painterResource(R.drawable.download), null, Modifier.size(24.dp), tint = colors.primary)
-                                Text("リンクから保存", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.save_link), fontSize = 20.sp, fontWeight = FontWeight.Bold)
                             }
-                            Text("動画や音声のリンクをコピーして、ペーストすると保存が始まります。",
+                            Text(stringResource(R.string.paste_help),
                                 fontSize = 15.sp, lineHeight = 20.sp, color = colors.onSurfaceVariant)
                             Button(onClick = paste, enabled = downloads.status == null,
                                 shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 5.dp)) {
                                 Icon(painterResource(R.drawable.paste), null, Modifier.size(18.dp))
                                 Spacer(Modifier.width(5.dp))
-                                Text("ペースト", fontSize = 17.sp)
+                                Text(stringResource(R.string.paste), fontSize = 17.sp)
                             }
                             downloads.status?.let { status ->
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(status, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                                    TextButton(onClick = downloads::cancel) { Text("キャンセル") }
+                                    Text(stringResource(status), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                                    TextButton(onClick = downloads::cancel) { Text(stringResource(R.string.cancel)) }
                                 }
                                 val percent = downloads.percent
                                 if (percent == null) LinearProgressIndicator(Modifier.fillMaxWidth())
                                 else LinearProgressIndicator(progress = { percent / 100f }, modifier = Modifier.fillMaxWidth())
                             }
-                            downloads.error?.let { Text(it, color = colors.error, fontSize = 15.sp, lineHeight = 20.sp) }
+                            downloads.error?.let { Text(stringResource(it), color = colors.error, fontSize = 15.sp, lineHeight = 20.sp) }
                         }
                     }
                 }
                 item {
-                    Text("保存したファイル", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.onSurfaceVariant,
+                    Text(stringResource(R.string.saved_files), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.onSurfaceVariant,
                         modifier = Modifier.padding(start = 16.dp, top = 26.dp, bottom = 8.dp))
                 }
                 if (downloads.files.isEmpty()) item {
                     Surface(shape = sectionShape, color = colors.surface) {
-                        Text("保存したファイルがここに表示されます。",
+                        Text(stringResource(R.string.empty_files),
                             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
                             fontSize = 15.sp, color = colors.onSurfaceVariant)
                     }
@@ -141,7 +143,7 @@ private fun DownloadScreen(downloads: Downloads, paste: () -> Unit, open: (Saved
                                     lineHeight = 22.sp, color = colors.primary)
                             }
                             IconButton(onClick = { share(file) }) {
-                                Icon(painterResource(R.drawable.share), "${file.name}を共有",
+                                Icon(painterResource(R.drawable.share), stringResource(R.string.share_file, file.name),
                                     Modifier.size(22.dp), tint = colors.primary)
                             }
                         }
@@ -150,7 +152,7 @@ private fun DownloadScreen(downloads: Downloads, paste: () -> Unit, open: (Saved
                     }
                 }
                 item {
-                    Text("「ファイル」アプリの「ダウンロード」→「ClipDock」からも開けます。",
+                    Text(stringResource(R.string.location),
                         fontSize = 13.sp, lineHeight = 17.sp, color = colors.onSurfaceVariant,
                         modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp))
                 }

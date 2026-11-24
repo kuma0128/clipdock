@@ -27,7 +27,7 @@ class PasteDownloadTest {
         val activity = instrumentation.startActivitySync(
             Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
-        val pasteButton = By.text("ペースト")
+        val pasteButton = By.text(context.getString(R.string.paste))
         fun paste(text: String) {
             assertNotNull("Paste control missing", device.wait(Until.findObject(pasteButton), 10000))
             instrumentation.runOnMainSync {
@@ -46,14 +46,14 @@ class PasteDownloadTest {
                     assertTrue(device.wait(Until.hasObject(By.text(file.name)), 5000))
                     return file
                 }
-                val failure = device.findObject(By.textContains("できません"))
+                val failure = device.findObject(By.text(context.getString(R.string.error_download)))
                 if (failure != null) fail("Download of $path failed: ${failure.text}")
                 SystemClock.sleep(250)
             }
             throw AssertionError("Timed out downloading $path")
         }
         paste("ClipDock")
-        assertTrue(device.wait(Until.hasObject(By.text("動画ページや音声・動画ファイルのリンクをコピーしてください。")), 5000))
+        assertTrue(device.wait(Until.hasObject(By.text(context.getString(R.string.error_invalid))), 5000))
         val video = save("watch", "ClipDock Sample")
         val audio = save("tone.wav", "tone")
         for ((file, hashArg) in listOf(video to "videoHash", audio to "audioHash")) {
@@ -71,7 +71,7 @@ class PasteDownloadTest {
         } finally { reader.release() }
         val ids = library.saved().map { it.uri }
         paste("$origin/empty")
-        assertTrue(device.wait(Until.hasObject(By.textContains("取得できませんでした")), 30000))
+        assertTrue(device.wait(Until.hasObject(By.text(context.getString(R.string.error_download))), 30000))
         assertEquals(ids, library.saved().map { it.uri })
     }
 }

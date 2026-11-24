@@ -41,11 +41,11 @@ internal class Downloads(private val app: Application) {
     private var cancellation: AtomicBoolean? = null
     var files by mutableStateOf(emptyList<SavedFile>())
         private set
-    var status by mutableStateOf<String?>(null)
+    var status by mutableStateOf<Int?>(null)
         private set
     var percent by mutableStateOf<Int?>(null)
         private set
-    var error by mutableStateOf<String?>(null)
+    var error by mutableStateOf<Int?>(null)
         private set
 
     init {
@@ -61,7 +61,7 @@ internal class Downloads(private val app: Application) {
                 val saved = library.saved()
                 main.post { files = saved }
             } catch (_: Exception) {
-                main.post { error = "保存したファイルの一覧を読み込めませんでした。" }
+                main.post { error = R.string.error_library }
             }
         }
     }
@@ -71,14 +71,14 @@ internal class Downloads(private val app: Application) {
         val link = text.trim()
         val uri = runCatching { URI(link) }.getOrNull()
         if (uri?.scheme?.lowercase() !in setOf("http", "https") || uri?.host.isNullOrBlank() || uri?.rawUserInfo != null) {
-            error = "動画ページや音声・動画ファイルのリンクをコピーしてください。"
+            error = R.string.error_invalid
             return
         }
         val stop = AtomicBoolean(false)
         cancellation = stop
         error = null
         percent = null
-        status = "リンクを確認中…"
+        status = R.string.checking_link
         worker.execute {
             val failure = try {
                 save(link, stop)
@@ -86,11 +86,11 @@ internal class Downloads(private val app: Application) {
             } catch (_: CancellationException) {
                 null
             } catch (_: UnsupportedMedia) {
-                "この配信形式は保存できません。音声や動画ファイルの直リンクも試してください。"
+                R.string.error_format
             } catch (_: IOException) {
-                "ファイルを書き込めませんでした。端末の空き容量を確認してください。"
+                R.string.error_storage
             } catch (_: Exception) {
-                "取得できませんでした。通信状況と、ログインせずに開けるリンクかどうかを確認してください。"
+                R.string.error_download
             } finally {
                 work.deleteRecursively()
             }
@@ -106,7 +106,7 @@ internal class Downloads(private val app: Application) {
 
     fun cancel() {
         cancellation?.set(true)
-        status = "キャンセル中…"
+        status = R.string.cancelling
     }
 
     private fun save(link: String, stop: AtomicBoolean) {
@@ -116,7 +116,7 @@ internal class Downloads(private val app: Application) {
         val listener = TransferProgress(stop) { value ->
             main.post {
                 if (cancellation === stop && !stop.get()) {
-                    if (value >= 0) status = "ダウンロード中…"
+                    if (value >= 0) status = R.string.downloading
                     percent = value.takeIf { it >= 0 }
                 }
             }
@@ -132,7 +132,7 @@ internal class Downloads(private val app: Application) {
         }
         val names = media.getJSONArray("files")
         val parts = (0 until names.length()).map { File(work, names.getString(it)) }
-        main.post { if (!stop.get()) { status = "ファイルを保存中…"; percent = null } }
+        main.post { if (!stop.get()) { status = R.string.saving_file; percent = null } }
         val file = finishMedia(parts, work, ::checkCancelled)
         checkCancelled()
         library.publish(file, media.getString("title"), ::checkCancelled)

@@ -30,16 +30,35 @@ video_hash=$(shasum -a 256 "$root/tests/iOS/sample.mp4" | cut -d' ' -f1)
 audio_hash=$(curl -fsS http://127.0.0.1:18741/tone.wav | shasum -a 256 | cut -d' ' -f1)
 adb shell am instrument -e videoHash "$video_hash" -e audioHash "$audio_hash" -w app.clipdock.android.test/androidx.test.runner.AndroidJUnitRunner | tee "$output/test.log"
 grep -q 'OK (1 test)' "$output/test.log"
-adb shell am force-stop app.clipdock.android
-adb shell am start -W -n app.clipdock.android/.MainActivity
-# Wait for the saved files to reappear after a cold start before capturing the screen.
-for _ in {1..15}; do
-    adb shell uiautomator dump /sdcard/clipdock-window.xml >/dev/null
-    if adb shell cat /sdcard/clipdock-window.xml | grep -F 'split.mp4' >/dev/null; then
-        adb exec-out screencap -p > "$output/android.png"
-        exit 0
-    fi
-    sleep 1
-done
-echo "Saved files did not reappear after restart." >&2
-exit 1
+# Capture both appearances on the dedicated emulator, then restore its settings.
+package=app.clipdock.android
+initial_locales=$(adb shell cmd locale get-app-locales "$package" | sed -n 's/.*\[\(.*\)\].*/\1/p')
+initial_night=$(adb shell cmd uimode night | awk '{print $3}' | tr -d '\r')
+restore() {
+    adb shell cmd locale set-app-locales "$package" ${initial_locales:+--locales "$initial_locales"} >/dev/null
+    adb shell cmd uimode night "$initial_night" >/dev/null
+    kill "$fixture" 2>/dev/null || true
+    adb reverse --remove tcp:18741 >/dev/null
+}
+trap restore EXIT
+
+capture() {
+    local locale=$1 night=$2 heading=$3 filename=$4
+    adb shell cmd locale set-app-locales "$package" --locales "$locale" >/dev/null
+    adb shell cmd uimode night "$night" >/dev/null
+    adb shell am force-stop "$package"
+    adb shell am start -W -n "$package/.MainActivity" >/dev/null
+    for _ in {1..15}; do
+        adb shell uiautomator dump /sdcard/clipdock-window.xml >/dev/null
+        local window
+        window=$(adb shell cat /sdcard/clipdock-window.xml)
+        if [[ "$window" == *"$heading"* && "$window" == *"split.mp4"* ]]; then
+            adb exec-out screencap -p > "$output/$filename"
+            return
+        fi
+    done
+    echo "Missing $locale heading or saved file after restart." >&2
+    return 1
+}
+capture ja no 'リンクから保存' android.png
+capture en yes 'Save from a link' android-dark.png

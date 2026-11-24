@@ -1,0 +1,20 @@
+<resources>
+    <string name="save_link">リンクから保存</string>
+    <string name="paste_help">動画や音声のリンクをコピーして、ペーストすると保存が始まります。</string>
+    <string name="saved_files">保存したファイル</string>
+    <string name="empty_files">保存したファイルがここに表示されます。</string>
+    <string name="cancel">キャンセル</string>
+    <string name="checking_link">リンクを確認中…</string>
+    <string name="downloading">ダウンロード中…</string>
+    <string name="cancelling">キャンセル中…</string>
+    <string name="error_download">取得できませんでした。通信状況と、ログインせずに開けるリンクかどうかを確認してください。</string>
+    <string name="paste">ペースト</string>
+    <string name="share_file">%1$sを共有</string>
+    <string name="location">「ファイル」アプリの「ダウンロード」→「ClipDock」からも開けます。</string>
+    <string name="saving_file">ファイルを保存中…</string>
+    <string name="error_invalid">動画ページや音声・動画ファイルのリンクをコピーしてください。</string>
+    <string name="error_format">この配信形式は保存できません。音声や動画ファイルの直リンクも試してください。</string>
+    <string name="error_storage">ファイルを書き込めませんでした。端末の空き容量を確認してください。</string>
+    <string name="error_library">保存したファイルの一覧を読み込めませんでした。</string>
+    <string name="error_open">このファイルを開けるアプリが見つかりません。</string>
+</resources>

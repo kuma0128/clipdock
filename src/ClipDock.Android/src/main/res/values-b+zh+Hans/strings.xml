@@ -1,0 +1,20 @@
+<resources>
+    <string name="save_link">通过链接保存</string>
+    <string name="paste_help">复制视频或音频链接，然后轻点“粘贴”即可保存。</string>
+    <string name="saved_files">已保存的文件</string>
+    <string name="empty_files">保存的文件会显示在这里。</string>
+    <string name="cancel">取消</string>
+    <string name="checking_link">正在检查链接…</string>
+    <string name="downloading">正在下载…</string>
+    <string name="cancelling">正在取消…</string>
+    <string name="error_download">无法下载文件。请检查网络连接，并确认无需登录即可打开链接。</string>
+    <string name="paste">粘贴</string>
+    <string name="share_file">共享%1$s</string>
+    <string name="location">你也可以在文件管理器的“下载”→“ClipDock”中打开这些文件。</string>
+    <string name="saving_file">正在保存文件…</string>
+    <string name="error_invalid">请复制视频网页或音视频文件的链接。</string>
+    <string name="error_format">无法保存这种媒体格式。请尝试音视频文件的直接链接。</string>
+    <string name="error_storage">无法保存文件。请检查设备的剩余空间。</string>
+    <string name="error_library">无法加载已保存的文件。</string>
+    <string name="error_open">找不到可以打开此文件的应用。</string>
+</resources>

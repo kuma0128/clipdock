@@ -7,11 +7,11 @@ private enum SaveError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .single: return "公開されている動画や音声を1件ずつ指定してください。"
-        case .format: return "この配信形式はiPhone版で保存できません。"
-        case .download: return "取得できませんでした。通信状況と、ログインせずに開けるリンクかどうかを確認してください。"
-        case .storage: return "ファイルを保存できません。iPhoneの空き容量を確認してください。"
-        case .engine: return "保存エンジンを起動できませんでした。アプリを入れ直してください。"
+        case .single: return String(localized: "Choose one public video or audio link at a time.")
+        case .format: return String(localized: "This media format can’t be saved on iPhone.")
+        case .download: return String(localized: "Couldn’t download the file. Check your connection and make sure the link opens without signing in.")
+        case .storage: return String(localized: "Couldn’t save the file. Check the available space on your iPhone.")
+        case .engine: return String(localized: "Couldn’t start the downloader. Reinstall ClipDock and try again.")
         }
     }
 }
@@ -126,18 +126,18 @@ final class Downloads {
               let link = URL(string: trimmed, encodingInvalidCharacters: false),
               ["http", "https"].contains(link.scheme?.lowercased() ?? ""),
               let host = link.host, !host.isEmpty, link.user == nil, link.password == nil else {
-            error = "動画ページや動画・音声ファイルのHTTP(S)リンクをコピーしてください。"
+            error = String(localized: "Copy an HTTP or HTTPS link to a video page or a video or audio file.")
             return
         }
         error = nil
-        status = "リンクを確認中…"
+        status = String(localized: "Checking link…")
         percent = nil
         transfer = Task { await save(link) }
     }
 
     func cancel() {
         transfer?.cancel()
-        status = "キャンセル中…"
+        status = String(localized: "Cancelling…")
     }
 
     private func save(_ link: URL) async {
@@ -151,9 +151,9 @@ final class Downloads {
             try manager.createDirectory(at: folder, withIntermediateDirectories: true)
             let media = try await fetchMedia(link, into: folder, task: task) { value in
                 self.percent = value < 0 ? nil : value
-                if value >= 0 { self.status = "ダウンロード中…" }
+                if value >= 0 { self.status = String(localized: "Downloading…") }
             }
-            status = "ファイルを確認中…"
+            status = String(localized: "Checking file…")
             percent = nil
             let tracks = (media.files ?? []).map { folder.appendingPathComponent($0) }
             let result = try await finishedMedia(tracks, in: folder)

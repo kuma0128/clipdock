@@ -1,0 +1,20 @@
+<resources>
+    <string name="save_link">Save from a link</string>
+    <string name="paste_help">Copy a video or audio link, then tap Paste to save it.</string>
+    <string name="saved_files">Saved files</string>
+    <string name="empty_files">Your saved files will appear here.</string>
+    <string name="cancel">Cancel</string>
+    <string name="checking_link">Checking link…</string>
+    <string name="downloading">Downloading…</string>
+    <string name="cancelling">Cancelling…</string>
+    <string name="error_download">Couldn’t download the file. Check your connection and make sure the link opens without signing in.</string>
+    <string name="paste">Paste</string>
+    <string name="share_file">Share %1$s</string>
+    <string name="location">You can also open these files in Files → Downloads → ClipDock.</string>
+    <string name="saving_file">Saving file…</string>
+    <string name="error_invalid">Copy a link to a video page or a video or audio file.</string>
+    <string name="error_format">This media format can’t be saved. Try a direct link to the video or audio file.</string>
+    <string name="error_storage">Couldn’t save the file. Check the available space on your device.</string>
+    <string name="error_library">Couldn’t load your saved files.</string>
+    <string name="error_open">No app is available to open this file.</string>
+</resources>

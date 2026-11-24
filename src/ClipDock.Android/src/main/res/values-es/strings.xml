@@ -1,0 +1,20 @@
+<resources>
+    <string name="save_link">Guardar desde un enlace</string>
+    <string name="paste_help">Copia un enlace de vídeo o audio y toca Pegar para guardarlo.</string>
+    <string name="saved_files">Archivos guardados</string>
+    <string name="empty_files">Aquí aparecerán los archivos que guardes.</string>
+    <string name="cancel">Cancelar</string>
+    <string name="checking_link">Comprobando el enlace…</string>
+    <string name="downloading">Descargando…</string>
+    <string name="cancelling">Cancelando…</string>
+    <string name="error_download">No se pudo descargar el archivo. Comprueba la conexión y que el enlace se abra sin iniciar sesión.</string>
+    <string name="paste">Pegar</string>
+    <string name="share_file">Compartir %1$s</string>
+    <string name="location">También puedes abrirlos en Archivos → Descargas → ClipDock.</string>
+    <string name="saving_file">Guardando el archivo…</string>
+    <string name="error_invalid">Copia un enlace a una página de vídeo o a un archivo de vídeo o audio.</string>
+    <string name="error_format">No se puede guardar este formato. Prueba con un enlace directo al archivo de vídeo o audio.</string>
+    <string name="error_storage">No se pudo guardar el archivo. Comprueba el espacio libre en el dispositivo.</string>
+    <string name="error_library">No se pudieron cargar los archivos guardados.</string>
+    <string name="error_open">No hay ninguna aplicación que pueda abrir este archivo.</string>
+</resources>

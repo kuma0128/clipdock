@@ -20,9 +20,9 @@ private struct ContentView: View {
             List {
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
-                        Label("リンクから保存", systemImage: "arrow.down.to.line")
+                        Label("Save from a link", systemImage: "arrow.down.to.line")
                             .font(.title3.bold())
-                        Text("動画や音声のリンクをコピーして、ペーストすると保存が始まります。")
+                        Text("Copy a video or audio link, then tap Paste to save it.")
                             .font(.subheadline).foregroundStyle(.secondary)
                         PasteButton(supportedContentTypes: [.url, .plainText], payloadAction: paste)
                             .labelStyle(.titleAndIcon)
@@ -40,7 +40,7 @@ private struct ContentView: View {
                 }
                 Section {
                     if downloads.files.isEmpty {
-                        Text("保存したファイルがここに表示されます。")
+                        Text("Your saved files will appear here.")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
                     ForEach(downloads.files, id: \.self) { file in
@@ -55,16 +55,17 @@ private struct ContentView: View {
                             Spacer()
                             ShareLink(item: file) { Image(systemName: "square.and.arrow.up") }
                                 .buttonStyle(.borderless)
-                                .accessibilityLabel("共有")
+                                .accessibilityLabel(Text("Share \(file.lastPathComponent)"))
                         }
                     }
                 } header: {
-                    Text("保存したファイル")
+                    Text("Saved files")
                 } footer: {
-                    Text("「ファイル」アプリの「このiPhone内」→「ClipDock」からも開けます。")
+                    Text("You can also open these files in Files → On My iPhone → ClipDock.")
                 }
             }
-            .navigationTitle("ClipDock")
+            .navigationTitle(Text(verbatim: "ClipDock"))
+            .tint(Color(uiColor: .link))
             .quickLookPreview($preview)
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { downloads.refresh() }
@@ -95,7 +96,7 @@ private struct DownloadProgress: View {
         HStack {
             Text(downloads.status)
             Spacer()
-            Button("キャンセル", action: downloads.cancel)
+            Button("Cancel", action: downloads.cancel)
         }
         if let percent = downloads.percent {
             ProgressView(value: Double(percent), total: 100)

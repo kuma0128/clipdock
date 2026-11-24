@@ -1,0 +1,17 @@
+"Save from a link" = "リンクから保存";
+"Copy a video or audio link, then tap Paste to save it." = "動画や音声のリンクをコピーして、ペーストすると保存が始まります。";
+"Saved files" = "保存したファイル";
+"Your saved files will appear here." = "保存したファイルがここに表示されます。";
+"Cancel" = "キャンセル";
+"Checking link…" = "リンクを確認中…";
+"Downloading…" = "ダウンロード中…";
+"Cancelling…" = "キャンセル中…";
+"Couldn’t download the file. Check your connection and make sure the link opens without signing in." = "取得できませんでした。通信状況と、ログインせずに開けるリンクかどうかを確認してください。";
+"You can also open these files in Files → On My iPhone → ClipDock." = "「ファイル」アプリの「このiPhone内」→「ClipDock」からも開けます。";
+"Share %@" = "%@を共有";
+"Checking file…" = "ファイルを確認中…";
+"Copy an HTTP or HTTPS link to a video page or a video or audio file." = "動画ページや動画・音声ファイルのHTTP(S)リンクをコピーしてください。";
+"Choose one public video or audio link at a time." = "公開されている動画や音声を1件ずつ指定してください。";
+"This media format can’t be saved on iPhone." = "この配信形式はiPhone版で保存できません。";
+"Couldn’t save the file. Check the available space on your iPhone." = "ファイルを保存できません。iPhoneの空き容量を確認してください。";
+"Couldn’t start the downloader. Reinstall ClipDock and try again." = "保存エンジンを起動できませんでした。アプリを入れ直してください。";

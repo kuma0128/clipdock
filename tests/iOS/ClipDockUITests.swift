@@ -2,9 +2,30 @@ import XCTest
 import UIKit
 
 final class ClipDockUITests: XCTestCase {
+    func testLocalizedPasteScreen() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        for (language, heading, errorPrefix) in [
+            ("ja", "リンクから保存", "動画ページや"),
+            ("en", "Save from a link", "Copy an HTTP"),
+            ("es", "Guardar desde un enlace", "Copia un enlace HTTP"),
+            ("zh-Hans", "通过链接保存", "请复制视频网页")
+        ] {
+            app.launchArguments = ["-AppleLanguages", "(\(language))", "-AppleLocale", language]
+            app.launch()
+            XCTAssertTrue(app.staticTexts[heading].waitForExistence(timeout: 10), language)
+            UIPasteboard.general.string = "ClipDock"
+            app.buttons["pasteLink"].tap()
+            XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", errorPrefix))
+                .firstMatch.waitForExistence(timeout: 10), language)
+            app.terminate()
+        }
+    }
+
     func testPasteDownloadsPageAndDirectFile() {
         continueAfterFailure = false
         let app = XCUIApplication()
+        app.launchArguments = ["-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
         app.launch()
         let paste = app.buttons["pasteLink"]
         func pasteLink(_ path: String, asURL: Bool = false) {

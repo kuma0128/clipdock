@@ -206,7 +206,7 @@ bash scripts/ios/package.sh
 
 `prepare.sh` はPythonのiOSランタイム、yt-dlp、TLS検証用のcertifiを取得し、SHA-256を検証します。実機用のIPAとチェックサムは `artifacts/ios/` に出力します。Xcodeから直接実機で起動する場合は、生成したプロジェクトを開き、ClipDockターゲットの「Signing & Capabilities」で自分のTeamと一意のBundle Identifierを指定してください。
 
-GitHub Actionsの「iPhone app」はIPAの作成後、iOS 26のiPhoneシミュレーターでページURLと直リンクをペーストし、保存ファイルを元データと照合します。`project.yml` のバージョンに合うタグ（例 `ios-v1.1.0`）をpushすると、確認済みのIPA・チェックサム・画面写真がGitHubリリースの下書きに付きます。内容を確認して公開してください。ワークフローを手動で実行した場合は、同じファイルを1日間 `ClipDock-iOS` アーティファクトから取得できます。
+GitHub Actionsの「iPhone app」はIPAの作成後、iOS 26のiPhoneシミュレーターでページURLと直リンクをペーストし、保存ファイルを元データと照合します。`project.yml` のバージョンに合うタグ（例 `ios-v1.1.0`）をpushすると、確認済みのIPA・チェックサム・ライト／ダークの画面写真がGitHubリリースの下書きに付きます。内容を確認して公開してください。ワークフローを手動で実行した場合は、同じファイルを1日間 `ClipDock-iOS` アーティファクトから取得できます。
 
 ## Android版
 
@@ -221,4 +221,4 @@ bash scripts/android/package.sh
 ANDROID_SERIAL=emulator-5554 bash scripts/android/check.sh release
 ```
 
-`artifacts/android/` にAPK、SHA-256、テスト後の画面写真 `android.png` が揃います。更新時は `build.gradle.kts` の `versionCode` を増やし、`versionName` と一致するタグ（例 `android-v1.0.0`）のGitHubリリースに3ファイルを添付します。画面写真はREADMEの `docs/images/android.png` にも反映します。
+`artifacts/android/` にAPK、SHA-256、テスト後の画面写真 `android.png`（日本語・ライト）と `android-dark.png`（英語・ダーク）が揃います。更新時は `build.gradle.kts` の `versionCode` を増やし、`versionName` と一致するタグ（例 `android-v1.0.0`）のGitHubリリースにAPK・チェックサム・両方の画面写真を添付します。READMEの画面写真も更新します。

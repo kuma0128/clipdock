@@ -31,5 +31,14 @@ for wheel in yt-dlp.whl certifi.whl; do unzip -q "$wheel" -d packages; done
 icons="$deps/Assets.xcassets/AppIcon.appiconset"
 mkdir -p "$icons"
 cp "$root/src/ClipDock.Mac/icon.png" "$icons/ClipDock.png"
-echo '{"images":[{"filename":"ClipDock.png","idiom":"universal","platform":"ios","size":"1024x1024"}],"info":{"author":"xcode","version":1}}' > "$icons/Contents.json"
+sips -s format png "$root/src/ClipDock.iOS/Artwork/ClipDockDark.svg" --out "$icons/ClipDockDark.png" >/dev/null
+cat > "$icons/Contents.json" <<'JSON'
+{
+  "images": [
+    {"filename":"ClipDock.png","idiom":"universal","platform":"ios","size":"1024x1024"},
+    {"appearances":[{"appearance":"luminosity","value":"dark"}],"filename":"ClipDockDark.png","idiom":"universal","platform":"ios","size":"1024x1024"}
+  ],
+  "info":{"author":"xcode","version":1}
+}
+JSON
 echo '{"info":{"author":"xcode","version":1}}' > "$deps/Assets.xcassets/Contents.json"

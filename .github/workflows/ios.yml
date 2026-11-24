@@ -49,9 +49,16 @@ jobs:
           precondition(tracks.contains { $0.mediaType == .audio } && tracks.contains { $0.mediaType == .video })
           SWIFT
           cmp "$container/Documents/tone.wav" <(curl -fsS http://127.0.0.1:18741/tone.wav)
-          xcrun simctl launch "$device" app.clipdock.ios
+          xcrun simctl terminate "$device" app.clipdock.ios || true
+          xcrun simctl ui "$device" appearance light
+          xcrun simctl launch "$device" app.clipdock.ios -AppleLanguages '(ja)' -AppleLocale ja_JP
           sleep 2
           xcrun simctl io "$device" screenshot artifacts/ios/simulator.png
+          xcrun simctl terminate "$device" app.clipdock.ios
+          xcrun simctl ui "$device" appearance dark
+          xcrun simctl launch "$device" app.clipdock.ios -AppleLanguages '(en)' -AppleLocale en_US
+          sleep 2
+          xcrun simctl io "$device" screenshot artifacts/ios/simulator-dark.png
       - name: Attach verified IPA to the iPhone release draft
         if: startsWith(github.ref, 'refs/tags/ios-v')
         env:
@@ -65,7 +72,7 @@ jobs:
             gh release create "$tag" --verify-tag --draft --latest=false --title "ClipDock for iPhone $version" --notes "iOS ${minimum%.0}以降のiPhoneに対応しています。"
           fi
           test "$(gh release view "$tag" --json isDraft --jq .isDraft)" = true
-          gh release upload "$tag" artifacts/ios/*.ipa artifacts/ios/*.sha256 artifacts/ios/simulator.png --clobber
+          gh release upload "$tag" artifacts/ios/*.ipa artifacts/ios/*.sha256 artifacts/ios/simulator*.png --clobber
       - uses: actions/upload-artifact@v7.0.2
         if: failure()
         continue-on-error: true
@@ -80,5 +87,5 @@ jobs:
           path: |
             artifacts/ios/*.ipa
             artifacts/ios/*.sha256
-            artifacts/ios/simulator.png
+            artifacts/ios/simulator*.png
           retention-days: 1
