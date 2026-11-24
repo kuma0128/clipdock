@@ -18,7 +18,7 @@ import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
 
-internal data class SavedFile(val uri: Uri, val name: String, val mime: String, val size: Long)
+internal data class SavedFile(val uri: Uri, val name: String, val mime: String)
 internal class UnsupportedMedia : Exception()
 
 internal class MediaFiles(context: Context) {
@@ -35,12 +35,12 @@ internal class MediaFiles(context: Context) {
             putString(ContentResolver.QUERY_ARG_SQL_SORT_ORDER, "${Col.DATE_ADDED} DESC, ${Col._ID} DESC")
             putInt(MediaStore.QUERY_ARG_MATCH_PENDING, MediaStore.MATCH_INCLUDE)
         }
-        val columns = arrayOf(Col._ID, Col.DISPLAY_NAME, Col.MIME_TYPE, Col.SIZE)
+        val columns = arrayOf(Col._ID, Col.DISPLAY_NAME, Col.MIME_TYPE)
         return resolver.query(collection, columns, args, null)?.use { cursor ->
             buildList {
                 while (cursor.moveToNext()) {
                     add(SavedFile(ContentUris.withAppendedId(collection, cursor.getLong(0)),
-                        cursor.getString(1), cursor.getString(2), cursor.getLong(3)))
+                        cursor.getString(1), cursor.getString(2)))
                 }
             }
         } ?: throw IOException("Downloads unavailable")

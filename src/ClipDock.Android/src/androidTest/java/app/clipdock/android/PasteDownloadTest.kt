@@ -27,7 +27,7 @@ class PasteDownloadTest {
         val activity = instrumentation.startActivitySync(
             Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
-        val pasteButton = By.text("貼り付けて保存")
+        val pasteButton = By.text("ペースト")
         fun paste(text: String) {
             assertNotNull("Paste control missing", device.wait(Until.findObject(pasteButton), 10000))
             instrumentation.runOnMainSync {

@@ -5,18 +5,16 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
 import android.os.Bundle
-import android.text.format.Formatter
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -24,11 +22,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
     private val downloads get() = (application as ClipDock).downloads
@@ -37,9 +35,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val colors = if (isSystemInDarkTheme()) darkColorScheme(primary = Color(0xFFA7C8FF))
-                else lightColorScheme(primary = Color(0xFF155BBA), background = Color(0xFFF5F7FA),
-                    surface = Color.White, primaryContainer = Color(0xFFE3EEFF), onPrimaryContainer = Color(0xFF123862))
+            val colors = if (isSystemInDarkTheme()) {
+                darkColorScheme(primary = Color(0xFF409CFF), onPrimary = Color.Black,
+                    surface = Color(0xFF1C1C1E), background = Color.Black, onSurfaceVariant = Color(0xFFAEAEB2))
+            } else {
+                lightColorScheme(primary = Color(0xFF007AFF), onPrimary = Color.White,
+                    surface = Color.White, background = Color(0xFFF2F2F7), onSurface = Color(0xFF111114),
+                    onSurfaceVariant = Color(0xFF636368), outlineVariant = Color(0xFFD5D5D9))
+            }
             MaterialTheme(colorScheme = colors) {
                 DownloadScreen(downloads, ::paste, { launchFile(it, false) }, { launchFile(it, true) })
             }
@@ -75,30 +78,30 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun DownloadScreen(downloads: Downloads, paste: () -> Unit, open: (SavedFile) -> Unit, share: (SavedFile) -> Unit) {
     val colors = MaterialTheme.colorScheme
-    val shape = RoundedCornerShape(20.dp)
+    val sectionShape = RoundedCornerShape(24.dp)
     Surface(modifier = Modifier.fillMaxSize(), color = colors.background) {
         Box(Modifier.safeDrawingPadding(), contentAlignment = Alignment.TopCenter) {
             LazyColumn(modifier = Modifier.widthIn(max = 640.dp).fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 22.dp, vertical = 26.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 76.dp, bottom = 32.dp)) {
                 item {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.padding(bottom = 12.dp)) {
-                        Image(painterResource(R.drawable.clipdock_logo), null, Modifier.size(42.dp))
-                        Text("ClipDock", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-                    }
+                    Text("ClipDock", fontSize = 34.sp, lineHeight = 41.sp, fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.8).sp, modifier = Modifier.padding(bottom = 8.dp))
                 }
                 item {
-                    Surface(shape = shape, color = colors.surface) {
-                        Column(Modifier.fillMaxWidth().padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("リンクから保存", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                            Text("動画ページや音声・動画ファイルのリンクをコピーしてください。",
-                                style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                    Surface(shape = sectionShape, color = colors.surface) {
+                        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                Icon(painterResource(R.drawable.download), null, Modifier.size(24.dp), tint = colors.primary)
+                                Text("リンクから保存", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Text("動画や音声のリンクをコピーして、ペーストすると保存が始まります。",
+                                fontSize = 15.sp, lineHeight = 20.sp, color = colors.onSurfaceVariant)
                             Button(onClick = paste, enabled = downloads.status == null,
-                                modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp), shape = RoundedCornerShape(12.dp)) {
-                                Icon(painterResource(R.drawable.paste), null, Modifier.size(20.dp))
-                                Spacer(Modifier.width(8.dp))
-                                Text("貼り付けて保存", style = MaterialTheme.typography.titleMedium)
+                                shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 5.dp)) {
+                                Icon(painterResource(R.drawable.paste), null, Modifier.size(18.dp))
+                                Spacer(Modifier.width(5.dp))
+                                Text("ペースト", fontSize = 17.sp)
                             }
                             downloads.status?.let { status ->
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -109,41 +112,47 @@ private fun DownloadScreen(downloads: Downloads, paste: () -> Unit, open: (Saved
                                 if (percent == null) LinearProgressIndicator(Modifier.fillMaxWidth())
                                 else LinearProgressIndicator(progress = { percent / 100f }, modifier = Modifier.fillMaxWidth())
                             }
-                            downloads.error?.let { Text(it, color = colors.error, style = MaterialTheme.typography.bodyMedium) }
+                            downloads.error?.let { Text(it, color = colors.error, fontSize = 15.sp, lineHeight = 20.sp) }
                         }
                     }
                 }
                 item {
-                    Column(Modifier.padding(top = 18.dp, bottom = 4.dp)) {
-                        Text("保存したファイル", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text("ダウンロード / ClipDock", color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
-                    }
+                    Text("保存したファイル", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 16.dp, top = 26.dp, bottom = 8.dp))
                 }
                 if (downloads.files.isEmpty()) item {
-                    Text("保存したファイルがここに表示されます。", Modifier.padding(vertical = 16.dp),
-                        color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
-                }
-                items(downloads.files, key = { it.uri.toString() }) { file ->
-                    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(colors.surface),
-                        verticalAlignment = Alignment.CenterVertically) {
-                        Row(Modifier.weight(1f).clickable { open(file) }.padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Surface(shape = RoundedCornerShape(12.dp), color = colors.primaryContainer) {
-                                Icon(painterResource(if (file.mime.startsWith("audio/")) R.drawable.audio else R.drawable.play),
-                                    null, Modifier.size(42.dp).padding(10.dp), tint = colors.onPrimaryContainer)
-                            }
-                            Column {
-                                Text(file.name, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                                    style = MaterialTheme.typography.titleMedium)
-                                Text(Formatter.formatShortFileSize(LocalContext.current, file.size),
-                                    style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
-                            }
-                        }
-                        IconButton(onClick = { share(file) }) {
-                            Icon(painterResource(R.drawable.share), "${file.name}を共有", tint = colors.primary)
-                        }
-                        Spacer(Modifier.width(4.dp))
+                    Surface(shape = sectionShape, color = colors.surface) {
+                        Text("保存したファイルがここに表示されます。",
+                            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                            fontSize = 15.sp, color = colors.onSurfaceVariant)
                     }
+                }
+                itemsIndexed(downloads.files, key = { _, file -> file.uri.toString() }) { index, file ->
+                    val top = if (index == 0) 24.dp else 0.dp
+                    val bottom = if (index == downloads.files.lastIndex) 24.dp else 0.dp
+                    Column(Modifier.clip(RoundedCornerShape(topStart = top, topEnd = top,
+                        bottomStart = bottom, bottomEnd = bottom)).background(colors.surface)) {
+                        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically) {
+                            Row(Modifier.weight(1f).clickable { open(file) }.heightIn(min = 54.dp),
+                                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                Icon(painterResource(R.drawable.play), null, Modifier.size(23.dp), tint = colors.primary)
+                                Text(file.name, maxLines = 2, overflow = TextOverflow.Ellipsis, fontSize = 17.sp,
+                                    lineHeight = 22.sp, color = colors.primary)
+                            }
+                            IconButton(onClick = { share(file) }) {
+                                Icon(painterResource(R.drawable.share), "${file.name}を共有",
+                                    Modifier.size(22.dp), tint = colors.primary)
+                            }
+                        }
+                        if (index < downloads.files.lastIndex) HorizontalDivider(Modifier.padding(start = 56.dp, end = 16.dp),
+                            thickness = 0.5.dp, color = colors.outlineVariant)
+                    }
+                }
+                item {
+                    Text("「ファイル」アプリの「ダウンロード」→「ClipDock」からも開けます。",
+                        fontSize = 13.sp, lineHeight = 17.sp, color = colors.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp))
                 }
             }
         }

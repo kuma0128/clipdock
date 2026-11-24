@@ -34,7 +34,8 @@ jobs:
           ANDROID_SERIAL: emulator-5554
         run: |
           export JAVA_HOME="$JAVA_HOME_17_X64"
-          export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+          tools_bin=$(dirname "$(find -L "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f -print -quit)")
+          export PATH="$tools_bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
           sudo chmod a+rw /dev/kvm
           image='system-images;android-37.0;default;x86_64'
           sdkmanager "$image"
