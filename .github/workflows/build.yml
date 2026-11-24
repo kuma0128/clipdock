@@ -60,9 +60,8 @@ jobs:
           tag="$GITHUB_REF_NAME"
           gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --draft --verify-tag --title "ClipDock ${tag#v}" --notes "ClipDock ${tag#v}"
           gh release upload "$tag" artifacts/mac/*.dmg artifacts/mac/*.dmg.sha256 --clobber
-      # Logs and packages are conveniences: a full artifact quota must not hide the checks' result.
       - name: Upload macOS check logs
-        if: always()
+        if: failure()
         continue-on-error: true
         uses: actions/upload-artifact@v7.0.2
         with:
@@ -71,10 +70,12 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v7.0.2
-        continue-on-error: true
+        if: github.event_name == 'workflow_dispatch'
         with:
           name: ClipDock-mac
           path: artifacts/mac
+          if-no-files-found: error
+          retention-days: 1
   windows:
     runs-on: windows-latest
     timeout-minutes: 25
@@ -125,7 +126,7 @@ jobs:
         shell: pwsh
         run: ./scripts/test-installer.ps1
       - name: Upload installer lifecycle logs
-        if: always()
+        if: failure()
         continue-on-error: true
         uses: actions/upload-artifact@v7.0.2
         with:
@@ -134,7 +135,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v7.0.2
-        continue-on-error: true
+        if: github.event_name == 'workflow_dispatch'
         with:
           name: ClipDock-win-x64
           path: artifacts/ClipDock-win-x64.zip
+          if-no-files-found: error
+          retention-days: 1

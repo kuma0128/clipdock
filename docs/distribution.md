@@ -162,7 +162,7 @@ bash scripts/build-mac.sh x64
 bash scripts/test-mac.sh arm64
 ```
 
-出力は `artifacts/mac/ClipDock-<version>-mac-<arch>-unsigned.dmg` と、その `.sha256` ファイルです。GitHub Actionsの `macos` ジョブも同じスクリプトを実行し、成果物 `ClipDock-mac` として両方のアーキテクチャを保存します。
+出力は `artifacts/mac/ClipDock-<version>-mac-<arch>-unsigned.dmg` と、その `.sha256` ファイルです。GitHub Actionsで「Build and check」を手動実行すると、両方のアーキテクチャのDMGとチェックサムを成果物 `ClipDock-mac` から1日間ダウンロードできます。
 
 `test-mac.sh` は次を確認し、不一致なら停止します。
 
@@ -188,6 +188,6 @@ Developer IDで配布する場合は、Apple Developer Programの証明書でバ
 
 言語切り替えを追加した1.0.4以降は、各言語でメイン画面・ログイン画面・進捗・エラーが表示され、再起動後も選択が保持されることを確認します。
 
-ディスクイメージはmacOSのジョブでだけ作れます。リリースタグ（`v<version>`）をpushすると、macOSジョブが確認済みのDMGと `.sha256` を同じ名前のGitHubリリース（なければ下書きで作成）に添付します。Actionsの成果物は保存容量の上限があるため使いません。`gh release download v<version> --pattern "*.dmg*"` で取得し、`shasum -a 256 -c` または `Get-FileHash` で照合します。
+ディスクイメージはmacOSのジョブでだけ作れます。リリースタグ（`v<version>`）をpushすると、macOSジョブが確認済みのDMGと `.sha256` を同じ名前のGitHubリリース（なければ下書きで作成）に添付します。`gh release download v<version> --pattern "*.dmg*"` で取得し、`shasum -a 256 -c` または `Get-FileHash` で照合します。
 
 公開する場合は、Windows版と同じ手順でR2バケットへディスクイメージと `.sha256` をアップロードしてからサイトを更新します。1.0.3・1.0.4のディスクイメージは `functions/downloads/[[file]].js` の公開ファイル名一覧に登録済みです。新しいバージョンではこの一覧も更新してください。公開前に、両アーキテクチャのDMGとチェックサムがR2にあることを確認します。GitHub Actionsの対象コミットと配布ファイルの版数を揃えてください。公開先から取得したファイルのSHA-256が配布用ファイルと一致することを確認してください。実機のMacで、新規インストール、URLからのMP4・MP3保存、ログイン保存を確認してから公開します。

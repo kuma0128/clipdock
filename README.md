@@ -150,6 +150,8 @@ npm test                                                # ダウンロード関�
 
 アプリのチェックは、保存一覧のルール（`DownloadLibrary`：重複・上限・再試行・履歴の復元・終了処理）、エンジン出力の解釈（yt-dlpの代わりのスクリプトで進捗・完成ファイルの確認・エラー内の署名付きURLとログイン情報の伏せ字・キャンセル）、保存処理の引数、ログイン情報、エンジン更新を対象とします。サイトのチェックは、全ページのダウンロードリンクとバージョン、内部リンクとアンカー、言語ごとのcanonical・hreflang、sitemap、Content-Security-Policyに反するインライン記述を確認します。失敗すると条件式と行番号を表示します。GitHub Actions（`.github/workflows/build.yml`）はpush・PRのたびに、アプリのチェックをLinux・Windows・macOSで実行し、失敗・SKIPした項目を実行ページのサマリーに表示します。WindowsとmacOSのジョブは、続けて実エンジンでの保存とパッケージ作成も行います。同じブランチへ新しくpushすると、実行中の古い確認は取り消されます（リリースタグは除く）。WindowsのWPF画面もmacOS・Linuxで `dotnet build ClipDock.slnx -c Release -p:EnableWindowsTargeting=true` によりビルドだけは確認できます。
 
+CIで作ったパッケージが必要なときは、GitHub Actionsで「Build and check」を手動実行します。実行ページの Artifacts から、Windows版のZIPとmacOS版のDMGを1日間ダウンロードできます。Windows・macOSの診断ログは、ジョブが失敗したときに7日間保存します。
+
 Windows版のパッケージ作成に必要なもの: Windows、.NET 10 SDK、Node.js 22以降。
 
 ```powershell
