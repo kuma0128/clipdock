@@ -1,0 +1,42 @@
+name: Android app
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/ClipDock.Android/**'
+      - 'src/ClipDock.iOS/Engine/**'
+      - 'tests/iOS/fixture.py'
+      - 'tests/iOS/*.mp4'
+      - 'tests/iOS/*.m4a'
+      - 'scripts/android/**'
+      - '.github/workflows/android.yml'
+permissions:
+  contents: read
+jobs:
+  emulator:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: false
+      - name: Build app and test APKs
+        run: |
+          export JAVA_HOME="$JAVA_HOME_17_X64"
+          src/ClipDock.Android/gradlew -p src/ClipDock.Android assembleDebug assembleDebugAndroidTest
+      - name: Start Android 17 emulator and test paste-to-save
+        env:
+          ANDROID_SERIAL: emulator-5554
+        run: |
+          export JAVA_HOME="$JAVA_HOME_17_X64"
+          export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+          sudo chmod a+rw /dev/kvm
+          image='system-images;android-37.0;default;x86_64'
+          sdkmanager "$image"
+          echo no | avdmanager create avd -n ClipDockTest -k "$image" -d pixel_7
+          emulator -avd ClipDockTest -port 5554 -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          trap 'adb emu kill >/dev/null || true' EXIT
+          timeout 300 bash -c 'adb wait-for-device; until adb shell getprop sys.boot_completed | grep -q 1; do sleep 2; done'
+          bash scripts/android/check.sh
