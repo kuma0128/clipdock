@@ -1,6 +1,7 @@
 """Serve an original short WAV and an HTML media page to the iPhone simulator."""
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
+from pathlib import Path
 import math
 import struct
 import wave
@@ -10,8 +11,9 @@ with wave.open(buffer, "wb") as sample:
     sample.setparams((1, 2, 8000, 0, "NONE", ""))
     sample.writeframes(b"".join(struct.pack("<h", int(4096 * math.sin(i * math.tau * 440 / 8000)))
                                 for i in range(4000)))
-page = b'<html><head><title>ClipDock Sample</title></head><body><audio src="/tone.wav" controls></audio></body></html>'
+page = b'<html><head><title>ClipDock Sample</title></head><body><video src="/sample.mp4" controls></video></body></html>'
 responses = {
+    "/sample.mp4": ("video/mp4", Path(__file__).with_name("sample.mp4").read_bytes()),
     "/tone.wav": ("audio/wav", buffer.getvalue()),
     "/watch": ("text/html", page),
     "/empty": ("text/html", b"<html><title>No media</title></html>"),

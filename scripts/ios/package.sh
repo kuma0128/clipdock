@@ -15,7 +15,7 @@ test "$(plutil -extract LSSupportsOpeningDocumentsInPlace raw "$app/Info.plist")
 test -s "$app/packages/media.py"
 test -s "$app/Frameworks/Python.framework/Python"
 test -s "$app/Frameworks/_ssl.framework/_ssl"
-lipo -verify_arch arm64 "$app/ClipDock"
+lipo "$app/ClipDock" -verify_arch arm64
 stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 mkdir "$stage/Payload"

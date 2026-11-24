@@ -3,6 +3,7 @@ import UIKit
 
 final class ClipDockUITests: XCTestCase {
     func testPasteDownloadsPageAndDirectFile() {
+        continueAfterFailure = false
         let app = XCUIApplication()
         app.launch()
         let paste = app.buttons["pasteLink"]
@@ -14,7 +15,7 @@ final class ClipDockUITests: XCTestCase {
 
         pasteLink("watch")
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "ClipDock Sample"))
-            .firstMatch.waitForExistence(timeout: 60))
+            .firstMatch.waitForExistence(timeout: 60), app.debugDescription)
         pasteLink("tone.wav")
         let tone = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "tone.wav")).firstMatch
         XCTAssertTrue(tone.waitForExistence(timeout: 30))

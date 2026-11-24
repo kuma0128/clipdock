@@ -38,8 +38,8 @@ jobs:
             -destination "id=$device" -parallel-testing-enabled NO \
             -derivedDataPath artifacts/ios/sim-build -resultBundlePath artifacts/ios/paste.xcresult test -quiet
           container=$(xcrun simctl get_app_container "$device" app.clipdock.ios data)
-          find "$container/Documents" -name '*.wav' | wc -l | xargs test 2 -eq
-          for file in "$container/Documents/"*.wav; do cmp "$file" <(curl -fsS http://127.0.0.1:18741/tone.wav); done
+          cmp "$container/Documents/"*.mp4 tests/iOS/sample.mp4
+          cmp "$container/Documents/tone.wav" <(curl -fsS http://127.0.0.1:18741/tone.wav)
           xcrun simctl launch "$device" app.clipdock.ios
           sleep 2
           xcrun simctl io "$device" screenshot artifacts/ios/simulator.png
