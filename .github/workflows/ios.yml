@@ -35,13 +35,13 @@ jobs:
         run: bash scripts/ios/package.sh
       - name: Check paste and save on an iPhone simulator
         run: |
-          device=$(xcrun simctl list devices available -j | jq -er 'first(.devices | to_entries[] | select(.key | startswith("com.apple.CoreSimulator.SimRuntime.iOS-26-")) | .value[] | select(.name | startswith("iPhone")) | .udid)')
-          xcrun simctl boot "$device"
-          xcrun simctl bootstatus "$device" -b
           uv run --no-project python tests/iOS/fixture.py &
           fixture=$!
           trap 'kill "$fixture" 2>/dev/null || true' EXIT
-          curl --fail --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:18741/watch
+          curl --fail --retry 60 --retry-connrefused --retry-delay 1 http://127.0.0.1:18741/watch
+          device=$(xcrun simctl list devices available -j | jq -er 'first(.devices | to_entries[] | select(.key | startswith("com.apple.CoreSimulator.SimRuntime.iOS-26-")) | .value[] | select(.name | startswith("iPhone")) | .udid)')
+          xcrun simctl boot "$device"
+          xcrun simctl bootstatus "$device" -b
           xcodebuild -project src/ClipDock.iOS/ClipDock.xcodeproj -scheme ClipDock \
             -destination "id=$device" -parallel-testing-enabled NO CLIPDOCK_PUBLIC_SITES=${{ inputs.public_sites && '1' || '0' }} \
             -derivedDataPath artifacts/ios/sim-build -resultBundlePath artifacts/ios/paste.xcresult test -quiet
