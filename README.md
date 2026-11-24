@@ -19,7 +19,7 @@ ClipDockは、動画や音声のリンクを貼り付けて端末に保存する
 
 分割配信（HLS・DASH）や映像と音声が別々に届く動画は、端末内で1本のファイルにまとめます。ログインが必要な動画、DRM付きの動画、配信中のライブ録画、MP3への変換は対象外です。
 
-<img src="docs/images/iphone.png" width="320" alt="iPhone版ClipDockの画面。上部に「ペースト」ボタン、下に保存したファイルと各ファイルの共有ボタンがあります。">
+<img src="docs/images/iphone.png" width="245" alt="日本語・ライトモードのiPhone版ClipDock"> <img src="docs/images/iphone-dark.png" width="245" alt="英語・ダークモードのiPhone版ClipDock">
 
 ### Android
 
