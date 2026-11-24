@@ -33,6 +33,15 @@ jobs:
           xcodegen generate --spec src/ClipDock.iOS/project.yml
       - name: Build the iPhone IPA
         run: bash scripts/ios/package.sh
+      - name: Check YouTube access from the simulator host
+        if: inputs.public_sites
+        continue-on-error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}/artifacts/ios-deps/packages
+        run: |
+          uv run --no-project --python 3.14 python -m yt_dlp --ignore-config --no-playlist \
+            --js-runtimes node --simulate --print '%(id)s %(format_id)s' \
+            'https://www.youtube.com/watch?v=HOfdboHvshg'
       - name: Check paste and save on an iPhone simulator
         run: |
           uv run --no-project python tests/iOS/fixture.py &
