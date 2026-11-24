@@ -47,9 +47,14 @@ capture() {
     adb shell cmd locale set-app-locales "$package" --locales "$locale" >/dev/null
     adb shell cmd uimode night "$night" >/dev/null
     adb shell am force-stop "$package"
-    adb shell am start -W -n "$package/.MainActivity" >/dev/null
-    for _ in {1..15}; do
-        adb shell uiautomator dump /sdcard/clipdock-window.xml >/dev/null
+    adb shell input keyevent KEYCODE_WAKEUP
+    adb shell wm dismiss-keyguard
+    for _ in {1..25}; do
+        if ! adb shell am start -W -n "$package/.MainActivity" >/dev/null ||
+           ! adb shell uiautomator dump /sdcard/clipdock-window.xml >/dev/null; then
+            sleep 1
+            continue
+        fi
         local window
         window=$(adb shell cat /sdcard/clipdock-window.xml)
         if [[ "$window" == *"$heading"* && "$window" == *"split.mp4"* ]]; then
