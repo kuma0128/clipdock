@@ -1,0 +1,59 @@
+name: iPhone app
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/ClipDock.iOS/**'
+      - 'src/ClipDock.Mac/icon.png'
+      - 'scripts/ios/**'
+      - 'tests/iOS/**'
+      - '.github/workflows/ios.yml'
+permissions:
+  contents: read
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v7
+      - name: Prepare the Xcode project
+        run: |
+          command -v xcodegen || brew install xcodegen
+          bash scripts/ios/prepare.sh
+          xcodegen generate --spec src/ClipDock.iOS/project.yml
+      - name: Build the iPhone IPA
+        run: bash scripts/ios/package.sh
+      - name: Check paste and save on an iPhone simulator
+        run: |
+          device=$(xcrun simctl list devices available -j | jq -er '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
+          xcrun simctl boot "$device"
+          xcrun simctl bootstatus "$device" -b
+          uv run --no-project python tests/iOS/fixture.py &
+          fixture=$!
+          trap 'kill "$fixture" 2>/dev/null || true' EXIT
+          curl --fail --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:18741/watch
+          xcodebuild -project src/ClipDock.iOS/ClipDock.xcodeproj -scheme ClipDock \
+            -destination "id=$device" -parallel-testing-enabled NO \
+            -derivedDataPath artifacts/ios/sim-build -resultBundlePath artifacts/ios/paste.xcresult test -quiet
+          container=$(xcrun simctl get_app_container "$device" app.clipdock.ios data)
+          find "$container/Documents" -name '*.wav' | wc -l | xargs test 2 -eq
+          for file in "$container/Documents/"*.wav; do cmp "$file" <(curl -fsS http://127.0.0.1:18741/tone.wav); done
+          xcrun simctl launch "$device" app.clipdock.ios
+          sleep 2
+          xcrun simctl io "$device" screenshot artifacts/ios/simulator.png
+      - uses: actions/upload-artifact@v7.0.2
+        if: failure()
+        with:
+          name: iPhone-test-results
+          path: artifacts/ios/paste.xcresult
+          retention-days: 3
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: ClipDock-iOS
+          path: |
+            artifacts/ios/*.ipa
+            artifacts/ios/*.sha256
+            artifacts/ios/simulator.png
+          retention-days: 7

@@ -12,3 +12,5 @@ TestResults/
 *.mp4
 tools/
 .DS_Store
+/src/ClipDock.iOS/ClipDock.xcodeproj/
+__pycache__/
