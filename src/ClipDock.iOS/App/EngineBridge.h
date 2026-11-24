@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#include "../Remux/ClipDockRemux.h"
 
 NS_ASSUME_NONNULL_BEGIN
 // Called on a worker thread. Returning NO from progress cancels the transfer.

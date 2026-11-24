@@ -19,6 +19,7 @@ private enum SaveError: LocalizedError {
 private struct MediaResult: Decodable {
     let title: String?
     let files: [String]?
+    let remux: Bool?
     let error: String?
 }
 
@@ -53,35 +54,24 @@ private func fetchMedia(_ link: URL, into folder: URL, task: Task<Void, Never>,
     }
 }
 
-private func finishedMedia(_ files: [URL], in folder: URL) async throws -> URL {
-    guard let first = files.first else { throw SaveError.format }
-    if files.count == 1 {
-        let asset = AVURLAsset(url: first)
-        guard let tracks = try? await asset.load(.tracks),
-              tracks.contains(where: { $0.mediaType == .video || $0.mediaType == .audio }) else { throw SaveError.format }
-        return first
-    }
-
-    guard files.count == 2 else { throw SaveError.format }
-    let composition = AVMutableComposition()
-    for (file, type) in zip(files, [AVMediaType.video, .audio]) {
-        let asset = AVURLAsset(url: file)
-        guard let source = try await asset.loadTracks(withMediaType: type).first,
-              let track = composition.addMutableTrack(withMediaType: type, preferredTrackID: kCMPersistentTrackID_Invalid)
-        else { throw SaveError.format }
-        try track.insertTimeRange(try await source.load(.timeRange), of: source, at: .zero)
-        if type == .video { track.preferredTransform = try await source.load(.preferredTransform) }
-    }
-    let output = folder.appendingPathComponent("merged.mp4")
-    guard let export = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetPassthrough),
-          export.supportedFileTypes.contains(.mp4) else { throw SaveError.format }
-    try Task.checkCancellation()
-    do {
-        try await export.export(to: output, as: .mp4)
-    } catch {
+@concurrent
+private func finishedMedia(_ files: [URL], in folder: URL, remux: Bool) async throws -> URL {
+    guard let first = files.first, files.count <= 2 else { throw SaveError.format }
+    var output = first
+    if remux || files.count == 2 {
+        let audio = files.count == 2 ? files[1].path : nil
+        let ext = audio == nil && first.pathExtension == "m4a" ? "m4a" : "mp4"
+        output = folder.appendingPathComponent("merged." + ext)
         try Task.checkCancellation()
-        throw SaveError.format
+        let result = CDRemux(first.path, audio, output.path) { Task.isCancelled ? 1 : 0 }
+        try Task.checkCancellation()
+        if result == -ENOSPC { throw SaveError.storage }
+        guard result >= 0 else { throw SaveError.format }
     }
+    let asset = AVURLAsset(url: output)
+    guard let tracks = try? await asset.load(.tracks),
+          tracks.contains(where: { $0.mediaType == .video || $0.mediaType == .audio })
+    else { throw SaveError.format }
     return output
 }
 
@@ -156,7 +146,7 @@ final class Downloads {
             status = String(localized: "Checking file…")
             percent = nil
             let tracks = (media.files ?? []).map { folder.appendingPathComponent($0) }
-            let result = try await finishedMedia(tracks, in: folder)
+            let result = try await finishedMedia(tracks, in: folder, remux: media.remux == true)
             try Task.checkCancellation()
             try store(result, title: media.title ?? "ClipDock")
             refresh()

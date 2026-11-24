@@ -18,7 +18,29 @@ manifest = b"""<MPD xmlns="urn:mpeg:dash:schema:mpd:2011" type="static" mediaPre
 <BaseURL>picture.mp4</BaseURL></Representation></AdaptationSet>
 <AdaptationSet mimeType="audio/mp4"><Representation id="a" codecs="mp4a.40.2" bandwidth="24000">
 <BaseURL>sound.m4a</BaseURL></Representation></AdaptationSet></Period></MPD>"""
+hls = b"""#EXTM3U
+#EXT-X-TARGETDURATION:1
+#EXT-X-MEDIA-SEQUENCE:0
+#EXTINF:0.664,
+part0.ts
+#EXTINF:0.600,
+part1.ts
+#EXT-X-ENDLIST
+"""
+dash = b"""<MPD xmlns="urn:mpeg:dash:schema:mpd:2011" type="static" mediaPresentationDuration="PT0.6S">
+<Period><AdaptationSet mimeType="video/mp4"><Representation id="v" codecs="avc1.64000A" bandwidth="45000">
+<SegmentList timescale="10" duration="6"><Initialization sourceURL="init.m4s"/>
+<SegmentURL media="part.m4s"/></SegmentList></Representation></AdaptationSet></Period></MPD>"""
+fragmented = Path(__file__).with_name("fragmented.m4v").read_bytes()
+first_fragment = fragmented.index(b"moof") - 4
 responses = {
+    "/segments.m3u8": ("application/vnd.apple.mpegurl", hls),
+    "/live.m3u8": ("application/vnd.apple.mpegurl", hls.replace(b"#EXT-X-ENDLIST", b"")),
+    "/part0.ts": ("video/mp2t", Path(__file__).with_name("part0.ts").read_bytes()),
+    "/part1.ts": ("video/mp2t", Path(__file__).with_name("part1.ts").read_bytes()),
+    "/fragments.mpd": ("application/dash+xml", dash),
+    "/init.m4s": ("video/mp4", fragmented[:first_fragment]),
+    "/part.m4s": ("video/mp4", fragmented[first_fragment:]),
     "/split.mpd": ("application/dash+xml", manifest),
     "/picture.mp4": ("video/mp4", Path(__file__).with_name("picture.mp4").read_bytes()),
     "/sound.m4a": ("audio/mp4", Path(__file__).with_name("sound.m4a").read_bytes()),

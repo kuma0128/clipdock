@@ -6,8 +6,8 @@ options:
 settings:
   SWIFT_VERSION: "5.0"
   TARGETED_DEVICE_FAMILY: "1"
-  MARKETING_VERSION: "1.2.0"
-  CURRENT_PROJECT_VERSION: 3
+  MARKETING_VERSION: "1.3.0"
+  CURRENT_PROJECT_VERSION: 4
 targets:
   ClipDock:
     type: application
@@ -18,6 +18,9 @@ targets:
     dependencies:
       - framework: ../../artifacts/ios-deps/Python.xcframework
         embed: true
+      - framework: ../../artifacts/ios-deps/ClipDockRemux.xcframework
+        embed: true
+      - sdk: JavaScriptCore.framework
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: app.clipdock.ios
       GENERATE_INFOPLIST_FILE: YES
@@ -43,7 +46,8 @@ targets:
           install_python "$deps/Python.xcframework"
           rm -rf "$CODESIGNING_FOLDER_PATH/python/lib/python3.14/test"
           rsync -a --delete --exclude '__pycache__' "$PROJECT_DIR/$deps/packages/" "$CODESIGNING_FOLDER_PATH/packages/"
-          cp "$PROJECT_DIR/Engine/media.py" "$CODESIGNING_FOLDER_PATH/packages/"
+          cp "$PROJECT_DIR"/Engine/*.py "$CODESIGNING_FOLDER_PATH/packages/"
+          cp "$PROJECT_DIR/$deps/ffmpeg-8.1.3/COPYING.LGPLv2.1" "$CODESIGNING_FOLDER_PATH/FFmpeg-LICENSE.txt"
           cp "$PROJECT_DIR/RuntimeNotices.txt" "$PROJECT_DIR/../../LICENSE" "$PROJECT_DIR/../../THIRD-PARTY.md" "$PROJECT_DIR/$deps/VERSIONS" "$CODESIGNING_FOLDER_PATH/"
   ClipDockUITests:
     type: bundle.ui-testing
@@ -61,3 +65,5 @@ schemes:
         ClipDock: all
     test:
       targets: [ClipDockUITests]
+      environmentVariables:
+        CLIPDOCK_PUBLIC_SITES: "$(CLIPDOCK_PUBLIC_SITES)"

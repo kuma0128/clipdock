@@ -14,6 +14,9 @@ test "$(plutil -extract MinimumOSVersion raw "$app/Info.plist")" = 26.0
 test "$(plutil -extract UIFileSharingEnabled raw "$app/Info.plist")" = true
 test "$(plutil -extract LSSupportsOpeningDocumentsInPlace raw "$app/Info.plist")" = true
 test -s "$app/packages/media.py"
+test -s "$app/packages/ios_media.py"
+test -d "$app/packages/yt_dlp_ejs"
+test -s "$app/Frameworks/ClipDockRemux.framework/ClipDockRemux"
 test -s "$app/Frameworks/Python.framework/Python"
 test -s "$app/Frameworks/_ssl.framework/_ssl"
 lipo "$app/ClipDock" -verify_arch arm64

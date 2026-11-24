@@ -1,7 +1,10 @@
 #import "EngineBridge.h"
 #include <Python.h>
 
+PyMODINIT_FUNC PyInit__clipdock_js(void);
+
 static BOOL startPython(void) {
+    if (PyImport_AppendInittab("_clipdock_js", PyInit__clipdock_js) != 0) return NO;
     NSString *bundle = NSBundle.mainBundle.resourcePath;
     PyPreConfig preconfig;
     PyPreConfig_InitIsolatedConfig(&preconfig);
@@ -46,7 +49,7 @@ NSString *CDDownload(NSString *link, NSString *directory, BOOL (^progress)(NSInt
 
     PyGILState_STATE gil = PyGILState_Ensure();
     static PyMethodDef method = {"progress", report, METH_O, NULL};
-    PyObject *module = PyImport_ImportModule("media");
+    PyObject *module = PyImport_ImportModule("ios_media");
     PyObject *context = PyCapsule_New((__bridge void *)progress, "ClipDock.progress", NULL);
     PyObject *callback = context ? PyCFunction_New(&method, context) : NULL;
     PyObject *result = module && callback

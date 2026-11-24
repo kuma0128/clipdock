@@ -50,11 +50,32 @@ final class ClipDockUITests: XCTestCase {
         XCTAssertTrue(tone.waitForExistence(timeout: 30))
         pasteLink("split.mpd")
         XCTAssertTrue(app.buttons["split.mp4"].waitForExistence(timeout: 30), app.debugDescription)
+        pasteLink("segments.m3u8")
+        XCTAssertTrue(app.buttons["segments.mp4"].waitForExistence(timeout: 30), app.debugDescription)
+        pasteLink("fragments.mpd")
+        XCTAssertTrue(app.buttons["fragments.mp4"].waitForExistence(timeout: 30), app.debugDescription)
         pasteLink("empty")
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "取得できませんでした"))
             .firstMatch.waitForExistence(timeout: 30))
         app.terminate()
         app.launch()
         XCTAssertTrue(tone.waitForExistence(timeout: 10))
+    }
+
+    func testPublicSites() throws {
+        try XCTSkipUnless(ProcessInfo.processInfo.environment["CLIPDOCK_PUBLIC_SITES"] == "1")
+        let app = XCUIApplication()
+        app.launch()
+        for (link, title) in [
+            ("https://x.com/CTVJLaidlaw/status/1600649710662213632/video/1", "Jocelyn Laidlaw"),
+            ("https://www.youtube.com/watch?v=HOfdboHvshg", "Sintel"),
+            ("https://clips.twitch.tv/FaintLightGullWholeWheat", "EA Play"),
+            ("https://www.w3schools.com/html/html5_video.asp", "HTML Video")
+        ] {
+            UIPasteboard.general.string = link
+            app.buttons["pasteLink"].tap()
+            let file = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", title)).firstMatch
+            XCTAssertTrue(file.waitForExistence(timeout: 110), "\(title): \(app.debugDescription)")
+        }
     }
 }

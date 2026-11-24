@@ -204,7 +204,9 @@ xcodegen generate --spec src/ClipDock.iOS/project.yml
 bash scripts/ios/package.sh
 ```
 
-`prepare.sh` はPythonのiOSランタイム、yt-dlp、TLS検証用のcertifiを取得し、SHA-256を検証します。実機用のIPAとチェックサムは `artifacts/ios/` に出力します。Xcodeから直接実機で起動する場合は、生成したプロジェクトを開き、ClipDockターゲットの「Signing & Capabilities」で自分のTeamと一意のBundle Identifierを指定してください。
+`prepare.sh` はPythonのiOSランタイム、yt-dlp、yt-dlp-ejs、certifi、FFmpegのソースを取得し、SHA-256を検証します。FFmpegからは、端末内の映像・音声をMP4にまとめるためのライブラリをビルドします。実機用のIPAとチェックサムは `artifacts/ios/` に出力します。Xcodeから直接実機で起動する場合は、生成したプロジェクトを開き、ClipDockターゲットの「Signing & Capabilities」で自分のTeamと一意のBundle Identifierを指定してください。
+
+実サイトで確認するには、GitHub Actionsの「iPhone app」を手動実行するときに `public_sites` を選びます。iOS 26のシミュレーターにX、YouTube、Twitch、一般のWebページのリンクを貼り付け、保存結果を確認します。
 
 GitHub Actionsの「iPhone app」はIPAの作成後、iOS 26のiPhoneシミュレーターでページURLと直リンクをペーストし、保存ファイルを元データと照合します。`project.yml` のバージョンに合うタグ（例 `ios-v1.1.0`）をpushすると、確認済みのIPA・チェックサム・ライト／ダークの画面写真がGitHubリリースの下書きに付きます。内容を確認して公開してください。ワークフローを手動で実行した場合は、同じファイルを1日間 `ClipDock-iOS` アーティファクトから取得できます。
 

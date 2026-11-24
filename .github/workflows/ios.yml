@@ -1,6 +1,11 @@
 name: iPhone app
 on:
   workflow_dispatch:
+    inputs:
+      public_sites:
+        description: Also exercise public X, YouTube, Twitch and HTML video links
+        type: boolean
+        default: false
   push:
     branches: [main]
     tags: ['ios-v*']
@@ -38,15 +43,35 @@ jobs:
           trap 'kill "$fixture" 2>/dev/null || true' EXIT
           curl --fail --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:18741/watch
           xcodebuild -project src/ClipDock.iOS/ClipDock.xcodeproj -scheme ClipDock \
-            -destination "id=$device" -parallel-testing-enabled NO \
+            -destination "id=$device" -parallel-testing-enabled NO CLIPDOCK_PUBLIC_SITES=${{ inputs.public_sites && '1' || '0' }} \
             -derivedDataPath artifacts/ios/sim-build -resultBundlePath artifacts/ios/paste.xcresult test -quiet
           container=$(xcrun simctl get_app_container "$device" app.clipdock.ios data)
           cmp "$container/Documents/ClipDock Sample (1).mp4" tests/iOS/sample.mp4
-          swift - "$container/Documents/split.mp4" <<'SWIFT'
+          swift - "$container/Documents" ${{ inputs.public_sites && '1' || '0' }} <<'SWIFT'
           import AVFoundation
-          let file = URL(fileURLWithPath: CommandLine.arguments[1])
-          let tracks = try await AVURLAsset(url: file).load(.tracks)
-          precondition(tracks.contains { $0.mediaType == .audio } && tracks.contains { $0.mediaType == .video })
+          let folder = URL(fileURLWithPath: CommandLine.arguments[1])
+          for name in ["split.mp4", "segments.mp4", "fragments.mp4"] {
+              let asset = AVURLAsset(url: folder.appendingPathComponent(name))
+              let tracks = try await asset.load(.tracks)
+              let duration = try await asset.load(.duration).seconds
+              precondition(tracks.contains { $0.mediaType == .video } && duration > 0)
+              if name != "fragments.mp4" { precondition(tracks.contains { $0.mediaType == .audio }) }
+              if name == "segments.mp4" { precondition((1.0...1.5).contains(duration)) }
+          }
+          if CommandLine.arguments[2] == "1" {
+              let files = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
+              for title in ["Jocelyn Laidlaw", "Sintel", "EA Play", "HTML Video"] {
+                  guard let file = files.first(where: { $0.lastPathComponent.contains(title) })
+                  else { fatalError("Missing saved video: " + title) }
+                  let asset = AVURLAsset(url: file)
+                  let tracks = try await asset.load(.tracks)
+                  precondition(tracks.contains { $0.mediaType == .video } && tracks.contains { $0.mediaType == .audio })
+                  if title == "Sintel" {
+                      let duration = try await asset.load(.duration).seconds
+                      precondition((51...54).contains(duration))
+                  }
+              }
+          }
           SWIFT
           cmp "$container/Documents/tone.wav" <(curl -fsS http://127.0.0.1:18741/tone.wav)
           xcrun simctl terminate "$device" app.clipdock.ios || true
