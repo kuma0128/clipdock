@@ -70,6 +70,7 @@ final class ClipDockUITests: XCTestCase {
             ("https://x.com/CTVJLaidlaw/status/1600649710662213632/video/1", "Jocelyn Laidlaw"),
             ("https://www.youtube.com/watch?v=HOfdboHvshg", "Sintel"),
             ("https://clips.twitch.tv/FaintLightGullWholeWheat", "EA Play"),
+            ("https://www.twitch.tv/videos/155322654", "FreshStock"),
             ("https://www.w3schools.com/html/html5_video.asp", "HTML Video")
         ] {
             UIPasteboard.general.string = link

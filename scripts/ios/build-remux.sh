@@ -18,7 +18,7 @@ cd "$build"
 sdk_path="$(xcrun --sdk "$sdk" --show-sdk-path)"
 cc="$(xcrun --sdk "$sdk" --find clang) -target $target -isysroot $sdk_path"
 "$source_dir/configure" --cc="$cc" --arch="$arch" --target-os=darwin --enable-cross-compile \
-    --disable-autodetect --disable-everything --disable-network --disable-programs --disable-doc \
+    --disable-autodetect --disable-everything --disable-network --disable-programs --disable-doc --disable-debug \
     --disable-asm --disable-avdevice --disable-avfilter --disable-swscale --disable-swresample \
     --enable-protocol=file --enable-demuxer=mov,mpegts,aac,matroska --enable-muxer=mp4 \
     --enable-parser=aac,h264,hevc,av1,vp9,opus --enable-decoder=aac,h264,hevc,av1,vp9,opus \

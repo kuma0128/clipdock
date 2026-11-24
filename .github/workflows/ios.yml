@@ -22,7 +22,7 @@ jobs:
     permissions:
       contents: write
     runs-on: macos-26
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v7
@@ -60,7 +60,7 @@ jobs:
           }
           if CommandLine.arguments[2] == "1" {
               let files = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
-              for title in ["Jocelyn Laidlaw", "Sintel", "EA Play", "HTML Video"] {
+              for title in ["Jocelyn Laidlaw", "Sintel", "EA Play", "FreshStock", "HTML Video"] {
                   guard let file = files.first(where: { $0.lastPathComponent.contains(title) })
                   else { fatalError("Missing saved video: " + title) }
                   let asset = AVURLAsset(url: file)
