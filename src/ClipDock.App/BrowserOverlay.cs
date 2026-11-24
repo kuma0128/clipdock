@@ -25,11 +25,10 @@ internal sealed class BrowserOverlay : IDisposable
         var button = new Button
         {
             Content = ClipDock.Core.Localization.Text("↓  ClipDockに取り込む"), FontSize = 13, FontWeight = FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x13, 0x2B, 0x1D)),
-            Background = new SolidColorBrush(Color.FromRgb(0xA5, 0xE7, 0xBA)),
             BorderThickness = new Thickness(0), Padding = new Thickness(12, 7, 12, 7), Focusable = false,
             ToolTip = ClipDock.Core.Localization.Text("このページのURLをClipDockで確認する")
         };
+        button.SetResourceReference(FrameworkElement.StyleProperty, "PrimaryButton");
         AutomationProperties.SetName(button, ClipDock.Core.Localization.Text("ClipDockに取り込む"));
         button.Click += Capture_Click;
         pill = new Window
@@ -38,7 +37,7 @@ internal sealed class BrowserOverlay : IDisposable
             ResizeMode = ResizeMode.NoResize, ShowInTaskbar = false, ShowActivated = false,
             AllowsTransparency = true, Background = Brushes.Transparent, Topmost = true,
             Focusable = false,
-            Content = new Border { Background = button.Background, CornerRadius = new CornerRadius(7), Child = button }
+            Content = button
         };
         pill.SourceInitialized += (_, _) =>
         {

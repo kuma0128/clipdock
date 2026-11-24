@@ -1,6 +1,8 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Media;
 using ClipDock.Core;
+using Microsoft.Win32;
 
 namespace ClipDock.App;
 
@@ -8,6 +10,7 @@ public partial class App : Application
 {
     private Mutex? instance;
     private EventWaitHandle? activation;
+    private bool? darkPalette;
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -32,6 +35,8 @@ public partial class App : Application
             }
             Shutdown(); return;
         }
+        SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
+        ApplySystemPalette();
         DispatcherUnhandledException += (_, args) =>
         {
             MessageBox.Show(args.Exception.Message, "ClipDock", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -41,7 +46,32 @@ public partial class App : Application
         MainWindow = new MainWindow(activation);
         if (!background) MainWindow.Show();
     }
-    protected override void OnExit(ExitEventArgs e) { activation?.Dispose(); instance?.Dispose(); base.OnExit(e); }
+    private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e) =>
+        Dispatcher.InvokeAsync(ApplySystemPalette);
+
+    private void ApplySystemPalette()
+    {
+        const string personalize = @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+        var light = Registry.GetValue(personalize, "AppsUseLightTheme", null)
+            ?? Registry.GetValue(personalize, "SystemUsesLightTheme", 1);
+        var dark = light is 0;
+        if (darkPalette == dark) return;
+        foreach (var (key, lightColor, darkColor) in DesktopPalette.Brushes)
+        {
+            var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(dark ? darkColor : lightColor));
+            brush.Freeze();
+            Resources[key] = brush;
+        }
+        darkPalette = dark;
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
+        activation?.Dispose();
+        instance?.Dispose();
+        base.OnExit(e);
+    }
 
     [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool AllowSetForegroundWindow(int processId);
 }

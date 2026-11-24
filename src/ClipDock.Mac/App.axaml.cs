@@ -1,4 +1,8 @@
 using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.Styling;
+using ClipDock.App;
 using ClipDock.Core;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -22,6 +26,15 @@ public partial class App : Application
         // Until a language is chosen in the app, the preferred languages in macOS's Language & Region decide.
         Localization.Initialize(Path.Combine(AppPaths.Data, "settings.json"), MacApp.PreferredLanguages());
         AvaloniaXamlLoader.Load(this);
+        var light = new ResourceDictionary();
+        var dark = new ResourceDictionary();
+        foreach (var (key, lightColor, darkColor) in DesktopPalette.Brushes)
+        {
+            light[key] = new SolidColorBrush(Color.Parse(lightColor));
+            dark[key] = new SolidColorBrush(Color.Parse(darkColor));
+        }
+        Resources.ThemeDictionaries[ThemeVariant.Light] = light;
+        Resources.ThemeDictionaries[ThemeVariant.Dark] = dark;
         foreach (var resource in Localization.Resources) Resources[resource.Key] = resource.Value;
     }
 

@@ -10,6 +10,7 @@
   <ItemGroup><ProjectReference Include="../ClipDock.Core/ClipDock.Core.csproj" /></ItemGroup>
   <!-- Shared with the Windows app: these sources have no UI framework dependency. -->
   <ItemGroup>
+    <Compile Include="../ClipDock.App/DesktopPalette.cs" Link="Shared/DesktopPalette.cs" />
     <Compile Include="../ClipDock.App/DownloadItem.cs" Link="Shared/DownloadItem.cs" />
     <Compile Include="../ClipDock.App/DownloadEngine.cs" Link="Shared/DownloadEngine.cs" />
     <Compile Include="../ClipDock.App/DownloadFailure.cs" Link="Shared/DownloadFailure.cs" />

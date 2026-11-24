@@ -5,7 +5,6 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Threading;
 using ClipDock.Core;
 using Localization = ClipDock.Core.Localization;
@@ -250,7 +249,7 @@ public partial class MainWindow : Window
     private void ShowUrlMessage(string? message, bool error = true)
     {
         UrlMessage.Text = message ?? "";
-        UrlMessage.Foreground = (Brush)FindResource(error ? "Danger" : "Muted");
+        UrlMessage.SetResourceReference(TextBlock.ForegroundProperty, error ? "Danger" : "Muted");
         UrlMessage.Visibility = message is null ? Visibility.Collapsed : Visibility.Visible;
     }
     // Something the user asked for did not work, or ClipDock could not read or save its data. Stays until closed.
@@ -587,7 +586,7 @@ public partial class MainWindow : Window
         var question = installing
             ? Localization.Text(tray ? "エンジンの準備を中止して終了しますか？\n終了しない場合、準備は通知領域で続きます。" : "エンジンの準備を中止して終了しますか？\n続ける場合は、このウィンドウを最小化してください。")
             : Localization.Text(tray ? "ダウンロードを中断して終了しますか？\n終了しない場合、保存は通知領域で続きます。" : "ダウンロードを中断して終了しますか？\n続ける場合は、このウィンドウを最小化してください。");
-        if (hasWork && MessageBox.Show(this, question, "ClipDock", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        if (hasWork && new ConfirmDialog(this, "ClipDock", question, Localization.Text("終了する"), Localization.Text("続ける")).ShowDialog() != true) return;
         shuttingDown = true;
         browserOverlay.Enabled = false;
         activationTimer.Stop();

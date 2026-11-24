@@ -1,32 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="ClipDock.Mac.App" Name="ClipDock" RequestedThemeVariant="Light">
+             x:Class="ClipDock.Mac.App" Name="ClipDock">
   <Application.Resources>
-    <!-- Palette. The Windows window (src/ClipDock.App/App.xaml) uses the same values. -->
-    <SolidColorBrush x:Key="Accent" Color="#28734B" />
-    <SolidColorBrush x:Key="AccentHover" Color="#21623F" />
-    <SolidColorBrush x:Key="AccentPressed" Color="#1B5134" />
-    <SolidColorBrush x:Key="AccentSoft" Color="#E9F3ED" />
-    <SolidColorBrush x:Key="AccentLine" Color="#C9E0D1" />
-    <SolidColorBrush x:Key="Ink" Color="#1B2620" />
-    <SolidColorBrush x:Key="Muted" Color="#5B6862" />
-    <SolidColorBrush x:Key="Faint" Color="#737E78" />
-    <SolidColorBrush x:Key="Page" Color="#F4F6F5" />
-    <SolidColorBrush x:Key="Surface" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="Line" Color="#E3E8E5" />
-    <SolidColorBrush x:Key="Field" Color="#CDD5D0" />
-    <SolidColorBrush x:Key="FieldHover" Color="#A9B4AE" />
-    <SolidColorBrush x:Key="Hover" Color="#F0F3F1" />
-    <SolidColorBrush x:Key="Pressed" Color="#E4E9E6" />
-    <SolidColorBrush x:Key="Track" Color="#E4EAE6" />
-    <SolidColorBrush x:Key="Danger" Color="#B42318" />
-    <SolidColorBrush x:Key="DangerSoft" Color="#FCEFEE" />
-    <SolidColorBrush x:Key="DangerLine" Color="#F1C8C4" />
-    <SolidColorBrush x:Key="DangerInk" Color="#7A1C14" />
-    <SolidColorBrush x:Key="WarnSoft" Color="#FFF7E6" />
-    <SolidColorBrush x:Key="WarnLine" Color="#EED6A0" />
-    <SolidColorBrush x:Key="WarnInk" Color="#6B4700" />
-    <Color x:Key="SystemAccentColor">#28734B</Color>
-
+    <x:Double x:Key="TextControlPlaceholderOpacity">1</x:Double>
     <!-- Line icons drawn on a 24 × 24 grid; shown through a Viewbox so every icon has the same weight. -->
     <StreamGeometry x:Key="IconDownload">M12 4 V15 M7 10 L12 15 L17 10 M5 20 H19</StreamGeometry>
     <StreamGeometry x:Key="IconSettings">M4 7 H11.5 M16.5 7 H20 M14 4.5 A2.5 2.5 0 1 1 14 9.5 A2.5 2.5 0 1 1 14 4.5 M4 17 H7.5 M12.5 17 H20 M10 14.5 A2.5 2.5 0 1 1 10 19.5 A2.5 2.5 0 1 1 10 14.5</StreamGeometry>
@@ -39,9 +14,9 @@
 
     <!-- Buttons: secondary (default) and the classes primary, subtle, row and icon. -->
     <ControlTheme x:Key="{x:Type Button}" TargetType="Button">
-      <Setter Property="Foreground" Value="{StaticResource Ink}" />
-      <Setter Property="Background" Value="{StaticResource Surface}" />
-      <Setter Property="BorderBrush" Value="{StaticResource Field}" />
+      <Setter Property="Foreground" Value="{DynamicResource Ink}" />
+      <Setter Property="Background" Value="{DynamicResource Surface}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Field}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="Padding" Value="14,0" />
       <Setter Property="MinHeight" Value="34" />
@@ -57,28 +32,28 @@
                             HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
         </ControlTemplate>
       </Setter>
-      <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{StaticResource Hover}" /></Style>
-      <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{StaticResource Pressed}" /></Style>
+      <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{DynamicResource Hover}" /></Style>
+      <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{DynamicResource Pressed}" /></Style>
       <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Opacity" Value="0.45" /></Style>
-      <Style Selector="^:focus-visible /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="BorderBrush" Value="{StaticResource Accent}" /></Style>
+      <Style Selector="^:focus-visible /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="BorderBrush" Value="{DynamicResource Accent}" /></Style>
       <Style Selector="^.primary">
-        <Setter Property="Foreground" Value="White" /><Setter Property="Background" Value="{StaticResource Accent}" />
-        <Setter Property="BorderBrush" Value="{StaticResource Accent}" /><Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource OnAccent}" /><Setter Property="Background" Value="{DynamicResource Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Accent}" /><Setter Property="FontWeight" Value="SemiBold" />
       </Style>
-      <Style Selector="^.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{StaticResource AccentHover}" /></Style>
-      <Style Selector="^.primary:pressed /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{StaticResource AccentPressed}" /></Style>
-      <Style Selector="^.primary:focus-visible /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="BorderBrush" Value="{StaticResource Ink}" /></Style>
+      <Style Selector="^.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{DynamicResource AccentHover}" /></Style>
+      <Style Selector="^.primary:pressed /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{DynamicResource AccentPressed}" /></Style>
+      <Style Selector="^.primary:focus-visible /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="BorderBrush" Value="{DynamicResource Ink}" /></Style>
       <Style Selector="^.subtle"><Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" /><Setter Property="Padding" Value="10,0" /></Style>
       <Style Selector="^.row"><Setter Property="MinHeight" Value="30" /><Setter Property="Padding" Value="12,0" /><Setter Property="FontSize" Value="12" /><Setter Property="Margin" Value="6,0,0,0" /></Style>
       <Style Selector="^.icon">
-        <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" /><Setter Property="Foreground" Value="{StaticResource Muted}" />
+        <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" /><Setter Property="Foreground" Value="{DynamicResource Muted}" />
         <Setter Property="Width" Value="32" /><Setter Property="MinHeight" Value="32" /><Setter Property="Padding" Value="0" />
       </Style>
     </ControlTheme>
 
     <!-- One half of a segmented switch (MP4 | MP3). -->
     <ControlTheme x:Key="Segment" TargetType="RadioButton">
-      <Setter Property="Foreground" Value="{StaticResource Muted}" />
+      <Setter Property="Foreground" Value="{DynamicResource Muted}" />
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="MinWidth" Value="64" />
       <Setter Property="Height" Value="30" />
@@ -91,37 +66,48 @@
                             FontWeight="{TemplateBinding FontWeight}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
         </ControlTemplate>
       </Setter>
-      <Style Selector="^:pointerover"><Setter Property="Foreground" Value="{StaticResource Ink}" /></Style>
+      <Style Selector="^:pointerover"><Setter Property="Foreground" Value="{DynamicResource Ink}" /></Style>
       <Style Selector="^:checked">
-        <Setter Property="Foreground" Value="{StaticResource Ink}" /><Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Background" Value="{StaticResource Surface}" />
+        <Setter Property="Foreground" Value="{DynamicResource Ink}" /><Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
       </Style>
       <Style Selector="^:checked /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="BoxShadow" Value="0 1 3 0 #24000000" /></Style>
-      <Style Selector="^:focus-visible /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="BorderBrush" Value="{StaticResource Accent}" /><Setter Property="BorderThickness" Value="1.5" /></Style>
+      <Style Selector="^:focus-visible /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="BorderBrush" Value="{DynamicResource Accent}" /><Setter Property="BorderThickness" Value="1.5" /></Style>
     </ControlTheme>
   </Application.Resources>
   <Application.Styles>
-    <FluentTheme />
+    <FluentTheme>
+      <FluentTheme.Palettes>
+        <ColorPaletteResources x:Key="Light" Accent="#28734B" />
+        <ColorPaletteResources x:Key="Dark" Accent="#86D6A4" />
+      </FluentTheme.Palettes>
+    </FluentTheme>
+    <Style Selector="Window">
+      <Setter Property="Background" Value="{DynamicResource Page}" /><Setter Property="Foreground" Value="{DynamicResource Ink}" />
+    </Style>
     <Style Selector="Path.icon">
       <Setter Property="Width" Value="24" /><Setter Property="Height" Value="24" /><Setter Property="StrokeThickness" Value="1.9" />
       <Setter Property="StrokeLineCap" Value="Round" /><Setter Property="StrokeJoin" Value="Round" />
     </Style>
     <Style Selector="Button Path.icon"><Setter Property="Stroke" Value="{Binding $parent[Button].Foreground}" /></Style>
-    <Style Selector="Border.card"><Setter Property="Background" Value="{StaticResource Surface}" /><Setter Property="BorderBrush" Value="{StaticResource Line}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="10" /></Style>
-    <Style Selector="TextBlock.section"><Setter Property="FontSize" Value="14" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{StaticResource Ink}" /></Style>
-    <Style Selector="TextBlock.label"><Setter Property="Foreground" Value="{StaticResource Muted}" /><Setter Property="VerticalAlignment" Value="Center" /><Setter Property="Margin" Value="0,0,20,0" /></Style>
-    <Style Selector="TextBlock.caption"><Setter Property="FontSize" Value="12" /><Setter Property="Foreground" Value="{StaticResource Muted}" /><Setter Property="TextWrapping" Value="Wrap" /><Setter Property="LineHeight" Value="18" /></Style>
+    <Style Selector="Border.card"><Setter Property="Background" Value="{DynamicResource Surface}" /><Setter Property="BorderBrush" Value="{DynamicResource Line}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="10" /></Style>
+    <Style Selector="TextBlock.section"><Setter Property="FontSize" Value="14" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="Foreground" Value="{DynamicResource Ink}" /></Style>
+    <Style Selector="TextBlock.label"><Setter Property="Foreground" Value="{DynamicResource Muted}" /><Setter Property="VerticalAlignment" Value="Center" /><Setter Property="Margin" Value="0,0,20,0" /></Style>
+    <Style Selector="TextBlock.caption"><Setter Property="FontSize" Value="12" /><Setter Property="Foreground" Value="{DynamicResource Muted}" /><Setter Property="TextWrapping" Value="Wrap" /><Setter Property="LineHeight" Value="18" /></Style>
     <Style Selector="TextBox">
-      <Setter Property="Background" Value="{StaticResource Surface}" /><Setter Property="Foreground" Value="{StaticResource Ink}" /><Setter Property="BorderBrush" Value="{StaticResource Field}" />
+      <Setter Property="Background" Value="{DynamicResource Surface}" /><Setter Property="Foreground" Value="{DynamicResource Ink}" /><Setter Property="BorderBrush" Value="{DynamicResource Field}" />
+      <Setter Property="PlaceholderForeground" Value="{DynamicResource Faint}" />
+      <Setter Property="SelectionBrush" Value="{DynamicResource Accent}" /><Setter Property="SelectionForegroundBrush" Value="{DynamicResource OnAccent}" />
       <Setter Property="CornerRadius" Value="6" /><Setter Property="Padding" Value="11,0" /><Setter Property="MinHeight" Value="36" /><Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="ComboBox">
-      <Setter Property="Foreground" Value="{StaticResource Ink}" /><Setter Property="Background" Value="{StaticResource Surface}" /><Setter Property="BorderBrush" Value="{StaticResource Field}" />
+      <Setter Property="Foreground" Value="{DynamicResource Ink}" /><Setter Property="Background" Value="{DynamicResource Surface}" /><Setter Property="BorderBrush" Value="{DynamicResource Field}" />
       <Setter Property="CornerRadius" Value="6" /><Setter Property="Height" Value="36" /><Setter Property="Padding" Value="12,0,8,0" /><Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
-    <Style Selector="CheckBox"><Setter Property="Foreground" Value="{StaticResource Ink}" /></Style>
+    <Style Selector="CheckBox"><Setter Property="Foreground" Value="{DynamicResource Ink}" /></Style>
+    <Style Selector="CheckBox:checked:not(:disabled) /template/ Path#CheckGlyph"><Setter Property="Fill" Value="{DynamicResource OnAccent}" /></Style>
     <Style Selector="ProgressBar">
-      <Setter Property="Foreground" Value="{StaticResource Accent}" /><Setter Property="Background" Value="{StaticResource Track}" />
+      <Setter Property="Foreground" Value="{DynamicResource Accent}" /><Setter Property="Background" Value="{DynamicResource Track}" />
       <Setter Property="Height" Value="6" /><Setter Property="MinHeight" Value="6" /><Setter Property="CornerRadius" Value="3" />
     </Style>
   </Application.Styles>

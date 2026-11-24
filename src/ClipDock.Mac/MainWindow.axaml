@@ -2,35 +2,35 @@
         xmlns:app="using:ClipDock.App"
         x:Class="ClipDock.Mac.MainWindow"
         Title="ClipDock" Width="980" Height="820" MinWidth="740" MinHeight="620" WindowStartupLocation="CenterScreen"
-        Background="{StaticResource Page}" Foreground="{StaticResource Ink}" FontSize="13">
+        Background="{DynamicResource Page}" Foreground="{DynamicResource Ink}" FontSize="13">
   <Window.Styles>
     <Style Selector="Border.row"><Setter Property="Background" Value="Transparent" /></Style>
-    <Style Selector="Border.row:pointerover"><Setter Property="Background" Value="#FAFBFA" /></Style>
-    <Style Selector="Border.tile"><Setter Property="Background" Value="{StaticResource AccentSoft}" /></Style>
-    <Style Selector="Border.tile.problem"><Setter Property="Background" Value="{StaticResource Track}" /></Style>
-    <Style Selector="Border.tile.failed"><Setter Property="Background" Value="{StaticResource DangerSoft}" /></Style>
-    <Style Selector="Path.kind"><Setter Property="Stroke" Value="{StaticResource Accent}" /></Style>
-    <Style Selector="Border.problem Path.kind"><Setter Property="Stroke" Value="{StaticResource Muted}" /></Style>
-    <Style Selector="Border.failed Path.kind"><Setter Property="Stroke" Value="{StaticResource Danger}" /></Style>
-    <Style Selector="TextBlock.failed"><Setter Property="Foreground" Value="{StaticResource Danger}" /></Style>
-    <Style Selector="TextBlock#UrlMessage"><Setter Property="Foreground" Value="{StaticResource Danger}" /></Style>
-    <Style Selector="TextBlock#UrlMessage.note"><Setter Property="Foreground" Value="{StaticResource Muted}" /></Style>
-    <Style Selector="Border.alert"><Setter Property="Background" Value="{StaticResource DangerSoft}" /><Setter Property="BorderBrush" Value="{StaticResource DangerLine}" /></Style>
-    <Style Selector="Border.alert TextBlock#AlertText"><Setter Property="Foreground" Value="{StaticResource DangerInk}" /></Style>
+    <Style Selector="Border.row:pointerover"><Setter Property="Background" Value="{DynamicResource RowHover}" /></Style>
+    <Style Selector="Border.tile"><Setter Property="Background" Value="{DynamicResource AccentSoft}" /></Style>
+    <Style Selector="Border.tile.problem"><Setter Property="Background" Value="{DynamicResource Track}" /></Style>
+    <Style Selector="Border.tile.failed"><Setter Property="Background" Value="{DynamicResource DangerSoft}" /></Style>
+    <Style Selector="Path.kind"><Setter Property="Stroke" Value="{DynamicResource Accent}" /></Style>
+    <Style Selector="Border.problem Path.kind"><Setter Property="Stroke" Value="{DynamicResource Muted}" /></Style>
+    <Style Selector="Border.failed Path.kind"><Setter Property="Stroke" Value="{DynamicResource Danger}" /></Style>
+    <Style Selector="TextBlock.failed"><Setter Property="Foreground" Value="{DynamicResource Danger}" /></Style>
+    <Style Selector="TextBlock#UrlMessage"><Setter Property="Foreground" Value="{DynamicResource Danger}" /></Style>
+    <Style Selector="TextBlock#UrlMessage.note"><Setter Property="Foreground" Value="{DynamicResource Muted}" /></Style>
+    <Style Selector="Border.alert"><Setter Property="Background" Value="{DynamicResource DangerSoft}" /><Setter Property="BorderBrush" Value="{DynamicResource DangerLine}" /></Style>
+    <Style Selector="Border.alert TextBlock#AlertText"><Setter Property="Foreground" Value="{DynamicResource DangerInk}" /></Style>
     <Style Selector="Border.alert Viewbox.note"><Setter Property="IsVisible" Value="False" /></Style>
-    <Style Selector="Border.alert.info"><Setter Property="Background" Value="{StaticResource AccentSoft}" /><Setter Property="BorderBrush" Value="{StaticResource AccentLine}" /></Style>
-    <Style Selector="Border.alert.info TextBlock#AlertText"><Setter Property="Foreground" Value="{StaticResource Ink}" /></Style>
+    <Style Selector="Border.alert.info"><Setter Property="Background" Value="{DynamicResource AccentSoft}" /><Setter Property="BorderBrush" Value="{DynamicResource AccentLine}" /></Style>
+    <Style Selector="Border.alert.info TextBlock#AlertText"><Setter Property="Foreground" Value="{DynamicResource Ink}" /></Style>
     <Style Selector="Border.alert.info Viewbox.problem"><Setter Property="IsVisible" Value="False" /></Style>
     <Style Selector="Border.alert.info Viewbox.note"><Setter Property="IsVisible" Value="True" /></Style>
   </Window.Styles>
   <Grid RowDefinitions="Auto,*">
 
     <!-- Title bar of the page: the name, an update when one is ready, and the settings. -->
-    <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1">
+    <Border Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1">
       <Grid Height="56" Margin="24,0,16,0" ColumnDefinitions="*,Auto,Auto">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-          <Border Width="28" Height="28" CornerRadius="7" Background="{StaticResource Accent}">
-            <Viewbox Width="17" Height="17"><Path Classes="icon" Data="{StaticResource IconDownload}" Stroke="White" StrokeThickness="2.4" /></Viewbox>
+          <Border Width="28" Height="28" CornerRadius="7" Background="{DynamicResource Accent}">
+            <Viewbox Width="17" Height="17"><Path Classes="icon" Data="{StaticResource IconDownload}" Stroke="{DynamicResource OnAccent}" StrokeThickness="2.4" /></Viewbox>
           </Border>
           <TextBlock Text="ClipDock" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,1" VerticalAlignment="Center" />
         </StackPanel>
@@ -49,18 +49,18 @@
       <!-- Bars that appear only when something needs attention; nothing is shown while all is well. -->
       <StackPanel>
         <!-- The first engine download: nothing can be saved until it is done. -->
-        <Border x:Name="SetupBanner" IsVisible="False" Background="{StaticResource AccentSoft}" BorderBrush="{StaticResource AccentLine}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
+        <Border x:Name="SetupBanner" IsVisible="False" Background="{DynamicResource AccentSoft}" BorderBrush="{DynamicResource AccentLine}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
           <DockPanel>
-            <Viewbox Width="18" Height="18" VerticalAlignment="Top" Margin="0,1,0,0"><Path Classes="icon" Data="{StaticResource IconDownload}" Stroke="{StaticResource Accent}" /></Viewbox>
+            <Viewbox Width="18" Height="18" VerticalAlignment="Top" Margin="0,1,0,0"><Path Classes="icon" Data="{StaticResource IconDownload}" Stroke="{DynamicResource Accent}" /></Viewbox>
             <TextBlock x:Name="SetupText" Text="{DynamicResource LFB88DA4E39B9C8F0}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
           </DockPanel>
         </Border>
         <!-- The engine could not be fetched; the reason and a way to try again. -->
-        <Border x:Name="EngineBanner" IsVisible="False" Background="{StaticResource WarnSoft}" BorderBrush="{StaticResource WarnLine}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
+        <Border x:Name="EngineBanner" IsVisible="False" Background="{DynamicResource WarnSoft}" BorderBrush="{DynamicResource WarnLine}" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
           <DockPanel>
             <Button x:Name="EngineButton" DockPanel.Dock="Right" Content="{DynamicResource L6AD4BA2E2D7A2BAB}" ToolTip.Tip="{DynamicResource L45BAC65D26CA7228}" Click="InstallEngine_Click" Margin="12,0,0,0" />
-            <Viewbox Width="18" Height="18" VerticalAlignment="Center"><Path Classes="icon" Data="{StaticResource IconWarning}" Stroke="{StaticResource WarnInk}" /></Viewbox>
-            <TextBlock x:Name="EngineProblem" Text="{DynamicResource L4D1DDFF0D8F723FD}" Foreground="{StaticResource WarnInk}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
+            <Viewbox Width="18" Height="18" VerticalAlignment="Center"><Path Classes="icon" Data="{StaticResource IconWarning}" Stroke="{DynamicResource WarnInk}" /></Viewbox>
+            <TextBlock x:Name="EngineProblem" Text="{DynamicResource L4D1DDFF0D8F723FD}" Foreground="{DynamicResource WarnInk}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,0,0" />
           </DockPanel>
         </Border>
         <!-- Something the user asked for did not work, or ClipDock could not read or save its data (class info: an update finished). -->
@@ -70,8 +70,8 @@
               <Viewbox Width="16" Height="16"><Path Classes="icon" Data="{StaticResource IconClose}" /></Viewbox>
             </Button>
             <Panel VerticalAlignment="Top" Margin="0,7,0,0">
-              <Viewbox Classes="problem" Width="18" Height="18"><Path Classes="icon" Data="{StaticResource IconWarning}" Stroke="{StaticResource Danger}" /></Viewbox>
-              <Viewbox Classes="note" Width="18" Height="18"><Path Classes="icon" Data="{StaticResource IconInfo}" Stroke="{StaticResource Accent}" /></Viewbox>
+              <Viewbox Classes="problem" Width="18" Height="18"><Path Classes="icon" Data="{StaticResource IconWarning}" Stroke="{DynamicResource Danger}" /></Viewbox>
+              <Viewbox Classes="note" Width="18" Height="18"><Path Classes="icon" Data="{StaticResource IconInfo}" Stroke="{DynamicResource Accent}" /></Viewbox>
             </Panel>
             <TextBlock x:Name="AlertText" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,0,8,0" />
           </DockPanel>
@@ -94,11 +94,11 @@
           <!-- Why this URL was not added (class note: what to check about it); cleared as soon as the URL is edited. -->
           <TextBlock x:Name="UrlMessage" IsVisible="False" FontSize="12" TextWrapping="Wrap" Margin="2,8,0,0" />
 
-          <Border Height="1" Background="{StaticResource Line}" Margin="0,16,0,2" />
+          <Border Height="1" Background="{DynamicResource Line}" Margin="0,16,0,2" />
           <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto">
             <TextBlock Text="{DynamicResource LA3FDBA54BDC4A0BA}" Classes="label" />
             <StackPanel Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,8">
-              <Border Background="{StaticResource Track}" CornerRadius="7" Padding="3" ToolTip.Tip="{DynamicResource LE396B8587B0219F1}">
+              <Border Background="{DynamicResource Track}" CornerRadius="7" Padding="3" ToolTip.Tip="{DynamicResource LE396B8587B0219F1}">
                 <StackPanel Orientation="Horizontal">
                   <RadioButton x:Name="Mp4Option" GroupName="Format" Theme="{StaticResource Segment}" Content="MP4" IsChecked="True" AutomationProperties.Name="MP4" />
                   <RadioButton x:Name="Mp3Option" GroupName="Format" Theme="{StaticResource Segment}" Content="MP3" AutomationProperties.Name="MP3" />
@@ -111,7 +111,7 @@
 
             <TextBlock Grid.Row="1" Text="{DynamicResource L56FC579CEECD83FE}" Classes="label" />
             <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-              <Viewbox Width="17" Height="17"><Path Classes="icon" Data="{StaticResource IconFolder}" Stroke="{StaticResource Muted}" /></Viewbox>
+              <Viewbox Width="17" Height="17"><Path Classes="icon" Data="{StaticResource IconFolder}" Stroke="{DynamicResource Muted}" /></Viewbox>
               <TextBlock x:Name="OutputLabel" Margin="8,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
             </StackPanel>
             <Button Grid.Row="1" Grid.Column="2" Content="{DynamicResource L029C5A77C78AF330}" Click="ChooseOutput_Click" Margin="0,8" />
@@ -132,8 +132,8 @@
           <Grid Margin="20,10,12,10" ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
               <TextBlock x:Name="ListTitle" Text="{DynamicResource L55C0442BCE02DDAF}" Classes="section" VerticalAlignment="Center" />
-              <Border Background="{StaticResource Track}" CornerRadius="9" Padding="8,1,8,2" Margin="8,0,0,0" VerticalAlignment="Center">
-                <TextBlock x:Name="CountLabel" Text="0" FontSize="12" Foreground="{StaticResource Muted}" />
+              <Border Background="{DynamicResource Track}" CornerRadius="9" Padding="8,1,8,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                <TextBlock x:Name="CountLabel" Text="0" FontSize="12" Foreground="{DynamicResource Muted}" />
               </Border>
             </StackPanel>
             <Button Grid.Column="1" Classes="subtle" Click="OpenOutput_Click" AutomationProperties.Name="{DynamicResource L8BC9EABC1A1F6BCF}">
@@ -147,7 +147,7 @@
             <ItemsControl x:Name="JobList">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="app:DownloadItem">
-                  <Border Classes="row" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="20,14,16,14">
+                  <Border Classes="row" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="20,14,16,14">
                     <Grid ColumnDefinitions="Auto,*,Auto">
                       <Border Classes="tile" Width="40" Height="40" CornerRadius="8" VerticalAlignment="Top" Classes.problem="{Binding CanRetry}" Classes.failed="{Binding IsFailed}">
                         <Panel>
@@ -157,12 +157,12 @@
                       </Border>
                       <StackPanel Grid.Column="1" Margin="14,0,16,0" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Title}" />
-                        <TextBlock Text="{Binding Meta}" FontSize="12" Foreground="{StaticResource Muted}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Meta}" FontSize="12" Foreground="{DynamicResource Muted}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
                         <StackPanel IsVisible="{Binding CanCancel}" Margin="0,10,0,0">
                           <ProgressBar Value="{Binding Percent, Mode=OneWay}" Minimum="0" Maximum="100" />
                           <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
-                            <TextBlock Text="{Binding StateLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Accent}" />
-                            <TextBlock Text="{Binding Detail}" FontSize="12" Foreground="{StaticResource Muted}" Margin="10,0,0,0" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding StateLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Accent}" />
+                            <TextBlock Text="{Binding Detail}" FontSize="12" Foreground="{DynamicResource Muted}" Margin="10,0,0,0" TextTrimming="CharacterEllipsis" />
                           </StackPanel>
                         </StackPanel>
                         <StackPanel IsVisible="{Binding CanRetry}" Margin="0,8,0,0">
@@ -187,8 +187,8 @@
             </ItemsControl>
           </ScrollViewer>
           <StackPanel x:Name="EmptyState" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24,8,24,24">
-            <Border Width="52" Height="52" CornerRadius="26" Background="{StaticResource AccentSoft}" HorizontalAlignment="Center">
-              <Viewbox Width="24" Height="24"><Path Classes="icon" Data="{StaticResource IconDownload}" Stroke="{StaticResource Accent}" /></Viewbox>
+            <Border Width="52" Height="52" CornerRadius="26" Background="{DynamicResource AccentSoft}" HorizontalAlignment="Center">
+              <Viewbox Width="24" Height="24"><Path Classes="icon" Data="{StaticResource IconDownload}" Stroke="{DynamicResource Accent}" /></Viewbox>
             </Border>
             <TextBlock Text="{DynamicResource LCBCFAFAE869EDF3E}" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,14,0,0" />
             <TextBlock Text="{DynamicResource L0593D6A008472BB9}" Classes="caption" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,6,0,0" />
@@ -199,8 +199,8 @@
 
     <!-- Settings slide over the right edge; the dimmed page behind closes them. -->
     <Panel x:Name="SettingsLayer" Grid.RowSpan="2" IsVisible="False">
-      <Border Background="#401B2620" PointerPressed="SettingsScrim_PointerPressed" />
-      <Border HorizontalAlignment="Right" Width="380" Background="{StaticResource Surface}" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0" BoxShadow="0 0 28 0 #2E000000">
+      <Border Background="{DynamicResource Scrim}" PointerPressed="SettingsScrim_PointerPressed" />
+      <Border HorizontalAlignment="Right" Width="380" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="1,0,0,0" BoxShadow="0 0 28 0 #2E000000">
         <DockPanel>
           <Grid DockPanel.Dock="Top" Height="56" Margin="24,0,12,0">
             <TextBlock Text="{DynamicResource L0D8619AAE051AE34}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
@@ -208,10 +208,10 @@
               <Viewbox Width="18" Height="18"><Path Classes="icon" Data="{StaticResource IconClose}" /></Viewbox>
             </Button>
           </Grid>
-          <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="24,14">
-            <TextBlock x:Name="VersionLabel" FontSize="12" Foreground="{StaticResource Muted}" />
+          <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="24,14">
+            <TextBlock x:Name="VersionLabel" FontSize="12" Foreground="{DynamicResource Muted}" />
           </Border>
-          <Border BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
+          <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
               <StackPanel Margin="24,20,24,24">
                 <TextBlock Text="{DynamicResource LF8C893840A2B75F3}" Classes="section" />
@@ -221,12 +221,12 @@
                 </ComboBox>
                 <TextBlock Text="{DynamicResource LE1143839B2C83678}" Classes="caption" Margin="0,6,0,0" />
 
-                <Border Height="1" Background="{StaticResource Line}" Margin="0,20" />
+                <Border Height="1" Background="{DynamicResource Line}" Margin="0,20" />
                 <TextBlock Text="{DynamicResource L785B65759020DE19}" Classes="section" />
                 <CheckBox x:Name="StartAtLoginBox" Margin="0,8,0,0" AutomationProperties.Name="{DynamicResource L42FF1836ECFA8EA2}" AutomationProperties.HelpText="{DynamicResource L761CB756BD82ED11}"><TextBlock Text="{DynamicResource L42FF1836ECFA8EA2}" TextWrapping="Wrap" /></CheckBox>
                 <TextBlock Text="{DynamicResource L761CB756BD82ED11}" Classes="caption" Margin="28,0,0,0" />
 
-                <Border Height="1" Background="{StaticResource Line}" Margin="0,20" />
+                <Border Height="1" Background="{DynamicResource Line}" Margin="0,20" />
                 <TextBlock Text="{DynamicResource L46775FB65FE38384}" Classes="section" />
                 <TextBlock x:Name="EngineStatus" Classes="caption" Margin="0,8,0,0" />
               </StackPanel>

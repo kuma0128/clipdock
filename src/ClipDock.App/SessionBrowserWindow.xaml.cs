@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using ClipDock.Core;
+using Localization = ClipDock.Core.Localization;
 using Microsoft.Web.WebView2.Core;
 
 namespace ClipDock.App;
@@ -41,20 +42,20 @@ public partial class SessionBrowserWindow : Window
         core.Settings.IsGeneralAutofillEnabled = false;
         core.Settings.AreHostObjectsAllowed = false;
         core.Settings.IsWebMessageEnabled = false;
-        core.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
+        core.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Auto;
         core.NavigationStarting += (_, e) =>
         {
-            if (!SiteSessionScope.AllowsNavigation(e.Uri)) { e.Cancel = true; Status.Text = ClipDock.Core.Localization.Text("ログインにはhttpsのページを開いてください。"); }
+            if (!SiteSessionScope.AllowsNavigation(e.Uri)) { e.Cancel = true; Status.Text = Localization.Text("ログインにはhttpsのページを開いてください。"); }
             else Address.Text = e.Uri;
         };
         core.NewWindowRequested += (_, e) => { e.Handled = true; if (SiteSessionScope.AllowsNavigation(e.Uri)) core.Navigate(e.Uri); };
         core.PermissionRequested += (_, e) => e.State = CoreWebView2PermissionState.Deny;
-        core.DownloadStarting += (_, e) => { e.Cancel = true; Status.Text = ClipDock.Core.Localization.Text("動画は「このページを取り込む」から保存してください。"); };
+        core.DownloadStarting += (_, e) => { e.Cancel = true; Status.Text = Localization.Text("動画は「このページを取り込む」から保存してください。"); };
         core.NavigationCompleted += async (_, e) =>
         {
             if (closed) return;
-            try { Address.Text = core.Source; Status.Text = e.IsSuccess ? await session.RefreshStatusAsync(core.Source) : ClipDock.Core.Localization.Text("ページを開けませんでした。URLを確認して、もう一度開いてください。"); }
-            catch (Exception) { if (!closed) Status.Text = ClipDock.Core.Localization.Text("ログイン状態を確認できませんでした。サイトを開き直してください。"); }
+            try { Address.Text = core.Source; Status.Text = e.IsSuccess ? await session.RefreshStatusAsync(core.Source) : Localization.Text("ページを開けませんでした。URLを確認して、もう一度開いてください。"); }
+            catch (Exception) { if (!closed) Status.Text = Localization.Text("ログイン状態を確認できませんでした。サイトを開き直してください。"); }
         };
     }
     private void Go_Click(object sender, RoutedEventArgs e) => OpenAddress();
@@ -63,16 +64,18 @@ public partial class SessionBrowserWindow : Window
     {
         var url = Address.Text.Trim();
         if (!url.Contains("://", StringComparison.Ordinal)) url = "https://" + url;
-        if (!SiteSessionScope.AllowsNavigation(url)) { Status.Text = ClipDock.Core.Localization.Text("httpsのページURLを入力してください。"); return; }
+        if (!SiteSessionScope.AllowsNavigation(url)) { Status.Text = Localization.Text("httpsのページURLを入力してください。"); return; }
         Open(url);
     }
     private void Back_Click(object sender, RoutedEventArgs e) { if (Web.CoreWebView2?.CanGoBack == true) Web.CoreWebView2.GoBack(); }
     private async void Clear_Click(object sender, RoutedEventArgs e)
     {
-        if (hasActiveDownloads()) { Status.Text = ClipDock.Core.Localization.Text("保存が終わるか、キャンセルしてからログイン情報を削除してください。"); return; }
-        if (MessageBox.Show(this, ClipDock.Core.Localization.Text("ClipDock内のすべてのログイン情報と閲覧データを削除しますか？"), ClipDock.Core.Localization.Text("ログイン情報を削除"), MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-        try { await session.ClearAsync(); if (!closed) { Status.Text = ClipDock.Core.Localization.Text("ログイン情報を削除しました。"); Web.CoreWebView2?.Reload(); } }
-        catch (Exception) { if (!closed) Status.Text = ClipDock.Core.Localization.Text("削除できませんでした。画面を開き直して再実行してください。"); }
+        if (hasActiveDownloads()) { Status.Text = Localization.Text("保存が終わるか、キャンセルしてからログイン情報を削除してください。"); return; }
+        var confirm = new ConfirmDialog(this, Localization.Text("ログイン情報を削除"),
+            Localization.Text("ClipDock内のすべてのログイン情報と閲覧データを削除しますか？"), Localization.Text("削除する"), Localization.Text("キャンセル"));
+        if (confirm.ShowDialog() != true) return;
+        try { await session.ClearAsync(); if (!closed) { Status.Text = Localization.Text("ログイン情報を削除しました。"); Web.CoreWebView2?.Reload(); } }
+        catch (Exception) { if (!closed) Status.Text = Localization.Text("削除できませんでした。画面を開き直して再実行してください。"); }
     }
     private void UsePage_Click(object sender, RoutedEventArgs e)
     {
@@ -84,6 +87,6 @@ public partial class SessionBrowserWindow : Window
     private void Runtime_Click(object sender, RoutedEventArgs e)
     {
         try { Process.Start(new ProcessStartInfo("https://developer.microsoft.com/microsoft-edge/webview2/") { UseShellExecute = true })?.Dispose(); }
-        catch (System.ComponentModel.Win32Exception) { Status.Text = ClipDock.Core.Localization.Text("Microsoft公式のWebView2ダウンロードページをブラウザーで開いてください。"); }
+        catch (System.ComponentModel.Win32Exception) { Status.Text = Localization.Text("Microsoft公式のWebView2ダウンロードページをブラウザーで開いてください。"); }
     }
 }

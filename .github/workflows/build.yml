@@ -90,6 +90,13 @@ jobs:
       - name: Build, checks and portable package
         shell: pwsh
         run: ./scripts/build.ps1 -Zip
+      - name: Check light and dark mode on the open Windows app
+        run: dotnet run --file tests/windows/Appearance.cs -- --data-dir "${{ runner.temp }}\clipdock-appearance"
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: Windows-appearance
+          path: artifacts/windows-appearance
+          retention-days: 1
       - name: Install verified Inno Setup 7.1.1 on the disposable runner
         shell: pwsh
         run: |

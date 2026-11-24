@@ -1,22 +1,22 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="ClipDock.Mac.LoginWindow"
         Title="{DynamicResource L2E346574DD15754E}" Width="1060" Height="800" MinWidth="720" MinHeight="600" WindowStartupLocation="CenterOwner"
-        Background="#F7FAF7" Foreground="#20352B" FontSize="13">
+        Background="{DynamicResource Page}" Foreground="{DynamicResource Ink}" FontSize="13">
   <Grid RowDefinitions="Auto,Auto,*,Auto">
     <StackPanel Margin="20,18,20,12">
       <TextBlock Text="{DynamicResource L66B12E91914D9D32}" FontSize="22" FontWeight="SemiBold" />
-      <TextBlock Text="{DynamicResource L4646066F31C48E25}" Foreground="{StaticResource Muted}" Margin="0,8,0,0" TextWrapping="Wrap" />
+      <TextBlock Text="{DynamicResource L4646066F31C48E25}" Foreground="{DynamicResource Muted}" Margin="0,8,0,0" TextWrapping="Wrap" />
     </StackPanel>
     <DockPanel Grid.Row="1" Margin="20,0,20,12">
       <Button Content="{DynamicResource L8FC7F899161B2076}" Click="Back_Click" Margin="0,0,8,0" DockPanel.Dock="Left" />
       <Button Content="{DynamicResource L3AA692FCAAE417D4}" Click="Go_Click" DockPanel.Dock="Right" Margin="8,0,0,0" />
       <TextBox x:Name="Address" KeyDown="Address_KeyDown" AutomationProperties.Name="{DynamicResource L4AC3A8A91DED2437}" ToolTip.Tip="{DynamicResource L9B7FD2485B48500B}" />
     </DockPanel>
-    <Border Grid.Row="2" BorderBrush="#D5E2D8" BorderThickness="0,1"><NativeWebView x:Name="Web" /></Border>
+    <Border Grid.Row="2" BorderBrush="{DynamicResource Line}" BorderThickness="0,1"><NativeWebView x:Name="Web" /></Border>
     <Grid Grid.Row="3" Margin="20,12,20,16" ColumnDefinitions="*,Auto,Auto">
-      <TextBlock x:Name="Status" Text="{DynamicResource L9A1BD9E001F18958}" TextWrapping="Wrap" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,12,0" />
+      <TextBlock x:Name="Status" Text="{DynamicResource L9A1BD9E001F18958}" TextWrapping="Wrap" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,12,0" />
       <Button Grid.Column="1" Content="{DynamicResource LCE7FDF672A7C310C}" Click="Clear_Click" Margin="0,0,8,0" VerticalAlignment="Center" />
-      <Button Grid.Column="2" Content="{DynamicResource LF02D92285D655674}" Background="#C6EBCF" Foreground="#173C27" Click="UsePage_Click" VerticalAlignment="Center" />
+      <Button Grid.Column="2" Content="{DynamicResource LF02D92285D655674}" Classes="primary" Click="UsePage_Click" VerticalAlignment="Center" />
     </Grid>
   </Grid>
 </Window>

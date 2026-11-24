@@ -13,7 +13,7 @@ internal static class ConfirmDialog
         var dialog = new Window
         {
             Title = title, Width = 440, SizeToContent = SizeToContent.Height, CanResize = false, ShowInTaskbar = false,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner, Background = new SolidColorBrush(Color.Parse("#F8FBF8"))
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
         };
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8, Margin = new Thickness(0, 20, 0, 0) };
         if (decline is not null)
@@ -24,8 +24,7 @@ internal static class ConfirmDialog
         }
         var yes = new Button
         {
-            Content = accept, IsDefault = true, IsCancel = decline is null, FontWeight = FontWeight.SemiBold,
-            Background = new SolidColorBrush(Color.Parse("#C6EBCF")), Foreground = new SolidColorBrush(Color.Parse("#132B1D"))
+            Content = accept, IsDefault = true, IsCancel = decline is null, Classes = { "primary" }
         };
         yes.Click += (_, _) => dialog.Close(true);
         buttons.Children.Add(yes);
@@ -34,7 +33,7 @@ internal static class ConfirmDialog
             Margin = new Thickness(24),
             Children =
             {
-                new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(Color.Parse("#20352B")), FontSize = 13, LineHeight = 21 },
+                new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, FontSize = 13, LineHeight = 21 },
                 buttons
             }
         };
