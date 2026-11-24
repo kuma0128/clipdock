@@ -32,7 +32,6 @@ internal static class Appearance
         try
         {
             settings.SetValue(key, 0);
-            Application.ResourceAssembly = typeof(App).Assembly;
             var app = new App();
             app.InitializeComponent();
             app.Startup += (_, _) => app.Dispatcher.InvokeAsync(async () =>
