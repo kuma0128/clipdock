@@ -1,4 +1,4 @@
-# 配布手順（Windows・macOS）
+# 配布手順
 
 ## 公式サイトとダウンロード
 
@@ -191,3 +191,19 @@ Developer IDで配布する場合は、Apple Developer Programの証明書でバ
 ディスクイメージはmacOSのジョブでだけ作れます。リリースタグ（`v<version>`）をpushすると、macOSジョブが確認済みのDMGと `.sha256` を同じ名前のGitHubリリース（なければ下書きで作成）に添付します。`gh release download v<version> --pattern "*.dmg*"` で取得し、`shasum -a 256 -c` または `Get-FileHash` で照合します。
 
 公開する場合は、Windows版と同じ手順でR2バケットへディスクイメージと `.sha256` をアップロードしてからサイトを更新します。1.0.3・1.0.4のディスクイメージは `functions/downloads/[[file]].js` の公開ファイル名一覧に登録済みです。新しいバージョンではこの一覧も更新してください。公開前に、両アーキテクチャのDMGとチェックサムがR2にあることを確認します。GitHub Actionsの対象コミットと配布ファイルの版数を揃えてください。公開先から取得したファイルのSHA-256が配布用ファイルと一致することを確認してください。実機のMacで、新規インストール、URLからのMP4・MP3保存、ログイン保存を確認してから公開します。
+
+## iPhone版
+
+iPhone版はGitHub Releasesで配布します。インストールと署名の更新方法は[READMEのiPhoneの項](../README.md#iphone)を参照してください。
+
+Macでビルドするには、iOS SDKを含むXcodeとXcodeGenを用意し、次をリポジトリのルートで実行します。
+
+```bash
+bash scripts/ios/prepare.sh
+xcodegen generate --spec src/ClipDock.iOS/project.yml
+bash scripts/ios/package.sh
+```
+
+`prepare.sh` はPythonのiOSランタイム、yt-dlp、TLS検証用のcertifiを取得し、SHA-256を検証します。実機用のIPAとチェックサムは `artifacts/ios/` に出力します。Xcodeから直接実機で起動する場合は、生成したプロジェクトを開き、ClipDockターゲットの「Signing & Capabilities」で自分のTeamと一意のBundle Identifierを指定してください。
+
+GitHub Actionsの「iPhone app」はIPAの作成後、iPhoneシミュレーターでページURLと直リンクをペーストし、保存ファイルを元データと照合します。`project.yml` のバージョンに合うタグ（例 `ios-v1.0.0`）をpushすると、確認済みのIPA・チェックサム・画面写真がGitHubリリースの下書きに付きます。内容を確認して公開してください。ワークフローを手動で実行した場合は、同じファイルを1日間 `ClipDock-iOS` アーティファクトから取得できます。

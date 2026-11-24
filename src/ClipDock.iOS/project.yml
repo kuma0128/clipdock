@@ -44,7 +44,7 @@ targets:
           rm -rf "$CODESIGNING_FOLDER_PATH/python/lib/python3.14/test"
           rsync -a --delete --exclude '__pycache__' "$PROJECT_DIR/$deps/packages/" "$CODESIGNING_FOLDER_PATH/packages/"
           cp "$PROJECT_DIR/Engine/media.py" "$CODESIGNING_FOLDER_PATH/packages/"
-          cp "$PROJECT_DIR/../../THIRD-PARTY.md" "$PROJECT_DIR/$deps/VERSIONS" "$CODESIGNING_FOLDER_PATH/"
+          cp "$PROJECT_DIR/RuntimeNotices.txt" "$PROJECT_DIR/../../LICENSE" "$PROJECT_DIR/../../THIRD-PARTY.md" "$PROJECT_DIR/$deps/VERSIONS" "$CODESIGNING_FOLDER_PATH/"
   ClipDockUITests:
     type: bundle.ui-testing
     platform: iOS

@@ -1,12 +1,21 @@
 # ClipDock
 
-動画をMP4、音声をMP3として保存するWindows / macOSアプリです。
+ClipDockは、動画や音声のリンクを貼り付けて端末に保存するアプリです。
 
 [公式サイト](https://clipdock-d6z.pages.dev/) · [使い方・ヘルプ](https://clipdock-d6z.pages.dev/help)
 
 ## はじめに
 
-対応環境: **Windows 10 / 11（x64）**、**macOS 14以降（Appleシリコン / Intel）**。
+対応環境: **Windows 10 / 11（x64）**、**macOS 14以降（Appleシリコン / Intel）**、**iOS 17以降のiPhone**。
+
+### iPhone
+
+1. MacまたはWindows PCにAltServerを用意し、自分のApple AccountでiPhoneにAltStore Classicをインストールします。[AltStore Classicの導入手順](https://faq.altstore.io/)
+2. iPhoneでこのリポジトリを閲覧できるGitHubアカウントにログインし、[iPhone版のリリース](https://github.com/kuma0128/clipdock/releases/tag/ios-v1.0.0)から `ClipDock-iOS.ipa` を「ファイル」にダウンロードします。
+3. AltServerに接続した状態で、AltStore Classicの「My Apps」→「＋」からIPAを選びます。無料のApple Accountでは署名の有効期間は7日間です。AltServerに接続して「Refresh All」を押すと更新できます。[AltStoreの更新方法](https://faq.altstore.io/altstore-classic/your-altstore)
+4. Safariなどで動画ページやメディアファイルのリンクをコピーし、ClipDockで「ペースト」をタップします。保存が終わるまでアプリを開いておきます。ファイル名をタップすると再生でき、共有ボタンで他のアプリに渡せます。
+
+保存先は「ファイル」→「ブラウズ」→「このiPhone内」→「ClipDock」です。iPhone版は、公開ページから取得できる動画・音声とメディアの直リンクに対応します。映像と音声が別々のMP4・M4Aなら、端末内で1本のMP4にまとめます。ログインや追加のJavaScript実行環境が必要なサイト、HLSなどの分割配信、MP3への変換は対象外です。
 
 ### Windows
 
@@ -59,7 +68,7 @@ Windows版との違い:
 - 「ログイン情報を削除」は、ClipDock内の全サイトのCookieを削除します。
 - 「場所」はFinderでファイルを表示します。
 
-## アプリの自動アップデート
+## アプリの自動アップデート（Windows・macOS）
 
 ClipDockは、起動時と、起動したままの間は1日に1回、公式サイトの更新情報（`https://clipdock-d6z.pages.dev/updates/latest.json`）を確認します。新しいバージョンがあれば、バックグラウンドでダウンロードし、サイズとSHA-256が更新情報と一致することを確かめます。一致しないファイルは使わずに削除します。
 
@@ -77,7 +86,7 @@ ClipDockにはコード署名がないため、更新が本物かどうかは、
 
 1.0.4から、Windows版・Mac版の右上の「設定」にある「表示言語」で日本語・English・简体中文・Españolを選べます。選択は設定ファイルに保存し、アプリを閉じて開き直すと反映します。言語の変更だけでは進行中の保存を中断しません。言語を選んでいないとき（初回起動時など）は、OSの表示言語に合わせます。Windowsは表示言語、macOSは「言語と地域」の優先する言語を上から順に見て、日本語・英語・簡体字中国語・スペイン語のうち最初に該当する言語を使い、該当しなければ英語にします（繁体字中国語も英語）。表示した言語は設定に保存され、以後はOSの言語を変えても変わりません。設定に言語が保存されていれば、以前のバージョンで保存したものもそのまま使います。以下では日本語の操作名を使います。OS標準のダイアログ、外部サイト、保存エンジンの生の診断や既存履歴の説明は元の言語で表示される場合があります。
 
-## 使い方
+## 使い方（Windows・macOS）
 
 形式の初期値はMP4です。MP3は音声のみを保存します。形式・画質・保存先の選択は次回も保持します。初期保存先はWindows・macOSともダウンロードフォルダー内の `ClipDock` です。「保存先を変更」で選び直せます。変更は、その後に保存する項目へ適用されます。
 
@@ -99,7 +108,7 @@ Windows版の機能です。右上の「設定」にある「ブラウザー上�
 
 アドレスを編集中の場合や読み取れない場合は、URLを手動で貼り付けてください。表示で省略された `https://` が補われる場合もあるため、取り込んだURLを確認してください。このURL取り込みはChrome・EdgeのCookieやログイン情報を読み出しません。保存時の認証には、アプリ内のログイン設定を使います。
 
-## ログインが必要な動画
+## ログインが必要な動画（Windows・macOS）
 
 「この保存にログイン情報を使う」は初期ONで、変更した設定も保持します。初回は「ログイン」を押し、ClipDock専用の画面で保存対象のサイトへサインインしてください。ChromeやEdgeの既存ログインとは別です。Windows版のログイン画面には [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) が必要です。見つからない場合はMicrosoft公式の案内から導入します。
 
@@ -107,7 +116,7 @@ Windows版の機能です。右上の「設定」にある「ブラウザー上�
 
 Windows版の「ログイン情報を削除」は、ClipDock専用プロファイルにある全サイトのログイン情報と閲覧データを消去します。Mac版では全サイトのCookieを削除します。進行中の保存があれば、完了またはキャンセルしてから実行してください。Cookieを保存履歴に残さず、処理用の一時ファイルは終了時に削除します。専用プロファイルの保持と削除の詳細はプライバシーポリシーを参照してください。
 
-## 対応範囲
+## 対応範囲（Windows・macOS）
 
 - HTTP(S)の動画・ページURL、保存エンジンの対応サイト、非DRMのHLS/DASHが対象です。
 - DRMの解除やアクセス制限の解除は行いません。サイトの変更・公開条件・認証方式によっては保存できません。
@@ -116,7 +125,7 @@ Windows版の「ログイン情報を削除」は、ClipDock専用プロファ�
 - 再生中のライブ配信は終了まで長時間動作する場合があります。ライブの録画専用アプリではありません。
 - ダウンロードする権利のある動画に利用してください。
 
-## 困ったとき
+## 困ったとき（Windows・macOS）
 
 | 症状 | 対処 |
 | --- | --- |
@@ -129,7 +138,7 @@ Windows版の「ログイン情報を削除」は、ClipDock専用プロファ�
 
 エラーの詳細は一覧の説明にマウスを乗せると確認できます。
 
-## 保存データ
+## 保存データ（Windows・macOS）
 
 Windows版では、ログイン用のCookie・閲覧データは専用の `browser-profile`、保存処理中の一時Cookieは `sessions` に保持します。設定は `%LOCALAPPDATA%\ClipDock\settings.json`、最大300件の履歴は同じ場所の `history.dat` に保存します。履歴はWindows DPAPIで暗号化します。更新したエンジンは `tools` に保存し、版数とSHA-256は `tools\versions.json` に記録します。
 
@@ -176,8 +185,10 @@ bash scripts/test-mac.sh arm64    # 署名・ディスクイメージ・実エ�
 
 生成先は `artifacts/mac-<arch>/ClipDock.app` と `artifacts/mac/ClipDock-<version>-mac-<arch>-unsigned.dmg` です。画面はAvalonia製でWindowsでも起動できるため、`dotnet run --project src/ClipDock.Mac -- --data-dir <作業用フォルダー>` で見た目と操作を確認できます。`--data-dir` を付けた実行や `.app` に入っていない開発用ビルドは、ログイン時の起動設定（LaunchAgent）を変更しません。
 
-構成は `ClipDock.App`（Windows用のWPFアプリ）、`ClipDock.Mac`（macOS用のAvaloniaアプリ）、`ClipDock.Core`（ダウンロード処理・設定・エンジン取得）です。UIに依存しない `ClipDock.App` の `DownloadItem.cs`・`DownloadEngine.cs`・`DownloadFailure.cs`・`DownloadLibrary.cs` はMac版とチェックでも共有します。保存一覧の振る舞いを変えるときは、両方の画面ではなく `DownloadLibrary` を変更します。実機での確認は [手動確認手順](docs/manual-checks.md) を使います。
+デスクトップ版の構成は `ClipDock.App`（Windows用のWPFアプリ）、`ClipDock.Mac`（macOS用のAvaloniaアプリ）、`ClipDock.Core`（ダウンロード処理・設定・エンジン取得）です。UIに依存しない `ClipDock.App` の `DownloadItem.cs`・`DownloadEngine.cs`・`DownloadFailure.cs`・`DownloadLibrary.cs` はMac版とチェックでも共有します。保存一覧の振る舞いを変えるときは、両方の画面ではなく `DownloadLibrary` を変更します。実機での確認は [手動確認手順](docs/manual-checks.md) を使います。
 
 macOS版では、設定・履歴・エンジンを `~/Library/Application Support/ClipDock` に保存します。macOSにはDPAPIがないため、履歴は暗号化せず、現在のユーザーだけが読み書きできるファイル（フォルダー700、ファイル600）として保存します。ログイン用のCookieはアプリ専用のWebKitデータに保持し、Safariとは共有しません。アンインストールは、「設定」の「ログイン時に開く」をOFFにし、メニューバーのアイコンから「ClipDockを終了」を選んでから、「アプリケーション」フォルダーの `ClipDock` をゴミ箱へ移します。先にゴミ箱へ移した場合は `~/Library/LaunchAgents/app.clipdock.ClipDock.plist` も削除してください。設定・履歴・保存ファイルは残ります。
+
+iPhone版は `src/ClipDock.iOS` にあります。ビルド方法とIPAの作成手順は[配布手順](docs/distribution.md#iphone版)を参照してください。
 
 同梱ソフトウェアのライセンスは [THIRD-PARTY.md](THIRD-PARTY.md) を参照してください。

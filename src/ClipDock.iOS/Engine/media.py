@@ -44,6 +44,14 @@ def download(link, directory, progress):
         if not info or info.get("_type", "video") != "video" or info.get("is_live"):
             raise MediaError("single")
         tracks = info.get("requested_formats") or [info]
+        if len(tracks) == 1:
+            # Preserve both kinds of media when the source offers both.
+            for codec in ("vcodec", "acodec"):
+                if info.get(codec) == "none" and any(
+                    f.get(codec) not in (None, "none") and f.get("ext") != "mhtml"
+                    for f in info.get("formats", [])
+                ):
+                    raise MediaError("format")
         files = []
         for index, track in enumerate(tracks):
             url = track.get("url", "")
